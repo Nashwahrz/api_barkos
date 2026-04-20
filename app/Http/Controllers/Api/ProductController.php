@@ -9,6 +9,7 @@ use App\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class ProductController extends Controller
@@ -33,7 +34,13 @@ class ProductController extends Controller
      */
     public function store(ProductRequest $request): JsonResponse
     {
-        $product = Auth::user()->products()->create($request->validated());
+        $data = $request->validated();
+
+        if ($request->hasFile('foto')) {
+            $data['foto'] = $request->file('foto')->store('products', 'public');
+        }
+
+        $product = Auth::user()->products()->create($data);
 
         return response()->json([
             'message' => 'Product created successfully',
@@ -58,7 +65,17 @@ class ProductController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $product->update($request->validated());
+        $data = $request->validated();
+
+        if ($request->hasFile('foto')) {
+            // Delete old photo if exists
+            if ($product->foto) {
+                Storage::disk('public')->delete($product->foto);
+            }
+            $data['foto'] = $request->file('foto')->store('products', 'public');
+        }
+
+        $product->update($data);
 
         return response()->json([
             'message' => 'Product updated successfully',
@@ -73,6 +90,11 @@ class ProductController extends Controller
     {
         if ($product->user_id !== Auth::id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Delete photo from storage if exists
+        if ($product->foto) {
+            Storage::disk('public')->delete($product->foto);
         }
 
         $product->delete();

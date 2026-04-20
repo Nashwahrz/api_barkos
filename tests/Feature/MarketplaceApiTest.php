@@ -6,7 +6,9 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Auth\Events\Registered;
 use Tests\TestCase;
 
@@ -76,8 +78,10 @@ class MarketplaceApiTest extends TestCase
     /** @test */
     public function test_authenticated_user_can_create_product()
     {
+        Storage::fake('public');
         $user = User::factory()->create();
         $category = Category::first();
+        $file = UploadedFile::fake()->image('laptop.jpg');
 
         $response = $this->actingAs($user)
             ->postJson('/api/products', [
@@ -86,10 +90,14 @@ class MarketplaceApiTest extends TestCase
                 'deskripsi' => 'Masih bagus gan',
                 'harga' => 5000000,
                 'kondisi' => 'sangat baik',
+                'foto' => $file,
             ]);
 
         $response->assertStatus(201);
         $this->assertDatabaseHas('products', ['nama_barang' => 'Laptop Bekas']);
+        
+        $product = Product::first();
+        Storage::disk('public')->assertExists($product->foto);
     }
 
     /** @test */

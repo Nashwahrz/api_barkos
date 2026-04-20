@@ -19,7 +19,7 @@ class ProductRequest extends FormRequest
             'nama_barang' => ['required', 'string', 'max:255'],
             'deskripsi' => ['required', 'string'],
             'harga' => ['required', 'integer', 'min:0'],
-            'foto' => ['nullable', 'string'], // Simplified as per user choice earlier (string/URL)
+            'foto' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
             'kondisi' => ['required', Rule::in(['baru', 'sangat baik', 'layak pakai'])],
             'status_terjual' => ['nullable', 'boolean'],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
