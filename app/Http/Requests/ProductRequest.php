@@ -22,6 +22,8 @@ class ProductRequest extends FormRequest
             'foto' => ['nullable', 'string'], // Simplified as per user choice earlier (string/URL)
             'kondisi' => ['required', Rule::in(['baru', 'sangat baik', 'layak pakai'])],
             'status_terjual' => ['nullable', 'boolean'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
         ];
     }
 }

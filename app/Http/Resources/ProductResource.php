@@ -17,6 +17,8 @@ class ProductResource extends JsonResource
             'foto' => $this->foto,
             'kondisi' => $this->kondisi,
             'status_terjual' => (bool) $this->status_terjual,
+            'latitude' => $this->latitude,
+            'longitude' => $this->longitude,
             'user' => new UserResource($this->whenLoaded('user')),
             'category' => new CategoryResource($this->whenLoaded('category')),
             'created_at' => $this->created_at,

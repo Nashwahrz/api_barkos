@@ -19,6 +19,7 @@ class RegisterRequest extends FormRequest
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Password::defaults()],
             'asal_kampus' => ['required', 'string', 'max:255'],
+            'role' => ['nullable', 'string', 'in:super_admin,pembeli,penjual'],
         ];
     }
 }

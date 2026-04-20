@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'user_id',
         'category_id',
@@ -16,7 +18,9 @@ class Product extends Model
         'harga',
         'foto',
         'kondisi',
-        'status_terjual'
+        'status_terjual',
+        'latitude',
+        'longitude'
     ];
 
     /**

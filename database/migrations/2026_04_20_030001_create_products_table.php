@@ -21,6 +21,8 @@ return new class extends Migration
             $table->string('foto')->nullable();
             $table->enum('kondisi', ['baru', 'sangat baik', 'layak pakai']);
             $table->boolean('status_terjual')->default(false);
+            $table->decimal('latitude', 10, 8)->nullable();
+            $table->decimal('longitude', 11, 8)->nullable();
             $table->timestamps();
         });
     }

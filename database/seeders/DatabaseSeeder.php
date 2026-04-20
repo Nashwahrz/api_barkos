@@ -18,9 +18,17 @@ class DatabaseSeeder extends Seeder
         $this->call(CategorySeeder::class);
 
         User::factory()->create([
+            'name' => 'Super Admin',
+            'email' => 'admin@admin.com',
+            'asal_kampus' => 'Universitas Indonesia',
+            'role' => 'super_admin',
+        ]);
+
+        User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
             'asal_kampus' => 'Institut Teknologi Bandung',
+            'role' => 'pembeli',
         ]);
     }
 }
