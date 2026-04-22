@@ -25,6 +25,7 @@ class AuthController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'asal_kampus' => $request->asal_kampus,
+            'role' => $request->role ?? 'pembeli',
         ]);
 
         event(new Registered($user));

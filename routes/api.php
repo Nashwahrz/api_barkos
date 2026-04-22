@@ -4,7 +4,11 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\EmailVerificationController;
+use App\Http\Controllers\Api\GoogleAuthController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\AdminDashboardController;
+use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -17,9 +21,18 @@ use Illuminate\Support\Facades\Route;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
+// Google OAuth
+Route::get('/auth/google', [GoogleAuthController::class, 'redirectToGoogle']);
+Route::get('/auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback']);
+
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{product}', [ProductController::class, 'show']);
 Route::get('/categories', [CategoryController::class, 'index']);
+
+// Email Verification (Publicly accessible but signed)
+Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('verification.verify');
 
 // Protected Routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -27,11 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    // Email Verification
-    Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
-        ->middleware(['signed', 'throttle:6,1'])
-        ->name('verification.verify');
-
+    // Email Resend
     Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])
         ->middleware('throttle:6,1')
         ->name('verification.send');
@@ -44,4 +53,17 @@ Route::middleware('auth:sanctum')->group(function () {
     // Chats
     Route::get('/products/{product}/chats', [ChatController::class, 'index']);
     Route::post('/products/{product}/chats', [ChatController::class, 'store']);
+
+    // Reports
+    Route::get('/reports', [ReportController::class, 'index']);
+    Route::post('/reports', [ReportController::class, 'store']);
+    Route::get('/reports/{report}', [ReportController::class, 'show']);
+    Route::put('/reports/{report}', [ReportController::class, 'update']);
+
+    // Admin & User Management
+    Route::get('/admin/stats', [AdminDashboardController::class, 'stats']);
+    Route::get('/admin/recent-activities', [AdminDashboardController::class, 'recentActivities']);
+    
+    Route::get('/users', [UserController::class, 'index']);
+    Route::delete('/users/{user}', [UserController::class, 'destroy']);
 });
