@@ -39,6 +39,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/upgrade-role', [AuthController::class, 'upgradeRole']);
 
     // Email Resend
     Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])
@@ -46,6 +47,7 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('verification.send');
 
     // Products
+    Route::get('/my-products', [ProductController::class, 'myProducts']);
     Route::post('/products', [ProductController::class, 'store']);
     Route::put('/products/{product}', [ProductController::class, 'update']);
     Route::delete('/products/{product}', [ProductController::class, 'destroy']);

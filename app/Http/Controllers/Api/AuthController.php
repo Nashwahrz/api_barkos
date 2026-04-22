@@ -81,4 +81,25 @@ class AuthController extends Controller
     {
         return new UserResource($request->user());
     }
+
+    /**
+     * Upgrade user role to penjual.
+     */
+    public function upgradeRole(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user->role === 'penjual') {
+            return response()->json([
+                'message' => 'Anda sudah terdaftar sebagai penjual'
+            ], 400);
+        }
+
+        $user->update(['role' => 'penjual']);
+
+        return response()->json([
+            'message' => 'Berhasil upgrade akun menjadi penjual lapak',
+            'user' => new UserResource($user)
+        ]);
+    }
 }

@@ -30,6 +30,16 @@ class ProductController extends Controller
     }
 
     /**
+     * Display a listing of products owned by the authenticated user.
+     */
+    public function myProducts(): AnonymousResourceCollection
+    {
+        $products = Auth::user()->products()->with('category')->latest()->get();
+
+        return ProductResource::collection($products);
+    }
+
+    /**
      * Store a newly created resource in storage.
      */
     public function store(ProductRequest $request): JsonResponse
