@@ -47,7 +47,7 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('verification.send');
 
     // Products
-    Route::get(' ', [ProductController::class, 'myProducts']);
+    Route::get('/my-products', [ProductController::class, 'myProducts']);
     Route::post('/products', [ProductController::class, 'store']);
     Route::put('/products/{product}', [ProductController::class, 'update']);
     Route::delete('/products/{product}', [ProductController::class, 'destroy']);

@@ -5,30 +5,49 @@ namespace App\Http\Controllers\Api;
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
 use App\Http\Controllers\Controller;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class EmailVerificationController extends Controller
 {
-    public function verify(Request $request, $id, $hash)
+    /**
+     * Handle an email verification request.
+     *
+     * This endpoint is hit by the SPA (frontend) after the user clicks the
+     * link in their email. Laravel's `signed` middleware has already validated
+     * the URL signature before this method is reached.
+     *
+     * On success it returns JSON so the frontend can react accordingly.
+     */
+    public function verify(Request $request, $id, $hash): JsonResponse
     {
         $user = User::findOrFail($id);
-        $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
 
+        // Double-check the hash matches the user's email
         if (!hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
-            return redirect()->away($frontendUrl . '/auth/login?error=invalid_verification_link');
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Link verifikasi tidak valid.',
+            ], 403);
         }
 
+        // Already verified – return success so the SPA can redirect gracefully
         if ($user->hasVerifiedEmail()) {
-            return redirect()->away($frontendUrl . '/auth/login?message=email_already_verified');
+            return response()->json([
+                'status'  => 'already_verified',
+                'message' => 'Email sudah terverifikasi sebelumnya.',
+            ]);
         }
 
+        // Mark as verified – this writes email_verified_at to the database
         if ($user->markEmailAsVerified()) {
             event(new Verified($user));
         }
 
-        return redirect()->away($frontendUrl . '/?verified=1');
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Email berhasil diverifikasi.',
+        ]);
     }
 
     /**
@@ -38,14 +57,14 @@ class EmailVerificationController extends Controller
     {
         if ($request->user()->hasVerifiedEmail()) {
             return response()->json([
-                'message' => 'Email already verified'
+                'message' => 'Email sudah terverifikasi.',
             ]);
         }
 
         $request->user()->sendEmailVerificationNotification();
 
         return response()->json([
-            'message' => 'Verification link sent'
+            'message' => 'Link verifikasi telah dikirim ulang.',
         ]);
     }
 }
