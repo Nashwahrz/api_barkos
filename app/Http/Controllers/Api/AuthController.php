@@ -103,7 +103,82 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Berhasil upgrade akun menjadi penjual lapak',
-            'user' => new UserResource($user)
+            'user'    => new UserResource($user)
         ]);
+    }
+
+    /**
+     * Phase 2.2 — Update authenticated user profile.
+     * PUT /api/profile
+     */
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $request->validate([
+            'name'        => 'sometimes|string|max:255',
+            'phone'       => 'sometimes|nullable|string|max:20',
+            'asal_kampus' => 'sometimes|nullable|string|max:255',
+            'avatar'      => 'sometimes|nullable|image|max:2048',
+        ]);
+
+        $user = $request->user();
+        $data = $request->only(['name', 'phone', 'asal_kampus']);
+
+        if ($request->hasFile('avatar')) {
+            // Delete old avatar if exists and not a Google avatar URL
+            if ($user->avatar && !str_starts_with($user->avatar, 'http')) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar);
+            }
+            $data['avatar'] = $request->file('avatar')->store('avatars', 'public');
+        }
+
+        $user->update($data);
+
+        return response()->json([
+            'message' => 'Profil berhasil diperbarui.',
+            'user'    => new UserResource($user),
+        ]);
+    }
+
+    /**
+     * Phase 2.2 — Change authenticated user password.
+     * PUT /api/password
+     */
+    public function updatePassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'current_password' => 'required|string',
+            'password'         => 'required|string|min:8|confirmed',
+        ]);
+
+        $user = $request->user();
+
+        if (!Hash::check($request->current_password, $user->password)) {
+            return response()->json([
+                'message' => 'Password saat ini tidak sesuai.',
+            ], 422);
+        }
+
+        $user->update(['password' => Hash::make($request->password)]);
+
+        return response()->json(['message' => 'Password berhasil diubah.']);
+    }
+
+    /**
+     * Phase 2.2 — Save user geolocation coordinates.
+     * PUT /api/location
+     */
+    public function updateLocation(Request $request): JsonResponse
+    {
+        $request->validate([
+            'latitude'  => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
+        ]);
+
+        $request->user()->update([
+            'latitude'  => $request->latitude,
+            'longitude' => $request->longitude,
+        ]);
+
+        return response()->json(['message' => 'Lokasi berhasil disimpan.']);
     }
 }
