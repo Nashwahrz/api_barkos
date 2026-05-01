@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ProductImageController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\AdminDashboardController;
+use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -79,6 +80,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/reports/{report}', [ReportController::class, 'show']);
     Route::put('/reports/{report}', [ReportController::class, 'update']);
 
+    // ── Transactions (Phase 3 — PRD §2.1.4, §2.2.3) ────────────────────
+    Route::get('/transactions',                         [TransactionController::class, 'index']);
+    Route::post('/transactions',                        [TransactionController::class, 'store']);
+    Route::get('/transactions/{transaction}',           [TransactionController::class, 'show']);
+    Route::patch('/transactions/{transaction}/confirm', [TransactionController::class, 'confirm']);
+    Route::patch('/transactions/{transaction}/payment', [TransactionController::class, 'uploadPayment']);
+    Route::patch('/transactions/{transaction}/complete',[TransactionController::class, 'complete']);
+    Route::delete('/transactions/{transaction}/cancel', [TransactionController::class, 'cancel']);
+
     // ── Admin Dashboard ──────────────────────────────────────────────────
     Route::get('/admin/stats',             [AdminDashboardController::class, 'stats']);
     Route::get('/admin/recent-activities', [AdminDashboardController::class, 'recentActivities']);
@@ -86,6 +96,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // ── User Management (Admin) ──────────────────────────────────────────
     Route::get('/users',                    [UserController::class, 'index']);
     Route::get('/users/{user}',             [UserController::class, 'show']);
-    Route::patch('/users/{user}/status',    [UserController::class, 'toggleStatus']); // Phase 2.4
+    Route::patch('/users/{user}/status',    [UserController::class, 'toggleStatus']);
     Route::delete('/users/{user}',          [UserController::class, 'destroy']);
 });
