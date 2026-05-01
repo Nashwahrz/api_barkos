@@ -20,9 +20,7 @@ class UserController extends Controller
 
         $users = User::latest()->get();
 
-        return response()->json([
-            'data' => $users
-        ]);
+        return response()->json(['data' => $users]);
     }
 
     /**
@@ -32,10 +30,38 @@ class UserController extends Controller
     {
         return response()->json([
             'data' => [
-                'id' => $user->id,
-                'name' => $user->name,
+                'id'          => $user->id,
+                'name'        => $user->name,
+                'email'       => $user->email,
+                'phone'       => $user->phone,
+                'avatar'      => $user->avatar,
                 'asal_kampus' => $user->asal_kampus,
+                'role'        => $user->role,
+                'is_active'   => $user->is_active,
             ]
+        ]);
+    }
+
+    /**
+     * Phase 2.4 — PRD §2.3.2
+     * Activate or deactivate a user account (Super Admin only).
+     * PATCH /api/users/{user}/status
+     */
+    public function toggleStatus(Request $request, User $user): JsonResponse
+    {
+        if ($request->user()->role !== 'super_admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        if ($user->role === 'super_admin') {
+            return response()->json(['message' => 'Cannot deactivate super admin'], 422);
+        }
+
+        $user->update(['is_active' => !$user->is_active]);
+
+        return response()->json([
+            'message'   => $user->is_active ? 'Akun pengguna diaktifkan.' : 'Akun pengguna dinonaktifkan.',
+            'is_active' => $user->is_active,
         ]);
     }
 
@@ -54,8 +80,6 @@ class UserController extends Controller
 
         $user->delete();
 
-        return response()->json([
-            'message' => 'User deleted successfully'
-        ]);
+        return response()->json(['message' => 'User deleted successfully']);
     }
 }
