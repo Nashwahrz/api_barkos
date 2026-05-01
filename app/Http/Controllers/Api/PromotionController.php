@@ -55,22 +55,24 @@ class PromotionController extends Controller
 
         // Record the promotion (simulating payment success instantly as per requirements)
         $promotion = Promotion::create([
-            'product_id' => $product->id,
-            'package_id' => $package->id,
-            'status' => 'active',
-            'start_date' => Carbon::now(),
-            'end_date' => $endDate,
+            'product_id'  => $product->id,
+            'seller_id'   => $request->user()->id,
+            'package_id'  => $package->id,
+            'status'      => 'active',
+            'start_at'    => Carbon::now(),
+            'end_at'      => $endDate,
+            'amount_paid' => $package->price,
         ]);
 
         // Update the product
         $product->update([
-            'is_promoted' => true,
+            'is_promoted'   => true,
             'promoted_until' => $endDate,
         ]);
 
         return response()->json([
             'message' => 'Promosi berhasil diaktifkan!',
-            'data' => $promotion
+            'data'    => $promotion,
         ], 201);
     }
 

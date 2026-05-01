@@ -20,6 +20,6 @@ Schedule::call(function () {
     
     DB::table('promotions')
         ->where('status', 'active')
-        ->where('end_date', '<', Carbon::now())
+        ->where('end_at', '<', Carbon::now())
         ->update(['status' => 'expired']);
 })->everyMinute();
