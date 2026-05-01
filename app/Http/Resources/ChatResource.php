@@ -15,6 +15,7 @@ class ChatResource extends JsonResource
             'receiver' => new UserResource($this->whenLoaded('receiver')),
             'product' => new ProductResource($this->whenLoaded('product')),
             'message' => $this->message,
+            'is_read' => (bool) $this->is_read,
             'created_at' => $this->created_at,
         ];
     }

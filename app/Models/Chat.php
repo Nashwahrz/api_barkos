@@ -11,7 +11,8 @@ class Chat extends Model
         'sender_id',
         'receiver_id',
         'product_id',
-        'message'
+        'message',
+        'is_read'
     ];
 
     /**

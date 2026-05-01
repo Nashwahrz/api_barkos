@@ -33,7 +33,8 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'message' => 'Registration successful',
+            'status' => 'success',
+            'message' => 'Registrasi berhasil. Silakan cek email Anda untuk verifikasi.',
             'access_token' => $token,
             'token_type' => 'Bearer',
             'user' => new UserResource($user),
@@ -47,7 +48,8 @@ class AuthController extends Controller
     {
         if (!Auth::attempt($request->only('email', 'password'))) {
             return response()->json([
-                'message' => 'Invalid login credentials',
+                'status' => 'error',
+                'message' => 'Email atau password yang Anda masukkan salah.',
             ], 401);
         }
 
@@ -55,10 +57,12 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'message' => 'Login successful',
+            'status' => 'success',
+            'message' => 'Login berhasil',
             'access_token' => $token,
             'token_type' => 'Bearer',
             'user' => new UserResource($user),
+            'email_verified' => $user->hasVerifiedEmail(),
         ]);
     }
 

@@ -26,6 +26,20 @@ class UserController extends Controller
     }
 
     /**
+     * Display the specified user profile.
+     */
+    public function show(User $user): JsonResponse
+    {
+        return response()->json([
+            'data' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'asal_kampus' => $user->asal_kampus,
+            ]
+        ]);
+    }
+
+    /**
      * Remove the specified user from storage (Super Admin Only).
      */
     public function destroy(Request $request, User $user): JsonResponse

@@ -47,14 +47,17 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('verification.send');
 
     // Products
-    Route::get('/my-products', [ProductController::class, 'myProducts']);
+    Route::get(' ', [ProductController::class, 'myProducts']);
     Route::post('/products', [ProductController::class, 'store']);
     Route::put('/products/{product}', [ProductController::class, 'update']);
     Route::delete('/products/{product}', [ProductController::class, 'destroy']);
 
-    // Chats
-    Route::get('/products/{product}/chats', [ChatController::class, 'index']);
+    // Chats & Notifications
+    Route::get('/conversations', [ChatController::class, 'conversations']);
+    Route::get('/notifications/unread-count', [ChatController::class, 'unreadCount']);
+    Route::get('/products/{product}/chats/{user}', [ChatController::class, 'messages']);
     Route::post('/products/{product}/chats', [ChatController::class, 'store']);
+    Route::patch('/products/{product}/chats/{user}/read', [ChatController::class, 'markAsRead']);
 
     // Reports
     Route::get('/reports', [ReportController::class, 'index']);
@@ -65,7 +68,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Admin & User Management
     Route::get('/admin/stats', [AdminDashboardController::class, 'stats']);
     Route::get('/admin/recent-activities', [AdminDashboardController::class, 'recentActivities']);
-    
+
     Route::get('/users', [UserController::class, 'index']);
+    Route::get('/users/{user}', [UserController::class, 'show']);
     Route::delete('/users/{user}', [UserController::class, 'destroy']);
 });

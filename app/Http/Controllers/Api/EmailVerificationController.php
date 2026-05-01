@@ -11,23 +11,24 @@ use Illuminate\Http\Request;
 
 class EmailVerificationController extends Controller
 {
-    public function verify(Request $request, $id, $hash): JsonResponse
+    public function verify(Request $request, $id, $hash)
     {
         $user = User::findOrFail($id);
+        $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
 
         if (!hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
-            return response()->json(['message' => 'Invalid verification link'], 403);
+            return redirect()->away($frontendUrl . '/auth/login?error=invalid_verification_link');
         }
 
         if ($user->hasVerifiedEmail()) {
-            return response()->json(['message' => 'Email already verified']);
+            return redirect()->away($frontendUrl . '/auth/login?message=email_already_verified');
         }
 
         if ($user->markEmailAsVerified()) {
             event(new Verified($user));
         }
 
-        return response()->json(['message' => 'Email has been verified']);
+        return redirect()->away($frontendUrl . '/?verified=1');
     }
 
     /**

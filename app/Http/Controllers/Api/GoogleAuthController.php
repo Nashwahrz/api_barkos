@@ -69,7 +69,14 @@ class GoogleAuthController extends Controller
             return redirect()->away($frontendUrl . '/auth/callback?token=' . $token);
 
         } catch (Exception $e) {
-            return redirect()->away(env('FRONTEND_URL', 'http://localhost:3000') . '/auth/login?error=google_auth_failed');
+            \Illuminate\Support\Facades\Log::error('Google Auth Error: ' . $e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString(),
+                'redirect_uri' => config('services.google.redirect')
+            ]);
+            
+            $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
+            return redirect()->away($frontendUrl . '/auth/login?error=google_auth_failed&message=' . urlencode($e->getMessage()));
         }
     }
 }
