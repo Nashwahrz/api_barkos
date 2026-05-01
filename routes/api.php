@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\EmailVerificationController;
 use App\Http\Controllers\Api\GoogleAuthController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ProductImageController;
+use App\Http\Controllers\Api\PromotionController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\AdminDashboardController;
 use App\Http\Controllers\Api\TransactionController;
@@ -31,6 +32,7 @@ Route::get('/auth/google/callback', [GoogleAuthController::class, 'handleGoogleC
 Route::get('/products',           [ProductController::class, 'index']);
 Route::get('/products/{product}', [ProductController::class, 'show']);
 Route::get('/categories',         [CategoryController::class, 'index']);
+Route::get('/promotions/packages', [PromotionController::class, 'packages']);
 
 // Email Verification (signed URL — public)
 Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
@@ -74,6 +76,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/products/{product}/chats',            [ChatController::class, 'store']);
     Route::patch('/products/{product}/chats/{user}/read', [ChatController::class, 'markAsRead']);
 
+    // ── Promotions (Phase 6.1) ──────────────────────────────────────────
+    Route::get('/promotions/my', [PromotionController::class, 'myPromotions']);
+    Route::post('/promotions', [PromotionController::class, 'store']);
+
     // ── Reports ─────────────────────────────────────────────────────────
     Route::get('/reports',          [ReportController::class, 'index']);
     Route::post('/reports',         [ReportController::class, 'store']);
@@ -92,6 +98,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ── Admin Dashboard & Management ─────────────────────────────────────
     Route::get('/admin/stats',             [AdminDashboardController::class, 'stats']);
     Route::get('/admin/recent-activities', [AdminDashboardController::class, 'recentActivities']);
+    Route::get('/admin/promotions',        [PromotionController::class, 'adminIndex']);
 
     // Admin: Categories (Phase 5.2)
     Route::post('/admin/categories',       [CategoryController::class, 'store']);
