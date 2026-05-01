@@ -89,10 +89,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/transactions/{transaction}/complete',[TransactionController::class, 'complete']);
     Route::delete('/transactions/{transaction}/cancel', [TransactionController::class, 'cancel']);
 
-    // ── Admin Dashboard ──────────────────────────────────────────────────
+    // ── Admin Dashboard & Management ─────────────────────────────────────
     Route::get('/admin/stats',             [AdminDashboardController::class, 'stats']);
     Route::get('/admin/recent-activities', [AdminDashboardController::class, 'recentActivities']);
 
+    // Admin: Categories (Phase 5.2)
+    Route::post('/admin/categories',       [CategoryController::class, 'store']);
+    Route::put('/admin/categories/{category}', [CategoryController::class, 'update']);
+    Route::delete('/admin/categories/{category}', [CategoryController::class, 'destroy']);
+
+    // Admin: Products (Phase 5.1)
+    Route::get('/admin/products',          [AdminDashboardController::class, 'allProducts']);
+    Route::delete('/admin/products/{product}', [AdminDashboardController::class, 'removeProduct']);
     // ── User Management (Admin) ──────────────────────────────────────────
     Route::get('/users',                    [UserController::class, 'index']);
     Route::get('/users/{user}',             [UserController::class, 'show']);

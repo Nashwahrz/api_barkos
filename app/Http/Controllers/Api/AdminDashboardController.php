@@ -9,6 +9,7 @@ use App\Models\Report;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Resources\ProductResource;
 
 class AdminDashboardController extends Controller
 {
@@ -65,6 +66,38 @@ class AdminDashboardController extends Controller
             'recent_users' => $recentUsers,
             'recent_products' => $recentProducts,
             'recent_reports' => $recentReports,
+        ]);
+    }
+
+    /**
+     * Phase 5.1 - Get all products for admin management.
+     */
+    public function allProducts(Request $request): JsonResponse
+    {
+        if ($request->user()->role !== 'super_admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $products = Product::with(['user', 'category'])->latest()->get();
+
+        return response()->json([
+            'data' => ProductResource::collection($products)
+        ]);
+    }
+
+    /**
+     * Phase 5.1 - Delete any product (Admin Only).
+     */
+    public function removeProduct(Request $request, Product $product): JsonResponse
+    {
+        if ($request->user()->role !== 'super_admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $product->delete();
+
+        return response()->json([
+            'message' => 'Produk berhasil dihapus oleh Admin.'
         ]);
     }
 }
