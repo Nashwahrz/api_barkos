@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'asal_kampus', 'role', 'google_id', 'avatar', 'google_token', 'email_verified_at'])]
+#[Fillable(['name', 'email', 'password', 'asal_kampus', 'role', 'google_id', 'avatar', 'google_token', 'email_verified_at', 'phone', 'is_active', 'latitude', 'longitude'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -44,6 +44,30 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Get all transactions where the user is the buyer.
+     */
+    public function buyerTransactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class, 'buyer_id');
+    }
+
+    /**
+     * Get all transactions where the user is the seller.
+     */
+    public function sellerTransactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class, 'seller_id');
+    }
+
+    /**
+     * Get all promotions purchased by this user (as seller).
+     */
+    public function promotions(): HasMany
+    {
+        return $this->hasMany(Promotion::class, 'seller_id');
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -52,7 +76,10 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'password'          => 'hashed',
+            'is_active'         => 'boolean',
+            'latitude'          => 'decimal:7',
+            'longitude'         => 'decimal:7',
         ];
     }
 
