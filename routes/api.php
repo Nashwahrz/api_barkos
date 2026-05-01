@@ -65,11 +65,31 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/reports/{report}', [ReportController::class, 'show']);
     Route::put('/reports/{report}', [ReportController::class, 'update']);
 
-    // Admin & User Management
-    Route::get('/admin/stats', [AdminDashboardController::class, 'stats']);
+    // ── Transactions (Phase 3 — PRD §2.1.4, §2.2.3) ────────────────────
+    Route::get('/transactions',                         [TransactionController::class, 'index']);
+    Route::post('/transactions',                        [TransactionController::class, 'store']);
+    Route::get('/transactions/{transaction}',           [TransactionController::class, 'show']);
+    Route::patch('/transactions/{transaction}/confirm', [TransactionController::class, 'confirm']);
+    Route::patch('/transactions/{transaction}/payment', [TransactionController::class, 'uploadPayment']);
+    Route::patch('/transactions/{transaction}/complete',[TransactionController::class, 'complete']);
+    Route::delete('/transactions/{transaction}/cancel', [TransactionController::class, 'cancel']);
+
+    // ── Admin Dashboard & Management ─────────────────────────────────────
+    Route::get('/admin/stats',             [AdminDashboardController::class, 'stats']);
     Route::get('/admin/recent-activities', [AdminDashboardController::class, 'recentActivities']);
 
-    Route::get('/users', [UserController::class, 'index']);
-    Route::get('/users/{user}', [UserController::class, 'show']);
-    Route::delete('/users/{user}', [UserController::class, 'destroy']);
+    // Admin: Categories (Phase 5.2)
+    Route::post('/admin/categories',       [CategoryController::class, 'store']);
+    Route::put('/admin/categories/{category}', [CategoryController::class, 'update']);
+    Route::delete('/admin/categories/{category}', [CategoryController::class, 'destroy']);
+
+    // Admin: Products (Phase 5.1)
+    Route::get('/admin/products',          [AdminDashboardController::class, 'allProducts']);
+    Route::delete('/admin/products/{product}', [AdminDashboardController::class, 'removeProduct']);
+
+    // ── User Management (Admin) ──────────────────────────────────────────
+    Route::get('/users',                    [UserController::class, 'index']);
+    Route::get('/users/{user}',             [UserController::class, 'show']);
+    Route::patch('/users/{user}/status',    [UserController::class, 'toggleStatus']);
+    Route::delete('/users/{user}',          [UserController::class, 'destroy']);
 });
