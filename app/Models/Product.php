@@ -20,7 +20,16 @@ class Product extends Model
         'kondisi',
         'status_terjual',
         'latitude',
-        'longitude'
+        'longitude',
+        'is_promoted',
+        'promoted_until',
+    ];
+
+    protected $casts = [
+        'is_promoted'    => 'boolean',
+        'status_terjual' => 'boolean',
+        'promoted_until' => 'datetime',
+        'harga'          => 'integer',
     ];
 
     /**
@@ -45,5 +54,29 @@ class Product extends Model
     public function chats(): HasMany
     {
         return $this->hasMany(Chat::class);
+    }
+
+    /**
+     * Get the images for this product.
+     */
+    public function images(): HasMany
+    {
+        return $this->hasMany(ProductImage::class);
+    }
+
+    /**
+     * Get the transactions for this product.
+     */
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class);
+    }
+
+    /**
+     * Get the promotions for this product.
+     */
+    public function promotions(): HasMany
+    {
+        return $this->hasMany(Promotion::class);
     }
 }
