@@ -157,6 +157,11 @@ class ChatController extends Controller
             'message'     => $request->message,
             'is_read'     => false,
         ]);
+        
+        $receiver = User::find($receiverId);
+        if ($receiver) {
+            $receiver->notify(new \App\Notifications\ChatNotification($chat));
+        }
 
         return response()->json([
             'message' => 'Message sent successfully',

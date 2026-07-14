@@ -24,7 +24,7 @@ class ProductImageController extends Controller
 
         $request->validate([
             'images'   => 'required|array|min:1|max:5',
-            'images.*' => 'required|image|max:2048',
+            'images.*' => 'required|image|max:20480',
         ]);
 
         $uploaded = [];

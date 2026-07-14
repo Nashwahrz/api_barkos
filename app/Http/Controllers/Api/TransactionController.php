@@ -34,8 +34,14 @@ class TransactionController extends Controller
     public function index(Request $request): AnonymousResourceCollection
     {
         $user = $request->user();
+        $as = $request->query('as');
 
-        if ($user->role === 'penjual') {
+        if ($as === 'buyer') {
+            $transactions = Transaction::with(['product', 'seller'])
+                ->where('buyer_id', $user->id)
+                ->latest()
+                ->get();
+        } elseif ($as === 'seller' || $user->role === 'penjual') {
             // Seller: see all transactions on their products
             $transactions = Transaction::with(['product', 'buyer'])
                 ->where('seller_id', $user->id)
@@ -103,6 +109,26 @@ class TransactionController extends Controller
             return response()->json(['message' => 'Anda sudah memiliki order aktif untuk produk ini.'], 422);
         }
 
+        // Validate agreed_price
+        $isValidPrice = false;
+        if ((int)$request->agreed_price === (int)$product->harga) {
+            $isValidPrice = true;
+        } else {
+            // Check if there is an accepted offer with this price
+            $acceptedOffer = \App\Models\Offer::where('product_id', $product->id)
+                ->where('buyer_id', $buyer->id)
+                ->where('status', 'accepted')
+                ->where('offered_price', $request->agreed_price)
+                ->exists();
+            if ($acceptedOffer) {
+                $isValidPrice = true;
+            }
+        }
+
+        if (!$isValidPrice) {
+            return response()->json(['message' => 'Harga tidak valid. Harus sesuai harga produk atau penawaran yang disetujui.'], 422);
+        }
+
         $transaction = Transaction::create([
             'product_id'     => $product->id,
             'buyer_id'       => $buyer->id,
@@ -112,6 +138,13 @@ class TransactionController extends Controller
             'agreed_price'   => $request->agreed_price,
             'notes'          => $request->notes,
         ]);
+
+        $seller = \App\Models\User::find($product->user_id);
+        $seller->notify(new \App\Notifications\TransactionNotification(
+            $transaction,
+            "Pesanan baru masuk dari {$buyer->name} untuk produk {$product->nama_barang} seharga Rp " . number_format($request->agreed_price, 0, ',', '.'),
+            'new_order'
+        ));
 
         return response()->json([
             'message' => 'Order berhasil dibuat. Menunggu konfirmasi penjual.',
@@ -140,9 +173,23 @@ class TransactionController extends Controller
         if ($request->action === 'confirm') {
             $transaction->update(['status' => 'confirmed']);
             $message = 'Order dikonfirmasi. Hubungi pembeli untuk proses selanjutnya.';
+
+            $buyer = \App\Models\User::find($transaction->buyer_id);
+            $buyer->notify(new \App\Notifications\TransactionNotification(
+                $transaction,
+                "Pesanan Anda untuk produk {$transaction->product->nama_barang} telah dikonfirmasi penjual.",
+                'order_confirmed'
+            ));
         } else {
             $transaction->update(['status' => 'cancelled']);
             $message = 'Order ditolak.';
+
+            $buyer = \App\Models\User::find($transaction->buyer_id);
+            $buyer->notify(new \App\Notifications\TransactionNotification(
+                $transaction,
+                "Maaf, pesanan Anda untuk produk {$transaction->product->nama_barang} telah ditolak oleh penjual.",
+                'order_rejected'
+            ));
         }
 
         return response()->json([
@@ -159,7 +206,7 @@ class TransactionController extends Controller
     public function uploadPayment(Request $request, Transaction $transaction): JsonResponse
     {
         $request->validate([
-            'payment_proof' => 'required|image|max:5120', // max 5 MB
+            'payment_proof' => 'required|image|max:10240', // max 10 MB
         ]);
 
         if ($transaction->buyer_id !== Auth::id()) {
@@ -182,6 +229,13 @@ class TransactionController extends Controller
         $path = $request->file('payment_proof')->store('payments', 'public');
 
         $transaction->update(['payment_proof_path' => $path]);
+
+        $seller = \App\Models\User::find($transaction->seller_id);
+        $seller->notify(new \App\Notifications\TransactionNotification(
+            $transaction,
+            "Pembeli telah mengunggah bukti pembayaran untuk pesanan {$transaction->product->nama_barang}.",
+            'payment_uploaded'
+        ));
 
         return response()->json([
             'message'           => 'Bukti pembayaran berhasil diunggah. Menunggu konfirmasi penjual.',
@@ -213,6 +267,13 @@ class TransactionController extends Controller
         // Mark product as sold
         $transaction->product->update(['status_terjual' => true]);
 
+        $buyer = \App\Models\User::find($transaction->buyer_id);
+        $buyer->notify(new \App\Notifications\TransactionNotification(
+            $transaction,
+            "Pesanan Anda untuk produk {$transaction->product->nama_barang} telah diselesaikan oleh penjual. Terima kasih!",
+            'order_completed'
+        ));
+
         return response()->json([
             'message' => 'Transaksi selesai! Produk ditandai sebagai terjual.',
             'data'    => new TransactionResource($transaction->fresh()->load(['product', 'buyer', 'seller'])),
@@ -234,6 +295,13 @@ class TransactionController extends Controller
         }
 
         $transaction->update(['status' => 'cancelled']);
+
+        $seller = \App\Models\User::find($transaction->seller_id);
+        $seller->notify(new \App\Notifications\TransactionNotification(
+            $transaction,
+            "Pembeli membatalkan pesanan untuk produk {$transaction->product->nama_barang}.",
+            'order_cancelled'
+        ));
 
         return response()->json([
             'message' => 'Order berhasil dibatalkan.',

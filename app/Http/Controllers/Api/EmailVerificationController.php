@@ -31,7 +31,7 @@ class EmailVerificationController extends Controller
             ], 403);
         }
 
-        // Already verified – return success so the SPA can redirect gracefully
+        // Already verified
         if ($user->hasVerifiedEmail()) {
             return response()->json([
                 'status'  => 'already_verified',

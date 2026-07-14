@@ -15,7 +15,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call(CategorySeeder::class);
+        $this->call([
+            CategorySeeder::class,
+            PromotionPackageSeeder::class,
+            PromotionSeeder::class,
+        ]);
 
         User::factory()->create([
             'name' => 'Super Admin',

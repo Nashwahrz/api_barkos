@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Promotion extends Model
 {
     protected $fillable = [
+        'order_id',
+        'snap_token',
+        'payment_status',
         'product_id',
         'seller_id',
         'package_id',
@@ -15,6 +18,9 @@ class Promotion extends Model
         'end_at',
         'amount_paid',
         'status',
+        'ad_type',
+        'ad_media_url',
+        'ad_title',
     ];
 
     protected $casts = [
@@ -48,11 +54,12 @@ class Promotion extends Model
     }
 
     /**
-     * Scope: only active promotions (status=active AND end_at > now).
+     * Scope: only active promotions (status=active AND end_at > now AND payment_status = paid).
      */
     public function scopeActive($query)
     {
         return $query->where('status', 'active')
+                     ->where('payment_status', 'paid')
                      ->where('end_at', '>', now());
     }
 }

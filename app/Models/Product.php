@@ -18,6 +18,7 @@ class Product extends Model
         'harga',
         'foto',
         'kondisi',
+        'durasi_pemakaian',
         'status_terjual',
         'latitude',
         'longitude',
@@ -78,5 +79,13 @@ class Product extends Model
     public function promotions(): HasMany
     {
         return $this->hasMany(Promotion::class);
+    }
+
+    /**
+     * Dynamically determine if the product is currently promoted.
+     */
+    public function getIsPromotedAttribute($value)
+    {
+        return $value && (!$this->promoted_until || $this->promoted_until->isFuture());
     }
 }

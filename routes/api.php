@@ -11,7 +11,9 @@ use App\Http\Controllers\Api\PromotionController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\AdminDashboardController;
 use App\Http\Controllers\Api\TransactionController;
+use App\Http\Controllers\Api\BankAccountController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\MidtransController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -23,6 +25,7 @@ use Illuminate\Support\Facades\Route;
 // ── Public Routes ─────────────────────────────────────────────────────────
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login',    [AuthController::class, 'login']);
+Route::post('/chatbot',  [\App\Http\Controllers\Api\ChatbotController::class, 'chat']);
 
 // Google OAuth
 Route::get('/auth/google',          [GoogleAuthController::class, 'redirectToGoogle']);
@@ -33,11 +36,15 @@ Route::get('/products',           [ProductController::class, 'index']);
 Route::get('/products/{product}', [ProductController::class, 'show']);
 Route::get('/categories',         [CategoryController::class, 'index']);
 Route::get('/promotions/packages', [PromotionController::class, 'packages']);
+Route::get('/promotions/banners',  [PromotionController::class, 'banners']);
 
 // Email Verification (signed URL — public)
 Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
     ->middleware(['signed', 'throttle:6,1'])
     ->name('verification.verify');
+
+// ── Midtrans Webhook (Public) ──────────────────────────────────────────────
+Route::post('/midtrans/webhook', [MidtransController::class, 'webhook']);
 
 // ── Protected Routes (require Sanctum token) ──────────────────────────────
 Route::middleware('auth:sanctum')->group(function () {
@@ -52,6 +59,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/password', [AuthController::class, 'updatePassword']);
     Route::put('/location', [AuthController::class, 'updateLocation']);
 
+    // ── Bank Accounts (Seller) ──────────────────────────────────────────
+    Route::apiResource('/bank-accounts', BankAccountController::class)->except(['show']);
+
     // Email Resend
     Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])
         ->middleware('throttle:6,1')
@@ -62,6 +72,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/products',                    [ProductController::class, 'store']);
     Route::put('/products/{product}',           [ProductController::class, 'update']);
     Route::delete('/products/{product}',        [ProductController::class, 'destroy']);
+
+    // ── Offers (Penawaran) ──────────────────────────────────────────────
+    Route::post('/products/{product}/offers',   [\App\Http\Controllers\Api\OfferController::class, 'store']);
+    Route::get('/offers/buyer',                 [\App\Http\Controllers\Api\OfferController::class, 'indexBuyer']);
+    Route::get('/offers/seller',                [\App\Http\Controllers\Api\OfferController::class, 'indexSeller']);
+    Route::patch('/offers/{offer}/status',      [\App\Http\Controllers\Api\OfferController::class, 'updateStatus']);
+
 
     // Phase 2.3 — Product status toggle & multiple images
     Route::patch('/products/{product}/status',  [ProductController::class, 'toggleStatus']);
@@ -79,6 +96,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ── Promotions (Phase 6.1) ──────────────────────────────────────────
     Route::get('/promotions/my', [PromotionController::class, 'myPromotions']);
     Route::post('/promotions', [PromotionController::class, 'store']);
+    Route::post('/promotions/force-paid', [PromotionController::class, 'forcePaid']);
 
     // ── Reports ─────────────────────────────────────────────────────────
     Route::get('/reports',          [ReportController::class, 'index']);
@@ -87,18 +105,28 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/reports/{report}', [ReportController::class, 'update']);
 
     // ── Transactions (Phase 3 — PRD §2.1.4, §2.2.3) ────────────────────
-    Route::get('/transactions',                         [TransactionController::class, 'index']);
-    Route::post('/transactions',                        [TransactionController::class, 'store']);
-    Route::get('/transactions/{transaction}',           [TransactionController::class, 'show']);
-    Route::patch('/transactions/{transaction}/confirm', [TransactionController::class, 'confirm']);
-    Route::patch('/transactions/{transaction}/payment', [TransactionController::class, 'uploadPayment']);
-    Route::patch('/transactions/{transaction}/complete',[TransactionController::class, 'complete']);
-    Route::delete('/transactions/{transaction}/cancel', [TransactionController::class, 'cancel']);
+    Route::get('/transactions',                 [\App\Http\Controllers\Api\TransactionController::class, 'index']);
+    Route::get('/transactions/{transaction}',   [\App\Http\Controllers\Api\TransactionController::class, 'show']);
+    Route::post('/transactions',                [\App\Http\Controllers\Api\TransactionController::class, 'store']);
+    Route::patch('/transactions/{transaction}/confirm', [\App\Http\Controllers\Api\TransactionController::class, 'confirm']);
+    Route::patch('/transactions/{transaction}/payment', [\App\Http\Controllers\Api\TransactionController::class, 'uploadPayment']);
+    Route::patch('/transactions/{transaction}/complete', [\App\Http\Controllers\Api\TransactionController::class, 'complete']);
+    Route::delete('/transactions/{transaction}/cancel', [\App\Http\Controllers\Api\TransactionController::class, 'cancel']);
+
+    // ── Notifications ──────────────────────────────────────────────────
+    Route::get('/notifications',                [\App\Http\Controllers\Api\NotificationController::class, 'index']);
+    Route::patch('/notifications/read-all',     [\App\Http\Controllers\Api\NotificationController::class, 'markAllAsRead']);
+    Route::patch('/notifications/{id}/read',    [\App\Http\Controllers\Api\NotificationController::class, 'markAsRead']);
 
     // ── Admin Dashboard & Management ─────────────────────────────────────
     Route::get('/admin/stats',             [AdminDashboardController::class, 'stats']);
     Route::get('/admin/recent-activities', [AdminDashboardController::class, 'recentActivities']);
     Route::get('/admin/promotions',        [PromotionController::class, 'adminIndex']);
+
+    // Admin: Promotions Packages
+    Route::post('/admin/promotions/packages', [PromotionController::class, 'storePackage']);
+    Route::put('/admin/promotions/packages/{package}', [PromotionController::class, 'updatePackage']);
+    Route::delete('/admin/promotions/packages/{package}', [PromotionController::class, 'destroyPackage']);
 
     // Admin: Categories (Phase 5.2)
     Route::post('/admin/categories',       [CategoryController::class, 'store']);

@@ -14,13 +14,14 @@ class UserResource extends JsonResource
             'name'              => $this->name,
             'email'             => $this->email,
             'phone'             => $this->phone,
-            'avatar'            => $this->avatar,
+            'avatar'            => $this->avatar ? (str_starts_with($this->avatar, 'http') ? $this->avatar : \Illuminate\Support\Facades\Storage::url($this->avatar)) : null,
             'asal_kampus'       => $this->asal_kampus,
             'role'              => $this->role,
             'is_active'         => (bool) $this->is_active,
             'latitude'          => $this->latitude,
             'longitude'         => $this->longitude,
             'email_verified_at' => $this->email_verified_at,
+            'bank_accounts'     => $this->whenLoaded('bankAccounts'),
             'created_at'        => $this->created_at,
         ];
     }

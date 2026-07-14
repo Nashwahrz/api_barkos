@@ -105,7 +105,7 @@ class ProductController extends Controller
 
         // ── Fallback: no geo params → promoted first, then latest ─────────
         $products = $query
-            ->orderByDesc('is_promoted')
+            ->orderByRaw('CASE WHEN is_promoted = 1 AND (promoted_until IS NULL OR promoted_until > NOW()) THEN 1 ELSE 0 END DESC')
             ->latest()
             ->paginate(20);
 
@@ -145,7 +145,7 @@ class ProductController extends Controller
      */
     public function show(Product $product): ProductResource
     {
-        return new ProductResource($product->load(['user', 'category', 'images']));
+        return new ProductResource($product->load(['user.bankAccounts', 'category', 'images']));
     }
 
     /**
