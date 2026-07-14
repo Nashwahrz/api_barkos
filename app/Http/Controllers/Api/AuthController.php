@@ -20,21 +20,52 @@ class AuthController extends Controller
      */
     public function register(RegisterRequest $request): JsonResponse
     {
+        $documentPath = null;
+        
+        if ($request->hasFile('identity_document')) {
+            $file = $request->file('identity_document');
+            $documentPath = $file->store('identity_documents', 'public');
+            
+            // Verifikasi dokumen dengan OCR AI
+            $verificationService = new \App\Services\KtpVerificationService();
+            $absolutePath = storage_path('app/public/' . $documentPath);
+            
+            try {
+                $isValid = $verificationService->verify($absolutePath);
+                if (!$isValid) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($documentPath);
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Pendaftaran gagal: Gambar yang diunggah tidak terdeteksi sebagai KTP atau KTM yang sah. Pastikan tulisan terbaca dengan jelas.'
+                    ], 422);
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($documentPath);
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $e->getMessage()
+                ], 500);
+            }
+        }
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'asal_kampus' => $request->asal_kampus,
             'role' => $request->role ?? 'pembeli',
+            'identity_document_path' => $documentPath,
+            'is_identity_verified' => $documentPath ? true : false,
         ]);
 
         event(new Registered($user));
 
         $token = $user->createToken('auth_token')->plainTextToken;
+        $user->load('bankAccounts');
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Registrasi berhasil. Silakan cek email Anda untuk verifikasi.',
+            'message' => 'Registrasi berhasil. KTP/KTM Anda telah lolos verifikasi AI otomatis. Silakan cek email Anda untuk verifikasi.',
             'access_token' => $token,
             'token_type' => 'Bearer',
             'user' => new UserResource($user),
@@ -55,6 +86,7 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->firstOrFail();
         $token = $user->createToken('auth_token')->plainTextToken;
+        $user->load('bankAccounts');
 
         return response()->json([
             'status' => 'success',
@@ -83,7 +115,9 @@ class AuthController extends Controller
      */
     public function me(Request $request): UserResource
     {
-        return new UserResource($request->user());
+        $user = $request->user();
+        $user->load('bankAccounts');
+        return new UserResource($user);
     }
 
     /**
@@ -117,7 +151,7 @@ class AuthController extends Controller
             'name'        => 'sometimes|string|max:255',
             'phone'       => 'sometimes|nullable|string|max:20',
             'asal_kampus' => 'sometimes|nullable|string|max:255',
-            'avatar'      => 'sometimes|nullable|image|max:2048',
+            'avatar'      => 'sometimes|nullable|image|max:10240',
         ]);
 
         $user = $request->user();

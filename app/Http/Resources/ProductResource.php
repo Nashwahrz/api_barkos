@@ -17,6 +17,7 @@ class ProductResource extends JsonResource
             'harga'          => $this->harga,
             'foto'           => $this->foto ? Storage::url($this->foto) : null,
             'kondisi'        => $this->kondisi,
+            'durasi_pemakaian' => $this->durasi_pemakaian,
             'status_terjual' => (bool) $this->status_terjual,
             'is_promoted'    => (bool) $this->is_promoted,
             'promoted_until' => $this->promoted_until,

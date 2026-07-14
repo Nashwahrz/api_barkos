@@ -20,6 +20,7 @@ class RegisterRequest extends FormRequest
             'password' => ['required', 'confirmed', Password::defaults()],
             'asal_kampus' => ['required', 'string', 'max:255'],
             'role' => ['nullable', 'string', 'in:super_admin,pembeli,penjual'],
+            'identity_document' => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:5120'], // Max 5MB
         ];
     }
 }

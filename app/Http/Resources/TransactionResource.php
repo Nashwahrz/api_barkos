@@ -44,6 +44,7 @@ class TransactionResource extends JsonResource
                 'name'   => $this->seller->name,
                 'phone'  => $this->seller->phone,
                 'avatar' => $this->seller->avatar,
+                'bank_accounts' => $this->seller->bankAccounts ?? [],
             ]),
             'created_at'           => $this->created_at,
             'updated_at'           => $this->updated_at,
