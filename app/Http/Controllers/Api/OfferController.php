@@ -35,6 +35,13 @@ class OfferController extends Controller
             return response()->json(['message' => 'Produk ini sudah terjual.'], 422);
         }
 
+        // Validate minimum offer price
+        if ($product->minimum_offer_price !== null && $request->offered_price < $product->minimum_offer_price) {
+            return response()->json([
+                'message' => 'Penawaran Anda di bawah harga minimum yang ditetapkan penjual (Rp ' . number_format($product->minimum_offer_price, 0, ',', '.') . ').'
+            ], 422);
+        }
+
         // Prevent duplicate pending offers
         $existing = Offer::where('product_id', $product->id)
             ->where('buyer_id', $buyer->id)

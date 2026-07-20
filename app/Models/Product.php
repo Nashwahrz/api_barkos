@@ -22,6 +22,7 @@ class Product extends Model
         'status_terjual',
         'latitude',
         'longitude',
+        'minimum_offer_price',
         'is_promoted',
         'promoted_until',
     ];

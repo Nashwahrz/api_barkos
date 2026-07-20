@@ -133,7 +133,42 @@ class AuthController extends Controller
             ], 400);
         }
 
-        $user->update(['role' => 'penjual']);
+        $request->validate([
+            'identity_document' => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:5120']
+        ]);
+
+        $documentPath = null;
+        if ($request->hasFile('identity_document')) {
+            $file = $request->file('identity_document');
+            $documentPath = $file->store('identity_documents', 'public');
+            
+            // Verifikasi dokumen dengan OCR AI
+            $verificationService = new \App\Services\KtpVerificationService();
+            $absolutePath = storage_path('app/public/' . $documentPath);
+            
+            try {
+                $isValid = $verificationService->verify($absolutePath);
+                if (!$isValid) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($documentPath);
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Upgrade gagal: Gambar yang diunggah tidak terdeteksi sebagai KTP atau KTM yang sah. Pastikan tulisan terbaca dengan jelas.'
+                    ], 422);
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($documentPath);
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $e->getMessage()
+                ], 500);
+            }
+        }
+
+        $user->update([
+            'role' => 'penjual',
+            'identity_document_path' => $documentPath,
+            'is_identity_verified' => $documentPath ? true : false,
+        ]);
 
         return response()->json([
             'message' => 'Berhasil upgrade akun menjadi penjual lapak',

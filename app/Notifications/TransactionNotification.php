@@ -59,7 +59,7 @@ class TransactionNotification extends Notification implements ShouldQueue
             ->subject('Pemberitahuan Pesanan Lapak Kos: ' . $this->transaction->product->nama_barang)
             ->greeting('Halo ' . $notifiable->name . '!')
             ->line($this->message)
-            ->action('Lihat Detail', url('/')) // Assuming frontend is at root
+            ->action('Lihat Detail', env('FRONTEND_URL', 'http://localhost:3000') . '/seller/orders')
             ->line('Terima kasih telah menggunakan Lapak Kos!');
     }
 
