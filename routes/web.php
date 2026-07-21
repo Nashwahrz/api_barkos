@@ -6,4 +6,10 @@ Route::get('/', function () {
     return 'connection sucses';
 });
   
-Route::get('/storage/{path}', function () {  = storage_path('app/public/' . ); if (file_exists()) { return response()-; } abort(404); })-, '.*'); 
+Route::get('/storage/{path}', function ($path) {
+    $file = storage_path('app/public/' . $path);
+    if (file_exists($file)) {
+        return response()->file($file);
+    }
+    abort(404);
+})->where('path', '.*');
