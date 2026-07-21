@@ -195,20 +195,18 @@ class ChatbotController extends Controller
             
             // 1. Jika ada barang yang cocok dengan pencarian, tampilkan barangnya
             if (!$products->isEmpty()) {
-                return "*(Miu sedang mode offline karena server penuh)* 🙏\nNamun Miu menemukan barang yang kamu cari di database:\n\n" . $productListString;
+                return "*(Mode Offline Miu)* 🤖\nBerikut adalah daftar barang yang tersedia:\n\n" . $productListString;
             }
             
             // 2. Jika tidak ada barang, cek kata kunci panduan
             if (strpos($msg, 'beli') !== false || strpos($msg, 'pesan') !== false) {
-                return "Cara Membeli: Cari barang di halaman 'Beranda' atau 'Katalog', lalu klik 'Ajukan Penawaran' atau 'Chat Penjual'. (Pesan otomatis karena server sibuk 🙏)";
-            } elseif (strpos($msg, 'jual') !== false || strpos($msg, 'tambah barang') !== false) {
-                return "Cara Menjual: Daftar jadi penjual di menu Profil, lalu buka 'Lapak Saya' untuk tambah barang. (Pesan otomatis 🙏)";
+                return "*(Mode Offline Miu)* 🤖\nCara Membeli: Cari barang di halaman 'Beranda', lalu klik 'Ajukan Penawaran' atau 'Chat Penjual'.";
+            } elseif (strpos($msg, 'jual') !== false || strpos($msg, 'tambah') !== false) {
+                return "*(Mode Offline Miu)* 🤖\nCara Menjual: Daftar jadi penjual di menu Profil, lalu buka 'Lapak Saya' untuk tambah barang.";
             } elseif (strpos($msg, 'profil') !== false || strpos($msg, 'edit') !== false || strpos($msg, 'password') !== false) {
-                return "Cara Mengedit Profil: Buka menu 'Profil' (ikon user) untuk mengubah nama, foto, password, dan titik lokasi kos. (Pesan otomatis 🙏)";
-            } elseif (strpos($msg, 'menu') !== false || strpos($msg, 'navigasi') !== false) {
-                return "Info Menu: Ada menu Beranda, Katalog, Pesan, dan Profil. Untuk penjual ada menu tambahan di Dashboard. (Pesan otomatis 🙏)";
+                return "*(Mode Offline Miu)* 🤖\nCara Mengedit Profil: Buka menu 'Profil' untuk mengubah data.";
             } else {
-                return "Maaf ya, kuota token Miu sedang habis / server sedang sibuk melayani banyak pengguna. Mohon tunggu sebentar dan coba lagi nanti! 🙏";
+                return "*(Mode Offline Miu)* 🤖\nKoneksi ke server AI utama sedang terputus atau API Key tidak valid.\n\nSaat ini belum ada produk di Lapak Kos. Kamu bisa mencoba fitur lain seperti 'Mulai Jual' untuk menambahkan barang pertamamu!";
             }
         };
         
