@@ -16,7 +16,7 @@ class ProductResource extends JsonResource
             'deskripsi'      => $this->deskripsi,
             'harga'          => $this->harga,
             'minimum_offer_price' => $this->minimum_offer_price,
-            'foto'           => $this->foto ? Storage::url($this->foto) : null,
+            'foto'           => $this->foto ? '/api/storage/' . $this->foto : null,
             'kondisi'        => $this->kondisi,
             'durasi_pemakaian' => $this->durasi_pemakaian,
             'status_terjual' => (bool) $this->status_terjual,
@@ -30,7 +30,7 @@ class ProductResource extends JsonResource
             'images'         => $this->whenLoaded('images', fn() =>
                 $this->images->map(fn($img) => [
                     'id'         => $img->id,
-                    'image_path' => Storage::url($img->image_path),
+                    'image_path' => '/api/storage/' . $img->image_path,
                     'is_primary' => (bool) $img->is_primary,
                 ])
             ),

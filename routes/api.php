@@ -23,6 +23,14 @@ use Illuminate\Support\Facades\Route;
 */
 
 // ── Public Routes ─────────────────────────────────────────────────────────
+Route::get('/storage/products/{filename}', function ($filename) {
+    $file = storage_path('app/public/products/' . $filename);
+    if (file_exists($file)) {
+        return response()->file($file);
+    }
+    abort(404);
+});
+
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login',    [AuthController::class, 'login']);
 Route::post('/chatbot',  [\App\Http\Controllers\Api\ChatbotController::class, 'chat']);
