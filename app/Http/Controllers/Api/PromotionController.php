@@ -36,10 +36,15 @@ class PromotionController extends Controller
             ->take(10)
             ->get()
             ->map(function ($promo) {
+                $mediaUrl = $promo->ad_media_url;
+                if ($mediaUrl && str_starts_with($mediaUrl, '/storage/')) {
+                    $mediaUrl = '/api' . $mediaUrl;
+                }
+
                 return [
                     'id'           => $promo->id,
                     'ad_type'      => $promo->ad_type,
-                    'ad_media_url' => $promo->ad_media_url,
+                    'ad_media_url' => $mediaUrl,
                     'ad_title'     => $promo->ad_title,
                     'product_id'   => $promo->product_id,
                     'product_name' => $promo->product?->nama_barang,
@@ -83,7 +88,7 @@ class PromotionController extends Controller
         $adMediaUrl = $request->ad_media_url;
         if ($request->hasFile('ad_media_file')) {
             $path = $request->file('ad_media_file')->store('promotions', 'public');
-            $adMediaUrl = Storage::url($path);
+            $adMediaUrl = '/api/storage/' . $path;
         }
 
         // Setup Midtrans Config
@@ -148,7 +153,13 @@ class PromotionController extends Controller
                 $query->where('user_id', $request->user()->id);
             })
             ->latest()
-            ->get();
+            ->get()
+            ->map(function ($promo) {
+                if ($promo->ad_media_url && str_starts_with($promo->ad_media_url, '/storage/')) {
+                    $promo->ad_media_url = '/api' . $promo->ad_media_url;
+                }
+                return $promo;
+            });
 
         return response()->json(['data' => $promotions]);
     }
@@ -162,7 +173,12 @@ class PromotionController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $promotions = Promotion::with(['product', 'package'])->latest()->get();
+        $promotions = Promotion::with(['product', 'package'])->latest()->get()->map(function ($promo) {
+            if ($promo->ad_media_url && str_starts_with($promo->ad_media_url, '/storage/')) {
+                $promo->ad_media_url = '/api' . $promo->ad_media_url;
+            }
+            return $promo;
+        });
         return response()->json(['data' => $promotions]);
     }
 

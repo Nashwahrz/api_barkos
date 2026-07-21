@@ -23,13 +23,13 @@ use Illuminate\Support\Facades\Route;
 */
 
 // ── Public Routes ─────────────────────────────────────────────────────────
-Route::get('/storage/products/{filename}', function ($filename) {
-    $file = storage_path('app/public/products/' . $filename);
+Route::get('/storage/{path}', function ($path) {
+    $file = storage_path('app/public/' . $path);
     if (file_exists($file)) {
         return response()->file($file);
     }
     abort(404);
-});
+})->where('path', '.*');
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login',    [AuthController::class, 'login']);
