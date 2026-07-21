@@ -1,6 +1,0 @@
-php_value upload_max_filesize 600M
-php_value post_max_size 600M
-# For Apache, limit request body size
-<IfModule mod_security2.c>
-    SecRequestBodyLimit 629145600
-</IfModule>
