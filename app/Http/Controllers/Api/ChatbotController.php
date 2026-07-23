@@ -170,9 +170,10 @@ class ChatbotController extends Controller
             $cleanMsg = strtolower(preg_replace('/[^a-zA-Z0-9\s]/', '', $msg));
             
             // 1. Cek intent FAQ (Cara membeli, menjual, edit profil)
-            $isBeli   = preg_match('/\b(beli|pesan|order|bayar|check out|checkout|belanja)\b/', $cleanMsg);
-            $isJual   = preg_match('/\b(jual|jualan|dagang|tambah|posting|pasang|lapak)\b/', $cleanMsg);
-            $isProfil = preg_match('/\b(profil|edit|ubah|ganti|password|sandi|akun|lokasi|pin)\b/', $cleanMsg);
+            // Hilangkan \b agar menangkap imbuhan seperti 'menjual', 'membeli', 'mengedit'
+            $isBeli   = preg_match('/(beli|pesan|order|bayar|check out|checkout|belanja)/', $cleanMsg);
+            $isJual   = preg_match('/(jual|dagang|tambah|posting|pasang|lapak)/', $cleanMsg);
+            $isProfil = preg_match('/(profil|edit|ubah|ganti|password|sandi|akun|lokasi|pin)/', $cleanMsg);
             
             if ($isBeli) {
                 return "*(Mode Offline Miu)* 🤖\n**Cara Membeli Barang:**\n1. Cari barang di 'Beranda' atau 'Katalog'.\n2. Klik barang yang diminati.\n3. Pilih 'Ajukan Penawaran' untuk nego, atau 'Chat Penjual' untuk bertanya.\n4. Jika deal, selesaikan transaksi.";
