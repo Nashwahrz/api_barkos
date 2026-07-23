@@ -167,35 +167,45 @@ class ChatbotController extends Controller
             . "DATA BARANG LAPAK KOS (HANYA GUNAKAN DATA INI UNTUK MENJAWAB PERTANYAAN TENTANG BARANG):\n"
             . "{$productListString}";
 
-        // Fungsi fallback jika API Gemini limit, error, atau key salah
-        $fallbackResponse = function($msg) use ($products, $productListString) {
+        $fallbackResponse = function($msg) use ($products, $productListString, $keywords) {
             // Bersihkan tanda baca untuk pengecekan kata
             $cleanMsg = strtolower(preg_replace('/[^a-zA-Z0-9\s]/', '', $msg));
             
-            // 1. Cek intent FAQ (HANYA JIKA ada kata tanya panduan)
+            // 1. Cek intent Sapaan / Greeting
+            $isGreeting = preg_match('/^(halo|hai|pagi|siang|sore|malam|ping|test|tes|woy|hy)$/i', trim($cleanMsg));
+            if ($isGreeting) {
+                $response = "*(Mode Offline)* 🤖\nHalo! Saat ini koneksi Miu ke server AI sedang terputus. Tapi tenang, kamu tetap bisa mencari barang atau bertanya panduan Lapak Kos di sini!\n";
+                if (!$products->isEmpty()) {
+                    $response .= "\nBerikut beberapa contoh barang terbaru:\n" . $productListString;
+                }
+                return $response;
+            }
+
+            // 2. Cek intent FAQ (HANYA JIKA ada kata tanya panduan)
             $isFaq = preg_match('/(cara|bagaimana|gimana|panduan|tutorial|langkah)/', $cleanMsg);
             
             $isBeli   = $isFaq && preg_match('/(beli|pesan|order|bayar|check out|checkout|belanja)/', $cleanMsg);
             $isJual   = $isFaq && preg_match('/(jual|dagang|tambah|posting|pasang|lapak)/', $cleanMsg);
             $isProfil = $isFaq && preg_match('/(profil|edit|ubah|ganti|password|sandi|akun|lokasi|pin)/', $cleanMsg);
             
-            if ($isBeli) {
-                return "*(Mode Offline Miu)* 🤖\n**Cara Membeli Barang:**\n1. Cari barang di 'Beranda' atau 'Katalog'.\n2. Klik barang yang diminati.\n3. Pilih 'Ajukan Penawaran' untuk nego, atau 'Chat Penjual' untuk bertanya.\n4. Jika deal, selesaikan transaksi.";
-            }
-            if ($isJual) {
-                return "*(Mode Offline Miu)* 🤖\n**Cara Menjual Barang:**\n1. Tekan tombol 'Mulai Jual' di halaman utama/profil.\n2. Masuk ke Dashboard Penjual -> 'Lapak Saya'.\n3. Tambah produk beserta foto dan detailnya.\n4. Tunggu pembeli menghubungi kamu!";
-            }
-            if ($isProfil) {
-                return "*(Mode Offline Miu)* 🤖\n**Cara Mengedit Profil:**\nBuka menu 'Profil' di pojok kanan atas. Di sana kamu bisa mengubah Nama, Foto, Password, dan menentukan titik lokasi kosmu (Pin Lokasi) agar lebih akurat.";
-            }
+            if ($isBeli) return "*(Mode Offline)* 🤖\n**Cara Membeli Barang:**\n1. Cari barang di 'Beranda' atau 'Katalog'.\n2. Klik barang yang diminati.\n3. Pilih 'Ajukan Penawaran' untuk nego, atau 'Chat Penjual'.\n4. Jika deal, selesaikan transaksi.";
+            if ($isJual) return "*(Mode Offline)* 🤖\n**Cara Menjual Barang:**\n1. Tekan tombol 'Mulai Jual'.\n2. Masuk ke Dashboard Penjual -> 'Lapak Saya'.\n3. Tambah produk beserta foto.\n4. Tunggu pembeli menghubungi kamu!";
+            if ($isProfil) return "*(Mode Offline)* 🤖\n**Cara Mengedit Profil:**\nBuka menu 'Profil' di pojok kanan atas. Di sana kamu bisa mengubah Nama, Foto, Password, dan titik lokasi kosmu (Pin Lokasi).";
             
-            // 2. Jika bukan pertanyaan FAQ, tampilkan produk hasil pencarian
+            // 3. Cek intent List Semua Barang
+            $isListAll = preg_match('/(semua|seluruh|daftar|list|katalog).* (barang|produk|item)|(barang|produk) (apa saja|yg ada|yang ada)/', $cleanMsg);
+            
+            if ($isListAll || (empty($keywords) && !$products->isEmpty())) {
+                return "*(Mode Offline)* 🤖\nTentu! Berikut adalah daftar barang yang tersedia di Lapak Kos saat ini:\n\n" . $productListString;
+            }
+
+            // 4. Jika mencari barang spesifik dan ketemu
             if (!$products->isEmpty()) {
-                return "*(Mode Offline)* 🤖\nBerikut hasil pencariannya:\n\n" . $productListString;
+                return "*(Mode Offline)* 🤖\nBerikut hasil pencarian barang yang paling relevan dengan permintaanmu:\n\n" . $productListString;
             }
             
-            // 3. Fallback terakhir jika tidak ada barang dan bukan FAQ
-            return "*(Mode Offline)* 🤖\nMaaf, barang yang kamu cari belum ada di Lapak Kos saat ini.";
+            // 5. Fallback terakhir jika tidak ada barang dan bukan FAQ
+            return "*(Mode Offline)* 🤖\nMaaf, sepertinya Miu belum bisa menemukan barang atau informasi yang kamu cari saat ini.";
         };
 
         $apiKey = config('services.gemini.key');
