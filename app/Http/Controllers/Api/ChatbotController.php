@@ -164,21 +164,33 @@ class ChatbotController extends Controller
             . "DATA BARANG LAPAK KOS (HANYA GUNAKAN DATA INI UNTUK MENJAWAB PERTANYAAN TENTANG BARANG):\n"
             . "{$productListString}";
 
-        // Fungsi fallback sederhana jika API Gemini limit / error
+        // Fungsi fallback jika API Gemini limit, error, atau key salah
         $fallbackResponse = function($msg) use ($products, $productListString) {
-            $msg = strtolower($msg);
+            // Bersihkan tanda baca untuk pengecekan kata
+            $cleanMsg = strtolower(preg_replace('/[^a-zA-Z0-9\s]/', '', $msg));
+            
+            // 1. Cek intent FAQ (Cara membeli, menjual, edit profil)
+            $isBeli   = preg_match('/\b(beli|pesan|order|bayar|check out|checkout|belanja)\b/', $cleanMsg);
+            $isJual   = preg_match('/\b(jual|jualan|dagang|tambah|posting|pasang|lapak)\b/', $cleanMsg);
+            $isProfil = preg_match('/\b(profil|edit|ubah|ganti|password|sandi|akun|lokasi|pin)\b/', $cleanMsg);
+            
+            if ($isBeli) {
+                return "*(Mode Offline Miu)* 🤖\n**Cara Membeli Barang:**\n1. Cari barang di 'Beranda' atau 'Katalog'.\n2. Klik barang yang diminati.\n3. Pilih 'Ajukan Penawaran' untuk nego, atau 'Chat Penjual' untuk bertanya.\n4. Jika deal, selesaikan transaksi.";
+            }
+            if ($isJual) {
+                return "*(Mode Offline Miu)* 🤖\n**Cara Menjual Barang:**\n1. Tekan tombol 'Mulai Jual' di halaman utama/profil.\n2. Masuk ke Dashboard Penjual -> 'Lapak Saya'.\n3. Tambah produk beserta foto dan detailnya.\n4. Tunggu pembeli menghubungi kamu!";
+            }
+            if ($isProfil) {
+                return "*(Mode Offline Miu)* 🤖\n**Cara Mengedit Profil:**\nBuka menu 'Profil' di pojok kanan atas. Di sana kamu bisa mengubah Nama, Foto, Password, dan menentukan titik lokasi kosmu (Pin Lokasi) agar lebih akurat.";
+            }
+            
+            // 2. Jika bukan pertanyaan FAQ, tampilkan produk hasil pencarian
             if (!$products->isEmpty()) {
-                return "*(Mode Offline Miu)* 🤖\nBerikut adalah daftar barang yang tersedia:\n\n" . $productListString;
+                return "*(Mode Offline Miu)* 🤖\nKoneksi ke server AI utama terputus, tapi ini hasil pencarian barang yang relevan:\n\n" . $productListString;
             }
-            if (strpos($msg, 'beli') !== false || strpos($msg, 'pesan') !== false) {
-                return "*(Mode Offline Miu)* 🤖\nCara Membeli: Cari barang di halaman 'Beranda', lalu klik 'Ajukan Penawaran' atau 'Chat Penjual'.";
-            } elseif (strpos($msg, 'jual') !== false || strpos($msg, 'tambah') !== false) {
-                return "*(Mode Offline Miu)* 🤖\nCara Menjual: Daftar jadi penjual di menu Profil, lalu buka 'Lapak Saya' untuk tambah barang.";
-            } elseif (strpos($msg, 'profil') !== false || strpos($msg, 'edit') !== false || strpos($msg, 'password') !== false) {
-                return "*(Mode Offline Miu)* 🤖\nCara Mengedit Profil: Buka menu 'Profil' untuk mengubah data.";
-            } else {
-                return "*(Mode Offline Miu)* 🤖\nKoneksi ke server AI utama sedang terputus atau API Key tidak valid.\n\nSaat ini belum ada produk di Lapak Kos. Kamu bisa mencoba fitur lain seperti 'Mulai Jual' untuk menambahkan barang pertamamu!";
-            }
+            
+            // 3. Fallback terakhir jika tidak ada barang dan bukan FAQ
+            return "*(Mode Offline Miu)* 🤖\nKoneksi ke AI utama terputus, dan barang yang kamu cari tidak ditemukan di database Lapak Kos saat ini.";
         };
 
         $apiKey = config('services.gemini.key');
