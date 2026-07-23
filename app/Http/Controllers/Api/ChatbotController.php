@@ -121,17 +121,23 @@ class ChatbotController extends Controller
                 $price = number_format($p->harga, 0, ',', '.');
                 $url = "/products/{$p->id}";
                 
+                $namaBarang = mb_convert_encoding($p->nama_barang, 'UTF-8', 'UTF-8');
+                $kondisi = mb_convert_encoding($p->kondisi, 'UTF-8', 'UTF-8');
+                $kategori = mb_convert_encoding($p->category?->name ?? '', 'UTF-8', 'UTF-8');
+                
                 $desc = substr(trim(preg_replace('/\s+/', ' ', $p->deskripsi ?? '')), 0, 150);
-                $productListString .= "- [{$p->nama_barang}]({$url}) (Kondisi: {$p->kondisi}{$jarakText}) - Rp {$price}\n";
+                $desc = mb_convert_encoding($desc, 'UTF-8', 'UTF-8');
+
+                $productListString .= "- [{$namaBarang}]({$url}) (Kondisi: {$kondisi}{$jarakText}) - Rp {$price}\n";
                 $productListString .= "  Detail: {$desc}...\n";
                 
                 $productList[] = [
                     'id'       => $p->id,
-                    'name'     => $p->nama_barang,
+                    'name'     => $namaBarang,
                     'price'    => (int) ($p->harga ?? 0),
-                    'kondisi'  => $p->kondisi,
+                    'kondisi'  => $kondisi,
                     'desc'     => $desc,
-                    'category' => $p->category?->name ?? '',
+                    'category' => $kategori,
                     'distance' => $distance,
                     'url'      => $url,
                 ];
@@ -244,7 +250,7 @@ class ChatbotController extends Controller
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('ChatbotController error: ' . $e->getMessage());
             return response()->json([
-                'text'        => 'DEBUG ERROR: ' . $e->getMessage() . ' di baris ' . $e->getLine(),
+                'text'        => 'Maaf, Miu sedang gangguan teknis. Coba lagi beberapa saat ya! 🙏',
                 'products'    => [],
                 'hasLocation' => false,
             ]);
