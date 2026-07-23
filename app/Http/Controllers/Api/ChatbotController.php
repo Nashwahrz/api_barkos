@@ -10,6 +10,7 @@ class ChatbotController extends Controller
 {
     public function chat(Request $request)
     {
+        try {
         $request->validate([
             'message' => 'required|string',
         ]);
@@ -237,5 +238,16 @@ class ChatbotController extends Controller
             'products'    => $productList,
             'hasLocation' => $hasLocation,
         ]);
+
+        } catch (\Illuminate\Validation\ValidationException $ve) {
+            throw $ve; // biarkan Laravel handle validasi error (422)
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('ChatbotController error: ' . $e->getMessage());
+            return response()->json([
+                'text'        => 'Maaf, Miu sedang gangguan teknis. Coba lagi beberapa saat ya! 🙏',
+                'products'    => [],
+                'hasLocation' => false,
+            ]);
+        }
     }
 }
