@@ -157,6 +157,23 @@ class ChatbotController extends Controller
             . "DATA BARANG LAPAK KOS (HANYA GUNAKAN DATA INI UNTUK MENJAWAB PERTANYAAN TENTANG BARANG):\n"
             . "{$productListString}";
 
+        // Fungsi fallback sederhana jika API Gemini limit / error
+        $fallbackResponse = function($msg) use ($products, $productListString) {
+            $msg = strtolower($msg);
+            if (!$products->isEmpty()) {
+                return "*(Mode Offline Miu)* 🤖\nBerikut adalah daftar barang yang tersedia:\n\n" . $productListString;
+            }
+            if (strpos($msg, 'beli') !== false || strpos($msg, 'pesan') !== false) {
+                return "*(Mode Offline Miu)* 🤖\nCara Membeli: Cari barang di halaman 'Beranda', lalu klik 'Ajukan Penawaran' atau 'Chat Penjual'.";
+            } elseif (strpos($msg, 'jual') !== false || strpos($msg, 'tambah') !== false) {
+                return "*(Mode Offline Miu)* 🤖\nCara Menjual: Daftar jadi penjual di menu Profil, lalu buka 'Lapak Saya' untuk tambah barang.";
+            } elseif (strpos($msg, 'profil') !== false || strpos($msg, 'edit') !== false || strpos($msg, 'password') !== false) {
+                return "*(Mode Offline Miu)* 🤖\nCara Mengedit Profil: Buka menu 'Profil' untuk mengubah data.";
+            } else {
+                return "*(Mode Offline Miu)* 🤖\nKoneksi ke server AI utama sedang terputus atau API Key tidak valid.\n\nSaat ini belum ada produk di Lapak Kos. Kamu bisa mencoba fitur lain seperti 'Mulai Jual' untuk menambahkan barang pertamamu!";
+            }
+        };
+
         $apiKey = config('services.gemini.key');
         if (empty($apiKey)) {
             return response()->json([
@@ -196,27 +213,6 @@ class ChatbotController extends Controller
         
         $aiText = "Maaf, Miu tidak mendapat jawaban dari server. Coba lagi ya! 🙏";
         
-        // Fungsi fallback sederhana jika API Gemini limit / error
-        $fallbackResponse = function($msg) use ($products, $productListString) {
-            $msg = strtolower($msg);
-            
-            // 1. Jika ada barang yang cocok dengan pencarian, tampilkan barangnya
-            if (!$products->isEmpty()) {
-                return "*(Mode Offline Miu)* 🤖\nBerikut adalah daftar barang yang tersedia:\n\n" . $productListString;
-            }
-            
-            // 2. Jika tidak ada barang, cek kata kunci panduan
-            if (strpos($msg, 'beli') !== false || strpos($msg, 'pesan') !== false) {
-                return "*(Mode Offline Miu)* 🤖\nCara Membeli: Cari barang di halaman 'Beranda', lalu klik 'Ajukan Penawaran' atau 'Chat Penjual'.";
-            } elseif (strpos($msg, 'jual') !== false || strpos($msg, 'tambah') !== false) {
-                return "*(Mode Offline Miu)* 🤖\nCara Menjual: Daftar jadi penjual di menu Profil, lalu buka 'Lapak Saya' untuk tambah barang.";
-            } elseif (strpos($msg, 'profil') !== false || strpos($msg, 'edit') !== false || strpos($msg, 'password') !== false) {
-                return "*(Mode Offline Miu)* 🤖\nCara Mengedit Profil: Buka menu 'Profil' untuk mengubah data.";
-            } else {
-                return "*(Mode Offline Miu)* 🤖\nKoneksi ke server AI utama sedang terputus atau API Key tidak valid.\n\nSaat ini belum ada produk di Lapak Kos. Kamu bisa mencoba fitur lain seperti 'Mulai Jual' untuk menambahkan barang pertamamu!";
-            }
-        };
-        
         try {
             $response = Http::timeout(15)->post($geminiUrl, [
                 'systemInstruction' => ['parts' => [['text' => $systemPrompt]]],
@@ -229,11 +225,8 @@ class ChatbotController extends Controller
                     $aiText = $data['candidates'][0]['content']['parts'][0]['text'];
                 }
             } else {
-                if ($response->status() === 429 || $response->serverError()) {
-                    $aiText = $fallbackResponse($userMessage);
-                } else {
-                    $aiText = "⚠️ Error: Gagal memanggil Gemini API (Status: " . $response->status() . ")";
-                }
+                // Fallback untuk semua error Gemini (400, 401, dll)
+                $aiText = $fallbackResponse($userMessage);
             }
         } catch (\Exception $e) {
             $aiText = $fallbackResponse($userMessage);
