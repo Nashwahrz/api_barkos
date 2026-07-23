@@ -244,7 +244,7 @@ class ChatbotController extends Controller
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('ChatbotController error: ' . $e->getMessage());
             return response()->json([
-                'text'        => 'Maaf, Miu sedang gangguan teknis. Coba lagi beberapa saat ya! 🙏',
+                'text'        => 'DEBUG ERROR: ' . $e->getMessage() . ' di baris ' . $e->getLine(),
                 'products'    => [],
                 'hasLocation' => false,
             ]);
