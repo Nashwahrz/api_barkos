@@ -41,6 +41,7 @@ class ChatbotController extends Controller
             'min', 'gan', 'kak', 'bang', 'mas', 'mbak', 'sis', 'bro', 'pak', 'buk', 'sekarang',
             'bisa', 'gak', 'enggak', 'tidak', 'lagi', 'sih', 'kok', 'ya', 'aja', 'saja', 'nya',
             'kalo', 'kalau', 'belum', 'apa', 'semua', 'daftar', 'list', 'tampilkan', 'produk', 'kamu',
+            'barang', 'barangnya',
         ];
 
         $words    = explode(' ', strtolower(preg_replace('/[^a-zA-Z0-9\s]/', '', $allUserText)));
@@ -57,16 +58,18 @@ class ChatbotController extends Controller
         if (!empty($keywords)) {
             $filtered = (clone $baseQuery)->where(function ($q) use ($keywords) {
                 foreach ($keywords as $word) {
-                    $q->orWhere('nama_barang', 'like', "%{$word}%")
-                      ->orWhere('deskripsi',   'like', "%{$word}%")
-                      ->orWhereHas('category', function ($cq) use ($word) {
-                          $cq->where('name', 'like', "%{$word}%");
-                      });
+                    $q->where(function ($subQ) use ($word) {
+                        $subQ->where('nama_barang', 'like', "%{$word}%")
+                             ->orWhere('deskripsi',   'like', "%{$word}%")
+                             ->orWhereHas('category', function ($cq) use ($word) {
+                                 $cq->where('name', 'like', "%{$word}%");
+                             });
+                    });
                 }
             })->with('category')->latest()->limit(15)->get();
 
-            // Fallback: jika keyword tidak menemukan hasil, tampilkan semua produk
-            $products = $filtered->isNotEmpty() ? $filtered : $baseQuery->with('category')->latest()->limit(15)->get();
+            // Jika ada keyword, biarkan kosong jika tidak ketemu (jangan tampilkan semua)
+            $products = $filtered;
         } else {
             // Keywords kosong (salam/pertanyaan umum), tampilkan semua produk
             $products = $baseQuery->with('category')->latest()->limit(15)->get();
