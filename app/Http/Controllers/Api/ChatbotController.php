@@ -183,7 +183,7 @@ class ChatbotController extends Controller
                 'hasLocation' => $hasLocation,
             ]);
         }
-        $geminiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={$apiKey}";
+        $geminiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}";
         
         $contents = [];
         if (is_array($history)) {
