@@ -120,14 +120,14 @@ class ChatbotController extends Controller
                 $price = number_format($p->harga, 0, ',', '.');
                 $url = "/products/{$p->id}";
                 
-                $desc = substr(trim(preg_replace('/\s+/', ' ', $p->deskripsi)), 0, 150);
+                $desc = substr(trim(preg_replace('/\s+/', ' ', $p->deskripsi ?? '')), 0, 150);
                 $productListString .= "- [{$p->nama_barang}]({$url}) (Kondisi: {$p->kondisi}{$jarakText}) - Rp {$price}\n";
                 $productListString .= "  Detail: {$desc}...\n";
                 
                 $productList[] = [
                     'id'       => $p->id,
                     'name'     => $p->nama_barang,
-                    'price'    => (int) $p->harga,
+                    'price'    => (int) ($p->harga ?? 0),
                     'kondisi'  => $p->kondisi,
                     'desc'     => $desc,
                     'category' => $p->category?->name ?? '',
@@ -157,8 +157,15 @@ class ChatbotController extends Controller
             . "DATA BARANG LAPAK KOS (HANYA GUNAKAN DATA INI UNTUK MENJAWAB PERTANYAAN TENTANG BARANG):\n"
             . "{$productListString}";
 
-        $apiKey = env('GEMINI_API_KEY');
-        $geminiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={$apiKey}";
+        $apiKey = config('services.gemini.key');
+        if (empty($apiKey)) {
+            return response()->json([
+                'text'        => $fallbackResponse($userMessage),
+                'products'    => $productList,
+                'hasLocation' => $hasLocation,
+            ]);
+        }
+        $geminiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={$apiKey}";
         
         $contents = [];
         if (is_array($history)) {
