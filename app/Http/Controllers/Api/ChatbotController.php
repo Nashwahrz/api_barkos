@@ -41,7 +41,8 @@ class ChatbotController extends Controller
             'min', 'gan', 'kak', 'bang', 'mas', 'mbak', 'sis', 'bro', 'pak', 'buk', 'sekarang',
             'bisa', 'gak', 'enggak', 'tidak', 'lagi', 'sih', 'kok', 'ya', 'aja', 'saja', 'nya',
             'kalo', 'kalau', 'belum', 'apa', 'semua', 'daftar', 'list', 'tampilkan', 'produk', 'kamu',
-            'barang', 'barangnya',
+            'barang', 'barangnya', 'dengan', 'jarak', 'dekat', 'jauh', 'lokasi', 'posisi', 'paling', 
+            'terdekat', 'sekitar', 'mana', 'dimana'
         ];
 
         $words    = explode(' ', strtolower(preg_replace('/[^a-zA-Z0-9\s]/', '', $allUserText)));
