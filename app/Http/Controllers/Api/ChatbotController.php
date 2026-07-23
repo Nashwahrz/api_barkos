@@ -117,7 +117,7 @@ class ChatbotController extends Controller
         if ($products->isEmpty()) {
             $productListString = "Saat ini tidak ada barang yang sesuai dengan pencarian di database Lapak Kos.";
         } else {
-            $productListString = "Daftar barang yang relevan saat ini di database Lapak Kos:\n";
+            $productListString = "";
             foreach ($products as $p) {
                 $distance = $osrmDistances[$p->id] ?? null;
                 $jarakText = $distance !== null ? ", Jarak: {$distance} km" : "";
@@ -191,11 +191,11 @@ class ChatbotController extends Controller
             
             // 2. Jika bukan pertanyaan FAQ, tampilkan produk hasil pencarian
             if (!$products->isEmpty()) {
-                return "*(Mode Offline Miu)* 🤖\nKoneksi ke server AI utama terputus, tapi ini hasil pencarian barang yang relevan:\n\n" . $productListString;
+                return "*(Mode Offline)* 🤖\nBerikut hasil pencariannya:\n\n" . $productListString;
             }
             
             // 3. Fallback terakhir jika tidak ada barang dan bukan FAQ
-            return "*(Mode Offline Miu)* 🤖\nKoneksi ke AI utama terputus, dan barang yang kamu cari tidak ditemukan di database Lapak Kos saat ini.";
+            return "*(Mode Offline)* 🤖\nMaaf, barang yang kamu cari belum ada di Lapak Kos saat ini.";
         };
 
         $apiKey = config('services.gemini.key');
