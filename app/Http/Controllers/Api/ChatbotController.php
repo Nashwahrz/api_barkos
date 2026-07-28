@@ -170,7 +170,7 @@ class ChatbotController extends Controller
 
         $suggestions = null;
 
-        $fallbackResponse = function($msg) use ($products, $productListString, $keywords, &$suggestions, $osrmDistances) {
+        $fallbackResponse = function($msg) use ($products, $productListString, $keywords, &$suggestions, $osrmDistances, $hasLocation) {
             // Bersihkan tanda baca untuk pengecekan kata
             $cleanMsg = strtolower(preg_replace('/[^a-zA-Z0-9\s]/', '', $msg));
             
@@ -179,6 +179,39 @@ class ChatbotController extends Controller
             if ($isGreeting) {
                 $suggestions = ['List barang terbaru', 'Barang terdekat dari sini', 'Semua list barang'];
                 return "*(Mode Offline)* 🤖\nHalo! Saat ini koneksi Miu ke server AI sedang terputus. Tapi tenang, kamu tetap bisa mencari barang atau bertanya panduan Lapak Kos di sini!";
+            }
+
+            // 1.5 Cek intent Barang Terdekat
+            $isTerdekat = preg_match('/(dekat|terdekat|jarak)/', $cleanMsg);
+            if ($isTerdekat) {
+                if (!$hasLocation) {
+                    return "*(Mode Offline)* 🤖\nMiu butuh tau lokasi kamu nih! Coba klik tombol 📍 (Pin Lokasi) di sebelah kotak ketik chat ya, biar Miu bisa menghitung jarak barang terdekat.";
+                }
+
+                if (empty($osrmDistances)) {
+                    return "*(Mode Offline)* 🤖\nMaaf, Miu gagal menghitung jarak. Mungkin server peta sedang sibuk atau barang-barang ini belum diatur lokasinya.";
+                }
+
+                $nearestProducts = $products->filter(function($p) use ($osrmDistances) {
+                    return isset($osrmDistances[$p->id]);
+                })->sortBy(function($p) use ($osrmDistances) {
+                    return $osrmDistances[$p->id];
+                })->take(5);
+
+                if ($nearestProducts->isEmpty()) {
+                    return "*(Mode Offline)* 🤖\nBelum ada barang di sekitar yang bisa dihitung jaraknya.";
+                }
+                
+                $str = "";
+                foreach ($nearestProducts as $p) {
+                    $distance = $osrmDistances[$p->id];
+                    $price = number_format($p->harga, 0, ',', '.');
+                    $url = "/products/{$p->id}";
+                    $namaBarang = mb_convert_encoding($p->nama_barang, 'UTF-8', 'UTF-8');
+                    $kondisi = mb_convert_encoding($p->kondisi, 'UTF-8', 'UTF-8');
+                    $str .= "- [{$namaBarang}]({$url}) (Kondisi: {$kondisi}, Jarak: {$distance} km) - Rp {$price}\n";
+                }
+                return "*(Mode Offline)* 🤖\nBerikut 5 barang terdekat dari lokasimu:\n\n" . $str;
             }
 
             // 2. Cek intent List Barang Terbaru (5 hari terakhir)
