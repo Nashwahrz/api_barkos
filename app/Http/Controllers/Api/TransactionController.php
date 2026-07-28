@@ -153,6 +153,41 @@ class TransactionController extends Controller
     }
 
     // ─────────────────────────────────────────────────────────────────────
+    // PATCH /api/transactions/{id}/payment-method
+    // Buyer changes the payment method
+    // ─────────────────────────────────────────────────────────────────────
+    public function updatePaymentMethod(Request $request, Transaction $transaction): JsonResponse
+    {
+        $request->validate([
+            'payment_method' => 'required|in:cod,bank_transfer',
+        ], [
+            'payment_method.required' => 'Metode pembayaran harus dipilih.',
+            'payment_method.in'       => 'Metode pembayaran harus COD atau transfer bank.',
+        ]);
+
+        if ($transaction->buyer_id !== Auth::id()) {
+            return response()->json(['message' => 'Hanya pembeli yang bisa mengubah metode pembayaran.'], 403);
+        }
+
+        if (in_array($transaction->status, ['completed', 'cancelled'])) {
+            return response()->json(['message' => 'Tidak dapat mengubah metode pembayaran pada pesanan ini.'], 422);
+        }
+
+        if ($transaction->has_payment_proof) {
+            return response()->json(['message' => 'Tidak dapat mengubah metode pembayaran karena bukti pembayaran sudah diunggah.'], 422);
+        }
+
+        $transaction->update([
+            'payment_method' => $request->payment_method
+        ]);
+
+        return response()->json([
+            'message' => 'Metode pembayaran berhasil diubah.',
+            'data'    => new TransactionResource($transaction->load(['product', 'buyer', 'seller'])),
+        ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
     // PATCH /api/transactions/{id}/confirm
     // Seller confirms or rejects the order
     // ─────────────────────────────────────────────────────────────────────

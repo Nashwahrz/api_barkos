@@ -117,6 +117,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/transactions/{transaction}',   [\App\Http\Controllers\Api\TransactionController::class, 'show']);
     Route::post('/transactions',                [\App\Http\Controllers\Api\TransactionController::class, 'store']);
     Route::patch('/transactions/{transaction}/confirm', [\App\Http\Controllers\Api\TransactionController::class, 'confirm']);
+    Route::patch('/transactions/{transaction}/payment-method', [\App\Http\Controllers\Api\TransactionController::class, 'updatePaymentMethod']);
     Route::patch('/transactions/{transaction}/payment', [\App\Http\Controllers\Api\TransactionController::class, 'uploadPayment']);
     Route::patch('/transactions/{transaction}/complete', [\App\Http\Controllers\Api\TransactionController::class, 'complete']);
     Route::delete('/transactions/{transaction}/cancel', [\App\Http\Controllers\Api\TransactionController::class, 'cancel']);
