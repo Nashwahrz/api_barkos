@@ -91,6 +91,7 @@ class ChatbotController extends Controller
 
             if (count($validProducts) > 0) {
                 $osrmUrl = "https://router.project-osrm.org/table/v1/driving/{$coords}?sources=0&annotations=distance";
+                $osrmSuccess = false;
                 try {
                     $osrmResponse = Http::timeout(5)->get($osrmUrl);
                     if ($osrmResponse->successful()) {
@@ -101,12 +102,34 @@ class ChatbotController extends Controller
                                 $distanceMeters = $distances[$idx + 1] ?? null;
                                 if ($distanceMeters !== null) {
                                     $osrmDistances[$pId] = round($distanceMeters / 1000, 1);
+                                    $osrmSuccess = true;
                                 }
                             }
                         }
                     }
                 } catch (\Exception $e) {
-                    // Ignore, fallback to no distance
+                    // Ignore, fallback to haversine
+                }
+
+                // Fallback ke Haversine jika OSRM gagal
+                if (!$osrmSuccess) {
+                    foreach ($products as $p) {
+                        if ($p->latitude && $p->longitude) {
+                            $lat1 = deg2rad((float)$userLat);
+                            $lon1 = deg2rad((float)$userLng);
+                            $lat2 = deg2rad((float)$p->latitude);
+                            $lon2 = deg2rad((float)$p->longitude);
+                            
+                            $dLat = $lat2 - $lat1;
+                            $dLon = $lon2 - $lon1;
+                            
+                            $a = sin($dLat/2) * sin($dLat/2) + cos($lat1) * cos($lat2) * sin($dLon/2) * sin($dLon/2);
+                            $c = 2 * asin(sqrt($a));
+                            $distanceKm = 6371 * $c;
+                            
+                            $osrmDistances[$p->id] = round($distanceKm, 1);
+                        }
+                    }
                 }
             }
         }
