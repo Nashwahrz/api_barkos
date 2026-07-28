@@ -274,7 +274,7 @@ class TransactionController extends Controller
 
         return response()->json([
             'message'           => 'Bukti pembayaran berhasil diunggah. Menunggu konfirmasi penjual.',
-            'payment_proof_url' => Storage::url($path),
+            'payment_proof_url' => '/api/storage/' . $path,
         ]);
     }
 

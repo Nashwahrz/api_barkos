@@ -37,7 +37,7 @@ class ProductImageController extends Controller
             ]);
             $uploaded[] = [
                 'id'         => $image->id,
-                'image_path' => Storage::url($path),
+                'image_path' => '/api/storage/' . $path,
                 'is_primary' => false,
             ];
         }
