@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Promotion;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\SendPromotionBlastJob;
 
 class MidtransController extends Controller
 {
@@ -68,6 +69,9 @@ class MidtransController extends Controller
                 ]);
 
                 Log::info('Midtrans Webhook: Promotion activated', ['order_id' => $orderId]);
+                
+                // Dispatch Email Blast Job
+                SendPromotionBlastJob::dispatch($promotion);
             }
         } else if ($transactionStatus == 'cancel' || $transactionStatus == 'deny' || $transactionStatus == 'expire') {
             $promotion->payment_status = 'failed';
