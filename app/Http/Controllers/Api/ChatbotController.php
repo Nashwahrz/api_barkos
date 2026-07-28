@@ -234,7 +234,7 @@ class ChatbotController extends Controller
                     $kondisi = mb_convert_encoding($p->kondisi, 'UTF-8', 'UTF-8');
                     $str .= "- [{$namaBarang}]({$url}) (Kondisi: {$kondisi}, Jarak: {$distance} km) - Rp {$price}\n";
                 }
-                return "*(Mode Offline)* 🤖\nBerikut 5 barang terdekat dari lokasimu:\n\n" . $str;
+                return "*(Mode Offline)* 🤖\nBerikut 5 barang terdekat dari lokasimu:\n\n" . $str . "\n💡 *Untuk jarak rute yang lebih pasti, silakan cek langsung di halaman detail produk ya!*";
             }
 
             // 2. Cek intent List Barang Terbaru (5 hari terakhir)
