@@ -32,7 +32,25 @@ class TransactionNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['database', 'mail'];
+        return ['database', 'mail', \NotificationChannels\WebPush\WebPushChannel::class];
+    }
+
+    /**
+     * Get the web push representation of the notification.
+     */
+    public function toWebPush($notifiable, $notification)
+    {
+        $url = '/seller/orders/' . $this->transaction->id;
+        if ($this->type === 'buyer') {
+            $url = '/orders/' . $this->transaction->id;
+        }
+
+        return (new \NotificationChannels\WebPush\WebPushMessage)
+            ->title('Pesanan Lapak Kos')
+            ->icon('/icon-192x192.png')
+            ->body($this->message)
+            ->action('Lihat', 'view')
+            ->data(['url' => $url]);
     }
 
     /**

@@ -62,6 +62,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout',       [AuthController::class, 'logout']);
     Route::post('/upgrade-role', [AuthController::class, 'upgradeRole']);
 
+    // ── Push Notifications ──────────────────────────────────────────────
+    Route::post('/push-subscribe',   [\App\Http\Controllers\Api\PushSubscriptionController::class, 'subscribe']);
+    Route::post('/push-unsubscribe', [\App\Http\Controllers\Api\PushSubscriptionController::class, 'unsubscribe']);
+
     // Phase 2.2 — Profile, Password, Location
     Route::put('/profile',  [AuthController::class, 'updateProfile']);
     Route::put('/password', [AuthController::class, 'updatePassword']);
