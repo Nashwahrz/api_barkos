@@ -20,10 +20,17 @@ class ChatbotController extends Controller
         $userLng    = $request->input('lng');
         $history    = $request->input('history', []);
 
+        $cleanUserMsg = strtolower(preg_replace('/[^a-zA-Z0-9\s]/', '', $userMessage));
+        $isCommand = preg_match('/^(halo|hai|pagi|siang|sore|malam|ping|test|tes|woy|hy)$/i', trim($cleanUserMsg))
+                  || preg_match('/(list|daftar|tampilkan).*(baru|terbaru|terakhir)/', $cleanUserMsg)
+                  || preg_match('/(dekat|terdekat|jarak)/', $cleanUserMsg)
+                  || preg_match('/(semua|seluruh|daftar|list|katalog).* (barang|produk|item)|(barang|produk) (apa saja|yg ada|yang ada)/', $cleanUserMsg)
+                  || preg_match('/(cara|bagaimana|gimana|panduan|tutorial|langkah)/', $cleanUserMsg);
+
         $allUserText = $userMessage;
 
-        // Ambil konteks dari 2 pesan terakhir user di history
-        if (is_array($history)) {
+        // Ambil konteks dari 2 pesan terakhir user di history JIKA bukan command spesifik
+        if (!$isCommand && is_array($history)) {
             $recentUserMessages = array_filter($history, function ($msg) {
                 return isset($msg['role']) && $msg['role'] === 'user' && !empty($msg['text']);
             });
