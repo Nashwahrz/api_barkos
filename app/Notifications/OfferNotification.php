@@ -32,7 +32,25 @@ class OfferNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['database', 'mail'];
+        return ['database', 'mail', \NotificationChannels\WebPush\WebPushChannel::class];
+    }
+
+    /**
+     * Get the web push representation of the notification.
+     */
+    public function toWebPush($notifiable, $notification)
+    {
+        $url = '/seller/offers';
+        if ($this->type === 'offer_accepted' || $this->type === 'offer_rejected') {
+            $url = '/offers';
+        }
+
+        return (new \NotificationChannels\WebPush\WebPushMessage)
+            ->title('💰 Penawaran Lapak Kos')
+            ->icon('/icon-192x192.png')
+            ->body($this->message)
+            ->action('Lihat', 'view')
+            ->data(['url' => $url]);
     }
 
     /**

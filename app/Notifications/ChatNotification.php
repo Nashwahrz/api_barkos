@@ -30,7 +30,25 @@ class ChatNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['database', 'mail'];
+        return ['database', 'mail', \NotificationChannels\WebPush\WebPushChannel::class];
+    }
+
+    /**
+     * Get the web push representation of the notification.
+     */
+    public function toWebPush($notifiable, $notification)
+    {
+        $senderName = $this->chat->sender->name ?? 'Seseorang';
+        $productName = $this->chat->product->nama_barang ?? 'Produk';
+        $body = $senderName . ': "' . Str::limit($this->chat->message, 60) . '"';
+        $url  = '/chat/' . $this->chat->product_id . '/' . $this->chat->sender_id;
+
+        return (new \NotificationChannels\WebPush\WebPushMessage)
+            ->title('💬 Pesan Baru - ' . $productName)
+            ->icon('/icon-192x192.png')
+            ->body($body)
+            ->action('Balas', 'reply')
+            ->data(['url' => $url]);
     }
 
     /**
