@@ -105,6 +105,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/promotions/my', [PromotionController::class, 'myPromotions']);
     Route::post('/promotions', [PromotionController::class, 'store']);
     Route::post('/promotions/force-paid', [PromotionController::class, 'forcePaid']);
+    Route::patch('/promotions/{promotion}/recreate-snap', [PromotionController::class, 'recreateSnapToken']);
 
     // ── Reports ─────────────────────────────────────────────────────────
     Route::get('/reports',          [ReportController::class, 'index']);

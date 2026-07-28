@@ -140,6 +140,57 @@ class PromotionController extends Controller
     }
 
     /**
+     * Recreate Snap Token for a pending promotion to allow changing payment method.
+     */
+    public function recreateSnapToken(Request $request, Promotion $promotion): JsonResponse
+    {
+        if ($promotion->seller_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        if ($promotion->payment_status !== 'pending') {
+            return response()->json(['message' => 'Hanya promosi berstatus pending yang dapat diubah metode pembayarannya.'], 422);
+        }
+
+        \Midtrans\Config::$serverKey = env('MIDTRANS_SERVER_KEY');
+        \Midtrans\Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
+        \Midtrans\Config::$isSanitized = true;
+        \Midtrans\Config::$is3ds = true;
+
+        // Generate a new order ID
+        $newOrderId = 'PROMO-' . time() . '-' . $request->user()->id . '-R';
+
+        $params = [
+            'transaction_details' => [
+                'order_id' => $newOrderId,
+                'gross_amount' => (int) $promotion->amount_paid,
+            ],
+            'customer_details' => [
+                'first_name' => $request->user()->name,
+                'email' => $request->user()->email,
+            ],
+        ];
+
+        try {
+            $newSnapToken = \Midtrans\Snap::getSnapToken($params);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Gagal mendapatkan token pembayaran baru dari Midtrans', 'error' => $e->getMessage()], 500);
+        }
+
+        // Update the promotion with new order ID and snap token
+        $promotion->update([
+            'order_id'   => $newOrderId,
+            'snap_token' => $newSnapToken,
+        ]);
+
+        return response()->json([
+            'message' => 'Berhasil membuat ulang transaksi.',
+            'snap_token' => $newSnapToken,
+            'order_id' => $newOrderId
+        ]);
+    }
+
+    /**
      * Get active promotions for the authenticated seller.
      */
     public function myPromotions(Request $request): JsonResponse
