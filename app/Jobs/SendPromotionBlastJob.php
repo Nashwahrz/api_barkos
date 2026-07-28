@@ -44,6 +44,7 @@ class SendPromotionBlastJob implements ShouldQueue
                     foreach ($users as $user) {
                         try {
                             Mail::to($user->email)->send(new PromotionBlastMail($this->promotion));
+                            $user->notify(new \App\Notifications\PromotionBlastNotification($this->promotion));
                         } catch (\Exception $e) {
                             Log::error('Failed to send promotion blast to user: ' . $user->email, ['error' => $e->getMessage()]);
                         }
