@@ -71,7 +71,7 @@ class MidtransController extends Controller
                 Log::info('Midtrans Webhook: Promotion activated', ['order_id' => $orderId]);
                 
                 // Dispatch Email Blast Job
-                SendPromotionBlastJob::dispatch($promotion);
+                SendPromotionBlastJob::dispatchAfterResponse($promotion);
             }
         } else if ($transactionStatus == 'cancel' || $transactionStatus == 'deny' || $transactionStatus == 'expire') {
             $promotion->payment_status = 'failed';
