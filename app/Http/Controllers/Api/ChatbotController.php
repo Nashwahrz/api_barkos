@@ -285,7 +285,8 @@ class ChatbotController extends Controller
             }
             
             // 6. Fallback terakhir jika tidak ada barang dan bukan FAQ
-            return "*(Mode Offline)* 🤖\nMaaf, sepertinya Miu belum bisa menemukan barang atau informasi yang kamu cari saat ini.";
+            $suggestions = ['List barang terbaru', 'Barang terdekat dari sini', 'Semua list barang'];
+            return "*(Mode Offline)* 🤖\nMaaf, Miu kurang mengerti maksudmu karena saat ini Miu sedang dalam mode offline.\n\nKamu bisa mencoba beberapa perintah berikut:\n- 📦 **List barang terbaru** (melihat barang yang baru diunggah)\n- 📍 **Barang terdekat dari sini** (mencari barang di sekitar kosmu)\n- 🛍️ **Semua list barang** (melihat keseluruhan katalog)\n- ❓ Atau tanyakan panduan seperti **Cara membeli barang** atau **Cara mengedit profil**.";
         };
 
         $apiKey = config('services.gemini.key');
