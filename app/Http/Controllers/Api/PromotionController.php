@@ -30,6 +30,9 @@ class PromotionController extends Controller
     {
         $banners = Promotion::with(['product'])
             ->active()
+            ->whereHas('product', function ($query) {
+                $query->where('status_terjual', false);
+            })
             ->whereIn('ad_type', ['image', 'video'])
             ->whereNotNull('ad_media_url')
             ->latest()
