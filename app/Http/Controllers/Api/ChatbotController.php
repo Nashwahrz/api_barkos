@@ -168,13 +168,16 @@ class ChatbotController extends Controller
             . "DATA BARANG LAPAK KOS (HANYA GUNAKAN DATA INI UNTUK MENJAWAB PERTANYAAN TENTANG BARANG):\n"
             . "{$productListString}";
 
-        $fallbackResponse = function($msg) use ($products, $productListString, $keywords) {
+        $suggestions = null;
+
+        $fallbackResponse = function($msg) use ($products, $productListString, $keywords, &$suggestions) {
             // Bersihkan tanda baca untuk pengecekan kata
             $cleanMsg = strtolower(preg_replace('/[^a-zA-Z0-9\s]/', '', $msg));
             
             // 1. Cek intent Sapaan / Greeting
             $isGreeting = preg_match('/^(halo|hai|pagi|siang|sore|malam|ping|test|tes|woy|hy)$/i', trim($cleanMsg));
             if ($isGreeting) {
+                $suggestions = ['List barang terbaru', 'Barang terdekat dari sini', 'Cari tas ransel murah'];
                 $response = "*(Mode Offline)* 🤖\nHalo! Saat ini koneksi Miu ke server AI sedang terputus. Tapi tenang, kamu tetap bisa mencari barang atau bertanya panduan Lapak Kos di sini!\n";
                 if (!$products->isEmpty()) {
                     $response .= "\nBerikut beberapa contoh barang terbaru:\n" . $productListString;
@@ -211,10 +214,12 @@ class ChatbotController extends Controller
 
         $apiKey = config('services.gemini.key');
         if (empty($apiKey)) {
+            $fallbackText = $fallbackResponse($userMessage);
             return response()->json([
-                'text'        => $fallbackResponse($userMessage),
+                'text'        => $fallbackText,
                 'products'    => $productList,
                 'hasLocation' => $hasLocation,
+                'suggestions' => $suggestions,
             ]);
         }
         $geminiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}";
@@ -271,6 +276,7 @@ class ChatbotController extends Controller
             'text'        => $aiText,
             'products'    => $productList,
             'hasLocation' => $hasLocation,
+            'suggestions' => $suggestions ?? null,
         ]);
 
         } catch (\Illuminate\Validation\ValidationException $ve) {
