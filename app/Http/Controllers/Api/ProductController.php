@@ -134,6 +134,9 @@ class ProductController extends Controller
 
         $product = Auth::user()->products()->create($data);
 
+        // Dispatch Email Blast Job
+        \App\Jobs\SendNewProductBlastJob::dispatchAfterResponse($product);
+
         return response()->json([
             'message' => 'Product created successfully',
             'data'    => new ProductResource($product->load(['user', 'category'])),
