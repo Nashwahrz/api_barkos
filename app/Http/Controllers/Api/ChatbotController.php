@@ -42,7 +42,7 @@ class ChatbotController extends Controller
             'bisa', 'gak', 'enggak', 'tidak', 'lagi', 'sih', 'kok', 'ya', 'aja', 'saja', 'nya',
             'kalo', 'kalau', 'belum', 'apa', 'semua', 'daftar', 'list', 'tampilkan', 'produk', 'kamu',
             'barang', 'barangnya', 'dengan', 'jarak', 'dekat', 'jauh', 'lokasi', 'posisi', 'paling', 
-            'terdekat', 'sekitar', 'mana', 'dimana'
+            'terdekat', 'sekitar', 'mana', 'dimana', 'baru', 'terbaru', 'terakhir', 'semua', 'seluruh'
         ];
 
         $words    = explode(' ', strtolower(preg_replace('/[^a-zA-Z0-9\s]/', '', $allUserText)));
@@ -73,7 +73,7 @@ class ChatbotController extends Controller
             $products = $filtered;
         } else {
             // Keywords kosong (salam/pertanyaan umum), tampilkan semua produk
-            $products = $baseQuery->with('category')->latest()->limit(15)->get();
+            $products = $baseQuery->with('category')->latest()->limit(50)->get();
         }
 
         // OSRM Distance Calculation
