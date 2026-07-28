@@ -132,6 +132,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/stats',             [AdminDashboardController::class, 'stats']);
     Route::get('/admin/recent-activities', [AdminDashboardController::class, 'recentActivities']);
     Route::get('/admin/promotions',        [PromotionController::class, 'adminIndex']);
+    Route::delete('/admin/promotions/{promotion}', [PromotionController::class, 'destroy']);
 
     // Admin: Promotions Packages
     Route::post('/admin/promotions/packages', [PromotionController::class, 'storePackage']);

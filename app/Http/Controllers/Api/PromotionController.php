@@ -344,4 +344,27 @@ class PromotionController extends Controller
 
         return response()->json(['message' => 'Package deleted successfully.']);
     }
+
+    /**
+     * Delete a promotion (Admin).
+     */
+    public function destroy(Request $request, $id): JsonResponse
+    {
+        if ($request->user()->role !== 'super_admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $promotion = Promotion::findOrFail($id);
+
+        if ($promotion->product) {
+            $promotion->product->update([
+                'is_promoted' => false,
+                'promoted_until' => null,
+            ]);
+        }
+
+        $promotion->delete();
+
+        return response()->json(['message' => 'Promotion deleted successfully.']);
+    }
 }
