@@ -212,6 +212,9 @@ class PromotionController extends Controller
                 if ($promo->ad_media_url && str_starts_with($promo->ad_media_url, '/storage/')) {
                     $promo->ad_media_url = '/api' . $promo->ad_media_url;
                 }
+                if ($promo->product && $promo->product->foto && !str_starts_with($promo->product->foto, '/api/storage/')) {
+                    $promo->product->foto = '/api/storage/' . $promo->product->foto;
+                }
                 return $promo;
             });
 
@@ -230,6 +233,9 @@ class PromotionController extends Controller
         $promotions = Promotion::with(['product', 'package'])->latest()->get()->map(function ($promo) {
             if ($promo->ad_media_url && str_starts_with($promo->ad_media_url, '/storage/')) {
                 $promo->ad_media_url = '/api' . $promo->ad_media_url;
+            }
+            if ($promo->product && $promo->product->foto && !str_starts_with($promo->product->foto, '/api/storage/')) {
+                $promo->product->foto = '/api/storage/' . $promo->product->foto;
             }
             return $promo;
         });
