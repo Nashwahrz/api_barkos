@@ -1,7 +1,7 @@
 <x-mail::message>
-# Promo Spesial untuk Anda! 🎉
+# Promo dari {{ $product->user->name ?? 'Lapak Kos' }}
 
-Ada penawaran menarik nih dari **{{ $product->user->name ?? 'Lapak Kos' }}**.
+Ada penawaran dari **{{ $product->user->name ?? 'Lapak Kos' }}** yang mungkin Anda minati.
 
 @if($promotion->ad_type === 'image')
 ![Gambar Produk]({{ url('storage/' . $promotion->ad_media_url) }})
@@ -13,14 +13,14 @@ Ada penawaran menarik nih dari **{{ $product->user->name ?? 'Lapak Kos' }}**.
 
 > {{ $product->deskripsi }}
 
-**Harga Spesial:** Rp {{ number_format($product->harga, 0, ',', '.') }}
+**Harga:** Rp {{ number_format($product->harga, 0, ',', '.') }}
 
 <x-mail::button :url="config('app.frontend_url', env('FRONTEND_URL', 'http://localhost:3000')) . '/products/' . $product->id">
-Lihat Produk Sekarang
+Lihat Produk
 </x-mail::button>
-
-Jangan sampai kehabisan, yuk cek sekarang juga!
 
 Terima kasih,<br>
 Tim {{ config('app.name') }}
+
+<small>Anda menerima email ini karena terdaftar di {{ config('app.name') }}. Balas email ini dengan subjek "unsubscribe" untuk berhenti menerima promosi.</small>
 </x-mail::message>
