@@ -48,8 +48,9 @@ class ChatbotController extends Controller
             'min', 'gan', 'kak', 'bang', 'mas', 'mbak', 'sis', 'bro', 'pak', 'buk', 'sekarang',
             'bisa', 'gak', 'enggak', 'tidak', 'lagi', 'sih', 'kok', 'ya', 'aja', 'saja', 'nya',
             'kalo', 'kalau', 'belum', 'apa', 'semua', 'daftar', 'list', 'tampilkan', 'produk', 'kamu',
-            'barang', 'barangnya', 'dengan', 'jarak', 'dekat', 'jauh', 'lokasi', 'posisi', 'paling', 
-            'terdekat', 'sekitar', 'mana', 'dimana', 'baru', 'terbaru', 'terakhir', 'semua', 'seluruh'
+            'barang', 'barangnya', 'dengan', 'jarak', 'dekat', 'jauh', 'lokasi', 'posisi', 'paling',
+            'terdekat', 'sekitar', 'mana', 'dimana', 'baru', 'terbaru', 'terakhir', 'semua', 'seluruh',
+            'saat', 'kini', 'skrg', 'dulu', 'hari', 'toko', 'lapak'
         ];
 
         $words    = explode(' ', strtolower(preg_replace('/[^a-zA-Z0-9\s]/', '', $allUserText)));
@@ -191,12 +192,11 @@ class ChatbotController extends Controller
             . "- Cara Mengedit Profil: Buka menu 'Profil' (ikon user). Di sana kamu bisa mengubah nama, foto, password, dan menentukan titik lokasi kosmu (Pin Lokasi).\n"
             . "- Info Menu: Terdapat menu Beranda, Katalog, Pesan (Chat), dan Profil. Khusus penjual, ada menu tambahan seperti Dashboard, Lapak Saya, Pesanan Masuk, Tawaran Masuk, Promosi, dan Rekening.\n\n"
             . "ATURAN SANGAT PENTING (HARUS DIPATUHI):\n"
-            . "1. DILARANG KERAS MENGARANG ATAU MENAMBAHKAN BARANG YANG TIDAK ADA DI 'DATA BARANG LAPAK KOS' DI BAWAH INI!\n"
-            . "2. JIKA BARANG YANG DITANYAKAN TIDAK ADA, KATAKAN: 'Maaf, barang tersebut belum ada di database Lapak Kos saat ini.' JANGAN MENGARANG HARGA ATAU NAMA BARANG.\n"
-            . "3. Saat menyebutkan barang dari daftar, WAJIB sertakan link markdown-nya (contoh: [Kipas Angin](/products/5)).\n"
-            . "4. Jika user menanyakan jarak namun {$locationRules}\n\n"
-            . "DATA BARANG LAPAK KOS (HANYA GUNAKAN DATA INI UNTUK MENJAWAB PERTANYAAN TENTANG BARANG):\n"
-            . "{$productListString}";
+            . "1. Kamu TIDAK punya data barang bawaan. WAJIB panggil fungsi cari_produk untuk mendapatkan data barang setiap kali user bertanya, mencari, membandingkan, atau menanyakan ketersediaan barang apa pun -- termasuk permintaan umum seperti 'apa saja yang ada' (panggil dengan keyword kosong untuk kasus ini).\n"
+            . "2. DILARANG KERAS MENGARANG ATAU MENAMBAHKAN BARANG YANG TIDAK ADA DI HASIL FUNGSI cari_produk!\n"
+            . "3. JIKA HASIL PENCARIAN KOSONG, KATAKAN: 'Maaf, barang tersebut belum ada di database Lapak Kos saat ini.' JANGAN MENGARANG HARGA ATAU NAMA BARANG.\n"
+            . "4. Saat menyebutkan barang dari hasil pencarian, WAJIB sertakan link markdown-nya (contoh: [Kipas Angin](/products/5)).\n"
+            . "5. Jika user menanyakan jarak namun {$locationRules}\n";
 
         $suggestions = null;
 
@@ -307,7 +307,111 @@ class ChatbotController extends Controller
             ]);
         }
         $geminiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={$apiKey}";
-        
+
+        // Tool definition: Gemini decides itself WHEN and with WHAT keyword to search,
+        // instead of us pre-guessing intent with regex/stopwords. Keeps token usage low
+        // because we only fetch + send product data when the model actually asks for it.
+        $tools = [[
+            'functionDeclarations' => [[
+                'name' => 'cari_produk',
+                'description' => 'Mencari barang bekas yang dijual di Lapak Kos berdasarkan kata kunci nama/kategori barang. Panggil setiap kali user ingin melihat, mencari, membandingkan, atau menanyakan ketersediaan barang. Kosongkan keyword untuk menampilkan barang terbaru secara umum.',
+                'parameters' => [
+                    'type' => 'OBJECT',
+                    'properties' => [
+                        'keyword' => [
+                            'type' => 'STRING',
+                            'description' => 'Kata kunci nama/jenis barang, contoh: "kipas angin". Kosongkan ("") jika user hanya minta ditampilkan barang secara umum.',
+                        ],
+                    ],
+                ],
+            ]],
+        ]];
+
+        // Runs the actual DB search on-demand (called only when Gemini invokes the tool).
+        $runProductSearch = function (?string $keyword) use ($hasLocation, $userLat, $userLng) {
+            $baseQuery = \App\Models\Product::where('status_terjual', false);
+            $keyword = trim((string) $keyword);
+
+            if ($keyword !== '') {
+                $terms = array_filter(explode(' ', $keyword));
+                $found = (clone $baseQuery)->where(function ($q) use ($terms) {
+                    foreach ($terms as $word) {
+                        $q->where(function ($subQ) use ($word) {
+                            $subQ->where('nama_barang', 'like', "%{$word}%")
+                                 ->orWhere('deskripsi', 'like', "%{$word}%")
+                                 ->orWhereHas('category', function ($cq) use ($word) {
+                                     $cq->where('name', 'like', "%{$word}%");
+                                 });
+                        });
+                    }
+                })->with('category')->latest()->limit(10)->get();
+            } else {
+                $found = $baseQuery->with('category')->latest()->limit(10)->get();
+            }
+
+            $distances = [];
+            if ($hasLocation && $found->isNotEmpty()) {
+                $coords = "{$userLng},{$userLat}";
+                $validIds = [];
+                foreach ($found as $p) {
+                    if ($p->latitude && $p->longitude) {
+                        $coords .= ";{$p->longitude},{$p->latitude}";
+                        $validIds[] = $p->id;
+                    }
+                }
+                if (count($validIds) > 0) {
+                    $osrmSuccess = false;
+                    try {
+                        $osrmResponse = Http::timeout(5)->get("https://router.project-osrm.org/table/v1/driving/{$coords}?sources=0&annotations=distance");
+                        if ($osrmResponse->successful()) {
+                            $osrmData = $osrmResponse->json();
+                            if (isset($osrmData['distances'][0])) {
+                                foreach ($validIds as $idx => $pId) {
+                                    $d = $osrmData['distances'][0][$idx + 1] ?? null;
+                                    if ($d !== null) {
+                                        $distances[$pId] = round($d / 1000, 1);
+                                        $osrmSuccess = true;
+                                    }
+                                }
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        // Ignore, fallback to haversine below
+                    }
+
+                    if (!$osrmSuccess) {
+                        foreach ($found as $p) {
+                            if ($p->latitude && $p->longitude) {
+                                $lat1 = deg2rad((float) $userLat);
+                                $lon1 = deg2rad((float) $userLng);
+                                $lat2 = deg2rad((float) $p->latitude);
+                                $lon2 = deg2rad((float) $p->longitude);
+                                $dLat = $lat2 - $lat1;
+                                $dLon = $lon2 - $lon1;
+                                $a = sin($dLat / 2) ** 2 + cos($lat1) * cos($lat2) * sin($dLon / 2) ** 2;
+                                $distances[$p->id] = round(6371 * 2 * asin(sqrt($a)), 1);
+                            }
+                        }
+                    }
+                }
+            }
+
+            $items = $found->map(function ($p) use ($distances) {
+                return [
+                    'id'        => $p->id,
+                    'nama'      => mb_convert_encoding($p->nama_barang, 'UTF-8', 'UTF-8'),
+                    'harga'     => (int) $p->harga,
+                    'kondisi'   => mb_convert_encoding($p->kondisi, 'UTF-8', 'UTF-8'),
+                    'kategori'  => mb_convert_encoding($p->category?->name ?? '', 'UTF-8', 'UTF-8'),
+                    'deskripsi' => substr(trim(preg_replace('/\s+/', ' ', $p->deskripsi ?? '')), 0, 150),
+                    'jarak_km'  => $distances[$p->id] ?? null,
+                    'url'       => "/products/{$p->id}",
+                ];
+            })->values()->all();
+
+            return $items;
+        };
+
         $contents = [];
         if (is_array($history)) {
             foreach ($history as $msg) {
@@ -336,20 +440,77 @@ class ChatbotController extends Controller
         }
         
         $aiText = "Maaf, Miu tidak mendapat jawaban dari server. Coba lagi ya! 🙏";
-        
+        $finalProductList = $productList; // default: fallback ke hasil pencarian awal jika AI tidak memanggil tool
+
         try {
             $response = Http::timeout(15)->post($geminiUrl, [
                 'systemInstruction' => ['parts' => [['text' => $systemPrompt]]],
-                'contents' => $contents
+                'contents' => $contents,
+                'tools' => $tools,
             ]);
-            
+
             if ($response->successful()) {
                 $data = $response->json();
-                if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
-                    $aiText = $data['candidates'][0]['content']['parts'][0]['text'];
+                $parts = $data['candidates'][0]['content']['parts'] ?? [];
+
+                $functionCall = null;
+                foreach ($parts as $part) {
+                    if (isset($part['functionCall'])) {
+                        $functionCall = $part['functionCall'];
+                        break;
+                    }
+                }
+
+                if ($functionCall) {
+                    // Gemini decided it needs product data — run the real search now.
+                    $keywordArg = $functionCall['args']['keyword'] ?? '';
+                    $items = $runProductSearch($keywordArg);
+
+                    $contents[] = ['role' => 'model', 'parts' => [['functionCall' => $functionCall]]];
+                    $contents[] = [
+                        'role'  => 'function',
+                        'parts' => [[
+                            'functionResponse' => [
+                                'name'     => 'cari_produk',
+                                'response' => ['items' => $items],
+                            ],
+                        ]],
+                    ];
+
+                    $secondResponse = Http::timeout(15)->post($geminiUrl, [
+                        'systemInstruction' => ['parts' => [['text' => $systemPrompt]]],
+                        'contents' => $contents,
+                        'tools' => $tools,
+                    ]);
+
+                    if ($secondResponse->successful()) {
+                        $secondData = $secondResponse->json();
+                        if (isset($secondData['candidates'][0]['content']['parts'][0]['text'])) {
+                            $aiText = $secondData['candidates'][0]['content']['parts'][0]['text'];
+                            $finalProductList = array_map(fn($it) => [
+                                'id'       => $it['id'],
+                                'name'     => $it['nama'],
+                                'price'    => $it['harga'],
+                                'kondisi'  => $it['kondisi'],
+                                'desc'     => $it['deskripsi'],
+                                'category' => $it['kategori'],
+                                'distance' => $it['jarak_km'],
+                                'url'      => $it['url'],
+                            ], $items);
+                        } else {
+                            $aiText = $fallbackResponse($userMessage);
+                        }
+                    } else {
+                        $aiText = $fallbackResponse($userMessage);
+                    }
+                } elseif (isset($parts[0]['text'])) {
+                    // Chit-chat / FAQ answered directly without needing product data.
+                    $aiText = $parts[0]['text'];
+                } else {
+                    $aiText = $fallbackResponse($userMessage);
                 }
             } else {
-                // Fallback untuk semua error Gemini (400, 401, dll)
+                // Fallback untuk semua error Gemini (400, 401, quota habis, dll)
                 $aiText = $fallbackResponse($userMessage);
             }
         } catch (\Exception $e) {
@@ -358,7 +519,7 @@ class ChatbotController extends Controller
 
         return response()->json([
             'text'        => $aiText,
-            'products'    => $productList,
+            'products'    => $finalProductList,
             'hasLocation' => $hasLocation,
             'suggestions' => $suggestions ?? null,
         ]);
