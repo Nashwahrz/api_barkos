@@ -215,33 +215,34 @@ class ChatbotController extends Controller
             $isTerdekat = preg_match('/(dekat|terdekat|jarak)/', $cleanMsg);
             if ($isTerdekat) {
                 if (!$hasLocation) {
+                    $suggestions = ['Semua list barang', 'List barang terbaru'];
                     return "*(Mode Offline)* 🤖\nMiu butuh tau lokasi kamu nih! Coba klik tombol 📍 (Pin Lokasi) di sebelah kotak ketik chat ya, biar Miu bisa menghitung jarak barang terdekat.";
                 }
 
-                if (empty($osrmDistances)) {
-                    return "*(Mode Offline)* 🤖\nMaaf, Miu gagal menghitung jarak. Mungkin server peta sedang sibuk atau barang-barang ini belum diatur lokasinya.";
+                // Products with coordinates but no computed distance (edge case:
+                // OSRM & Haversine both skipped upstream because none had lat/lng at all).
+                $productsWithCoords = $products->filter(fn($p) => $p->latitude && $p->longitude);
+                if ($productsWithCoords->isEmpty()) {
+                    $suggestions = ['Semua list barang', 'List barang terbaru'];
+                    return "*(Mode Offline)* 🤖\nBelum ada barang yang penjualnya mengatur titik lokasi, jadi Miu belum bisa hitung jaraknya. Coba lihat semua barang yang tersedia dulu, yuk!";
                 }
 
-                $nearestProducts = $products->filter(function($p) use ($osrmDistances) {
-                    return isset($osrmDistances[$p->id]);
-                })->sortBy(function($p) use ($osrmDistances) {
-                    return $osrmDistances[$p->id];
-                })->take(5);
+                $nearestProducts = $productsWithCoords
+                    ->sortBy(fn($p) => $osrmDistances[$p->id] ?? PHP_INT_MAX)
+                    ->take(5);
 
-                if ($nearestProducts->isEmpty()) {
-                    return "*(Mode Offline)* 🤖\nBelum ada barang di sekitar yang bisa dihitung jaraknya.";
-                }
-                
                 $str = "";
                 foreach ($nearestProducts as $p) {
-                    $distance = $osrmDistances[$p->id];
+                    $distance = $osrmDistances[$p->id] ?? null;
+                    $jarakText = $distance !== null ? ", Jarak: {$distance} km" : "";
                     $price = number_format($p->harga, 0, ',', '.');
                     $url = "/products/{$p->id}";
                     $namaBarang = mb_convert_encoding($p->nama_barang, 'UTF-8', 'UTF-8');
                     $kondisi = mb_convert_encoding($p->kondisi, 'UTF-8', 'UTF-8');
-                    $str .= "- [{$namaBarang}]({$url}) (Kondisi: {$kondisi}, Jarak: {$distance} km) - Rp {$price}\n";
+                    $str .= "- [{$namaBarang}]({$url}) (Kondisi: {$kondisi}{$jarakText}) - Rp {$price}\n";
                 }
-                return "*(Mode Offline)* 🤖\nBerikut 5 barang terdekat dari lokasimu:\n\n" . $str . "\n💡 *Untuk jarak rute yang lebih pasti, silakan cek langsung di halaman detail produk ya!*";
+                $suggestions = ['Semua list barang', 'List barang terbaru'];
+                return "*(Mode Offline)* 🤖\nBerikut barang terdekat dari lokasimu:\n\n" . $str . "\n💡 *Untuk jarak rute yang lebih pasti, silakan cek langsung di halaman detail produk ya!*";
             }
 
             // 2. Cek intent List Barang Terbaru (5 hari terakhir)
@@ -252,9 +253,10 @@ class ChatbotController extends Controller
                 });
                 
                 if ($latestProducts->isEmpty()) {
+                    $suggestions = ['Semua list barang', 'Barang terdekat dari sini'];
                     return "*(Mode Offline)* 🤖\nBelum ada barang baru yang ditambahkan dalam 5 hari terakhir.";
                 }
-                
+
                 $str = "";
                 foreach ($latestProducts as $p) {
                     $distance = $osrmDistances[$p->id] ?? null;
@@ -266,6 +268,7 @@ class ChatbotController extends Controller
                     $desc = substr(trim(preg_replace('/\s+/', ' ', $p->deskripsi ?? '')), 0, 150);
                     $str .= "- [{$namaBarang}]({$url}) (Kondisi: {$kondisi}{$jarakText}) - Rp {$price}\n  Detail: {$desc}...\n";
                 }
+                $suggestions = ['Barang terdekat dari sini', 'Semua list barang'];
                 return "*(Mode Offline)* 🤖\nBerikut daftar barang terbaru dalam 5 hari terakhir:\n\n" . $str;
             }
 
@@ -276,18 +279,21 @@ class ChatbotController extends Controller
             $isJual   = $isFaq && preg_match('/(jual|dagang|tambah|posting|pasang|lapak)/', $cleanMsg);
             $isProfil = $isFaq && preg_match('/(profil|edit|ubah|ganti|password|sandi|akun|lokasi|pin)/', $cleanMsg);
             
-            if ($isBeli) return "*(Mode Offline)* 🤖\n**Cara Membeli Barang:**\n1. Cari barang di 'Beranda' atau 'Katalog'.\n2. Klik barang yang diminati.\n3. Pilih 'Ajukan Penawaran' untuk nego, atau 'Chat Penjual'.\n4. Jika deal, selesaikan transaksi.";
-            if ($isJual) return "*(Mode Offline)* 🤖\n**Cara Menjual Barang:**\n1. Tekan tombol 'Mulai Jual'.\n2. Masuk ke Dashboard Penjual -> 'Lapak Saya'.\n3. Tambah produk beserta foto.\n4. Tunggu pembeli menghubungi kamu!";
-            if ($isProfil) return "*(Mode Offline)* 🤖\n**Cara Mengedit Profil:**\nBuka menu 'Profil' di pojok kanan atas. Di sana kamu bisa mengubah Nama, Foto, Password, dan titik lokasi kosmu (Pin Lokasi).";
-            
+            $faqSuggestions = ['Semua list barang', 'Barang terdekat dari sini'];
+            if ($isBeli) { $suggestions = $faqSuggestions; return "*(Mode Offline)* 🤖\n**Cara Membeli Barang:**\n1. Cari barang di 'Beranda' atau 'Katalog'.\n2. Klik barang yang diminati.\n3. Pilih 'Ajukan Penawaran' untuk nego, atau 'Chat Penjual'.\n4. Jika deal, selesaikan transaksi."; }
+            if ($isJual) { $suggestions = $faqSuggestions; return "*(Mode Offline)* 🤖\n**Cara Menjual Barang:**\n1. Tekan tombol 'Mulai Jual'.\n2. Masuk ke Dashboard Penjual -> 'Lapak Saya'.\n3. Tambah produk beserta foto.\n4. Tunggu pembeli menghubungi kamu!"; }
+            if ($isProfil) { $suggestions = $faqSuggestions; return "*(Mode Offline)* 🤖\n**Cara Mengedit Profil:**\nBuka menu 'Profil' di pojok kanan atas. Di sana kamu bisa mengubah Nama, Foto, Password, dan titik lokasi kosmu (Pin Lokasi)."; }
+
             // 4. Cek intent Semua List Barang
             $isListAll = preg_match('/(semua|seluruh|daftar|list|katalog).* (barang|produk|item)|(barang|produk) (apa saja|yg ada|yang ada)/', $cleanMsg);
             if ($isListAll || (empty($keywords) && !$products->isEmpty())) {
+                $suggestions = ['Barang terdekat dari sini', 'List barang terbaru'];
                 return "*(Mode Offline)* 🤖\nTentu! Berikut adalah semua daftar barang yang tersedia di Lapak Kos saat ini:\n\n" . $productListString;
             }
 
             // 5. Jika mencari barang spesifik dan ketemu
             if (!$products->isEmpty()) {
+                $suggestions = ['Semua list barang', 'Barang terdekat dari sini'];
                 return "*(Mode Offline)* 🤖\nBerikut hasil pencarian barang yang paling relevan dengan permintaanmu:\n\n" . $productListString;
             }
             
