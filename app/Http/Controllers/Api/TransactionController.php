@@ -23,7 +23,7 @@ class TransactionController extends Controller
      *   pending  →  cancelled  (by buyer)
      *   confirmed → cancelled  (by seller reject)
      *
-     *   Bank Transfer: confirmed + upload proof → seller confirms receipt → completed
+     *   Bank Transfer: pending/confirmed + upload proof → seller confirms order → seller confirms receipt → completed
      *   COD:           confirmed → completed directly
      */
 
@@ -252,8 +252,8 @@ class TransactionController extends Controller
             return response()->json(['message' => 'Upload bukti hanya untuk transaksi bank transfer.'], 422);
         }
 
-        if ($transaction->status !== 'confirmed') {
-            return response()->json(['message' => 'Order harus dikonfirmasi penjual terlebih dahulu.'], 422);
+        if (in_array($transaction->status, ['completed', 'cancelled'])) {
+            return response()->json(['message' => 'Tidak dapat upload bukti untuk order yang sudah selesai atau dibatalkan.'], 422);
         }
 
         // Delete old proof if exists
