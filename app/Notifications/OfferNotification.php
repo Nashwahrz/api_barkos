@@ -47,7 +47,7 @@ class OfferNotification extends Notification implements ShouldQueue
 
         return (new \NotificationChannels\WebPush\WebPushMessage)
             ->title('💰 Penawaran Lapak Kos')
-            ->icon('/icon-192x192.png')
+            ->icon('/logo-lapak-kos.png')
             ->body($this->message)
             ->action('Lihat', 'view')
             ->data(['url' => $url]);

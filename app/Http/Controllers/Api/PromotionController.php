@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\ProcessPromotionPaymentProofJob;
+use App\Models\PaymentSetting;
 use App\Models\Product;
 use App\Models\Promotion;
 use App\Models\PromotionPackage;
+use App\Services\PromotionActivationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -13,6 +16,10 @@ use Illuminate\Support\Facades\Storage;
 
 class PromotionController extends Controller
 {
+    public function __construct(private PromotionActivationService $promotionActivationService)
+    {
+    }
+
     /**
      * Get all promotion packages available for purchase.
      */
@@ -70,6 +77,7 @@ class PromotionController extends Controller
         $request->validate([
             'product_id'    => 'required|exists:products,id',
             'package_id'    => 'required|exists:promotion_packages,id',
+            'payment_method' => 'required|in:midtrans,manual_transfer',
             // Ad fields — optional
             'ad_type'       => 'nullable|in:none,image,video',
             'ad_media_url'  => 'nullable|string|max:2000',
@@ -86,12 +94,43 @@ class PromotionController extends Controller
 
         $package = PromotionPackage::findOrFail($request->package_id);
 
-        // Calculate end date based on package duration is deferred until payment succeeds.
-        // For now, prepare media
+        $paymentSetting = PaymentSetting::current();
+        if ($request->payment_method === 'midtrans' && !$paymentSetting->midtrans_enabled) {
+            return response()->json(['message' => 'Metode pembayaran Midtrans sedang tidak tersedia.'], 422);
+        }
+        if ($request->payment_method === 'manual_transfer' && !$paymentSetting->manual_transfer_enabled) {
+            return response()->json(['message' => 'Metode transfer manual sedang tidak tersedia.'], 422);
+        }
+
+        // Prepare ad media
         $adMediaUrl = $request->ad_media_url;
         if ($request->hasFile('ad_media_file')) {
             $path = $request->file('ad_media_file')->store('promotions', 'public');
             $adMediaUrl = '/api/storage/' . $path;
+        }
+
+        if ($request->payment_method === 'manual_transfer') {
+            $promotion = Promotion::create([
+                'order_id'     => 'PROMO-' . time() . '-' . $request->user()->id,
+                'payment_status' => 'pending',
+                'payment_method' => 'manual_transfer',
+                'manual_review_status' => 'pending',
+                'product_id'   => $product->id,
+                'seller_id'    => $request->user()->id,
+                'package_id'   => $package->id,
+                'status'       => 'active',
+                'start_at'     => Carbon::now(),
+                'end_at'       => Carbon::now(),
+                'amount_paid'  => $package->price,
+                'ad_type'      => $request->ad_type ?? 'none',
+                'ad_media_url' => $adMediaUrl,
+                'ad_title'     => $request->ad_title,
+            ]);
+
+            return response()->json([
+                'message' => 'Silakan upload bukti transfer.',
+                'data'    => $promotion,
+            ], 201);
         }
 
         // Setup Midtrans Config
@@ -124,6 +163,7 @@ class PromotionController extends Controller
             'order_id'     => $orderId,
             'snap_token'   => $snapToken,
             'payment_status' => 'pending',
+            'payment_method' => 'midtrans',
             'product_id'   => $product->id,
             'seller_id'    => $request->user()->id,
             'package_id'   => $package->id,
@@ -140,6 +180,84 @@ class PromotionController extends Controller
             'message' => 'Silakan selesaikan pembayaran.',
             'data'    => $promotion,
         ], 201);
+    }
+
+    /**
+     * Upload manual-transfer proof of payment for a pending promotion (Seller).
+     */
+    public function uploadProof(Request $request, Promotion $promotion): JsonResponse
+    {
+        if ($promotion->seller_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        if ($promotion->payment_method !== 'manual_transfer' || $promotion->payment_status !== 'pending') {
+            return response()->json(['message' => 'Promosi ini tidak dapat diupload bukti transfernya.'], 422);
+        }
+
+        $request->validate([
+            'proof_image' => 'required|image|max:10240',
+        ]);
+
+        if ($promotion->manual_proof_path) {
+            Storage::disk('public')->delete($promotion->manual_proof_path);
+        }
+
+        $path = $request->file('proof_image')->store('payments/promotions', 'public');
+        $promotion->update([
+            'manual_proof_path' => $path,
+            'manual_review_status' => 'pending',
+            'ocr_note' => null,
+        ]);
+
+        ProcessPromotionPaymentProofJob::dispatch($promotion);
+
+        return response()->json([
+            'message' => 'Bukti transfer berhasil diupload dan sedang diperiksa.',
+            'data'    => $promotion,
+        ]);
+    }
+
+    /**
+     * Approve a manual-transfer promotion payment (Admin).
+     */
+    public function approvePayment(Request $request, $id): JsonResponse
+    {
+        if ($request->user()->role !== 'super_admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $promotion = Promotion::findOrFail($id);
+        if ($promotion->payment_method !== 'manual_transfer') {
+            return response()->json(['message' => 'Promosi ini bukan pembayaran transfer manual.'], 422);
+        }
+
+        $this->promotionActivationService->activate($promotion);
+        $promotion->update(['manual_review_status' => 'approved']);
+
+        return response()->json(['message' => 'Pembayaran disetujui, promosi diaktifkan.', 'data' => $promotion]);
+    }
+
+    /**
+     * Reject a manual-transfer promotion payment (Admin).
+     */
+    public function rejectPayment(Request $request, $id): JsonResponse
+    {
+        if ($request->user()->role !== 'super_admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $promotion = Promotion::findOrFail($id);
+        if ($promotion->payment_method !== 'manual_transfer') {
+            return response()->json(['message' => 'Promosi ini bukan pembayaran transfer manual.'], 422);
+        }
+
+        $promotion->update([
+            'payment_status' => 'failed',
+            'manual_review_status' => 'rejected',
+        ]);
+
+        return response()->json(['message' => 'Pembayaran ditolak.', 'data' => $promotion]);
     }
 
     /**
@@ -212,6 +330,9 @@ class PromotionController extends Controller
                 if ($promo->ad_media_url && str_starts_with($promo->ad_media_url, '/storage/')) {
                     $promo->ad_media_url = '/api' . $promo->ad_media_url;
                 }
+                if ($promo->manual_proof_path && !str_starts_with($promo->manual_proof_path, '/api/storage/')) {
+                    $promo->manual_proof_path = '/api/storage/' . $promo->manual_proof_path;
+                }
                 if ($promo->product && $promo->product->foto && !str_starts_with($promo->product->foto, '/api/storage/')) {
                     $promo->product->foto = '/api/storage/' . $promo->product->foto;
                 }
@@ -230,9 +351,12 @@ class PromotionController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $promotions = Promotion::with(['product', 'package'])->latest()->get()->map(function ($promo) {
+        $promotions = Promotion::with(['product', 'package', 'seller'])->latest()->get()->map(function ($promo) {
             if ($promo->ad_media_url && str_starts_with($promo->ad_media_url, '/storage/')) {
                 $promo->ad_media_url = '/api' . $promo->ad_media_url;
+            }
+            if ($promo->manual_proof_path && !str_starts_with($promo->manual_proof_path, '/api/storage/')) {
+                $promo->manual_proof_path = '/api/storage/' . $promo->manual_proof_path;
             }
             if ($promo->product && $promo->product->foto && !str_starts_with($promo->product->foto, '/api/storage/')) {
                 $promo->product->foto = '/api/storage/' . $promo->product->foto;
@@ -255,27 +379,7 @@ class PromotionController extends Controller
             ->where('seller_id', $request->user()->id)
             ->firstOrFail();
 
-        if ($promotion->payment_status !== 'paid') {
-            $promotion->payment_status = 'paid';
-            
-            $package = $promotion->package;
-            $product = $promotion->product;
-            
-            $startDate = Carbon::now();
-            if ($product->is_promoted && $product->promoted_until && Carbon::parse($product->promoted_until)->isFuture()) {
-                $startDate = Carbon::parse($product->promoted_until);
-            }
-            $endDate = $startDate->copy()->addDays($package->duration_days);
-
-            $promotion->start_at = $startDate;
-            $promotion->end_at = $endDate;
-            $promotion->save();
-
-            $product->update([
-                'is_promoted' => true,
-                'promoted_until' => $endDate,
-            ]);
-        }
+        $this->promotionActivationService->activate($promotion);
 
         return response()->json(['message' => 'Status forced to paid successfully.', 'data' => $promotion]);
     }

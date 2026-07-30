@@ -21,6 +21,10 @@ class Promotion extends Model
         'ad_type',
         'ad_media_url',
         'ad_title',
+        'payment_method',
+        'manual_proof_path',
+        'manual_review_status',
+        'ocr_note',
     ];
 
     protected $casts = [

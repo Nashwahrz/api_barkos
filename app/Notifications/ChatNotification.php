@@ -45,7 +45,7 @@ class ChatNotification extends Notification implements ShouldQueue
 
         return (new \NotificationChannels\WebPush\WebPushMessage)
             ->title('💬 Pesan Baru - ' . $productName)
-            ->icon('/icon-192x192.png')
+            ->icon('/logo-lapak-kos.png')
             ->body($body)
             ->action('Balas', 'reply')
             ->data(['url' => $url]);

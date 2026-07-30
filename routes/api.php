@@ -114,6 +114,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/promotions', [PromotionController::class, 'store']);
     Route::post('/promotions/force-paid', [PromotionController::class, 'forcePaid']);
     Route::patch('/promotions/{promotion}/recreate-snap', [PromotionController::class, 'recreateSnapToken']);
+    Route::post('/promotions/{promotion}/upload-proof', [PromotionController::class, 'uploadProof']);
+
+    // ── Payment Settings ──────────────────────────────────────────────────
+    Route::get('/payment-settings', [\App\Http\Controllers\Api\PaymentSettingController::class, 'show']);
 
     // ── Reports ─────────────────────────────────────────────────────────
     Route::get('/reports',          [ReportController::class, 'index']);
@@ -141,11 +145,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/recent-activities', [AdminDashboardController::class, 'recentActivities']);
     Route::get('/admin/promotions',        [PromotionController::class, 'adminIndex']);
     Route::delete('/admin/promotions/{promotion}', [PromotionController::class, 'destroy']);
+    Route::patch('/admin/promotions/{promotion}/approve-payment', [PromotionController::class, 'approvePayment']);
+    Route::patch('/admin/promotions/{promotion}/reject-payment', [PromotionController::class, 'rejectPayment']);
 
     // Admin: Promotions Packages
     Route::post('/admin/promotions/packages', [PromotionController::class, 'storePackage']);
     Route::put('/admin/promotions/packages/{package}', [PromotionController::class, 'updatePackage']);
     Route::delete('/admin/promotions/packages/{package}', [PromotionController::class, 'destroyPackage']);
+
+    // Admin: Payment Settings
+    Route::post('/admin/payment-settings', [\App\Http\Controllers\Api\PaymentSettingController::class, 'update']);
+    Route::get('/admin/payment-bank-accounts', [\App\Http\Controllers\Api\PaymentBankAccountController::class, 'index']);
+    Route::post('/admin/payment-bank-accounts', [\App\Http\Controllers\Api\PaymentBankAccountController::class, 'store']);
+    Route::put('/admin/payment-bank-accounts/{id}', [\App\Http\Controllers\Api\PaymentBankAccountController::class, 'update']);
+    Route::delete('/admin/payment-bank-accounts/{id}', [\App\Http\Controllers\Api\PaymentBankAccountController::class, 'destroy']);
 
     // Admin: Categories (Phase 5.2)
     Route::post('/admin/categories',       [CategoryController::class, 'store']);

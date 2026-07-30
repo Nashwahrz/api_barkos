@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Promotion;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
-use App\Jobs\SendPromotionBlastJob;
+use App\Services\PromotionActivationService;
 
 class MidtransController extends Controller
 {
+    public function __construct(private PromotionActivationService $promotionActivationService)
+    {
+    }
+
     public function webhook(Request $request)
     {
         $serverKey = config('midtrans.server_key');
@@ -45,33 +48,8 @@ class MidtransController extends Controller
 
         if ($transactionStatus == 'capture' || $transactionStatus == 'settlement') {
             if ($promotion->payment_status !== 'paid') {
-                $promotion->payment_status = 'paid';
-                
-                // Calculate end date based on package duration now that it's paid
-                $package = $promotion->package;
-                $product = $promotion->product;
-                
-                $startDate = Carbon::now();
-                // If already promoted, extend from current end date
-                if ($product->is_promoted && $product->promoted_until && Carbon::parse($product->promoted_until)->isFuture()) {
-                    $startDate = Carbon::parse($product->promoted_until);
-                }
-                $endDate = $startDate->copy()->addDays($package->duration_days);
-
-                $promotion->start_at = $startDate;
-                $promotion->end_at = $endDate;
-                $promotion->save();
-
-                // Update product
-                $product->update([
-                    'is_promoted' => true,
-                    'promoted_until' => $endDate,
-                ]);
-
+                $this->promotionActivationService->activate($promotion);
                 Log::info('Midtrans Webhook: Promotion activated', ['order_id' => $orderId]);
-                
-                // Dispatch Email Blast Job
-                SendPromotionBlastJob::dispatchAfterResponse($promotion);
             }
         } else if ($transactionStatus == 'cancel' || $transactionStatus == 'deny' || $transactionStatus == 'expire') {
             $promotion->payment_status = 'failed';
