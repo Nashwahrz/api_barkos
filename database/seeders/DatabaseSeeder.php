@@ -23,16 +23,18 @@ class DatabaseSeeder extends Seeder
 
         User::factory()->create([
             'name' => 'Super Admin',
-            'email' => 'admin@admin.com',
-            'asal_kampus' => 'Universitas Indonesia',
+            'email' => 'kostmartpadang@gmail.com',
+            'asal_kampus' => 'PNP',
             'role' => 'super_admin',
+            'email_verified_at' => now(),
+            'password' => 'YakinBisa123!',
         ]);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'asal_kampus' => 'Institut Teknologi Bandung',
-            'role' => 'pembeli',
-        ]);
+        // User::factory()->create([
+        //     'name' => 'Test User',
+        //     'email' => 'test@example.com',
+        //     'asal_kampus' => 'Institut Teknologi Bandung',
+        //     'role' => 'pembeli',
+        // ]);
     }
 }
