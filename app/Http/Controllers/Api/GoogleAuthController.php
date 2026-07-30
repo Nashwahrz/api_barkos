@@ -65,7 +65,7 @@ class GoogleAuthController extends Controller
             $token = $user->createToken('auth_token')->plainTextToken;
 
             // Redirect to frontend with token
-            $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
+            $frontendUrl = config('services.frontend_url');
             return redirect()->away($frontendUrl . '/auth/callback?token=' . $token);
 
         } catch (Exception $e) {
@@ -75,7 +75,7 @@ class GoogleAuthController extends Controller
                 'redirect_uri' => config('services.google.redirect')
             ]);
             
-            $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
+            $frontendUrl = config('services.frontend_url');
             return redirect()->away($frontendUrl . '/auth/login?error=google_auth_failed&message=' . urlencode($e->getMessage()));
         }
     }
