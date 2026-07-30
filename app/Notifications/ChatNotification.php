@@ -77,7 +77,7 @@ class ChatNotification extends Notification implements ShouldQueue
             ->greeting('Halo ' . $notifiable->name . '!')
             ->line('Anda menerima pesan baru dari ' . $this->chat->sender->name . ' terkait produk "' . $productName . '".')
             ->line('Pesan: "' . Str::limit($this->chat->message, 100) . '"')
-            ->action('Balas Pesan', env('FRONTEND_URL', 'http://localhost:3000') . '/chat') 
+            ->action('Balas Pesan', config('services.frontend_url') . '/chat')
             ->line('Terima kasih telah menggunakan Lapak Kos!');
     }
 }

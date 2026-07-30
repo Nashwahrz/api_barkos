@@ -43,6 +43,10 @@ return [
 
     'frontend_url' => env('FRONTEND_URL', 'http://localhost:3000'),
 
+    'ocr_space' => [
+        'api_key' => env('OCR_SPACE_API_KEY'),
+    ],
+
     'recaptcha' => [
         'secret_key' => env('RECAPTCHA_SECRET_KEY'),
     ],

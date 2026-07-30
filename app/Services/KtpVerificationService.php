@@ -16,7 +16,7 @@ class KtpVerificationService
      */
     public function verify($absoluteImagePath): bool
     {
-        $apiKey = env('OCR_SPACE_API_KEY');
+        $apiKey = config('services.ocr_space.api_key');
         
         if (!$apiKey) {
             Log::error('OCR_SPACE_API_KEY is not set in .env');
