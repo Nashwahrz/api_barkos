@@ -50,6 +50,10 @@ Route::get('/categories',         [CategoryController::class, 'index']);
 Route::get('/promotions/packages', [PromotionController::class, 'packages']);
 Route::get('/promotions/banners',  [PromotionController::class, 'banners']);
 
+// Push subscription renewal — called from the service worker, which has no auth token.
+// Authorized by the unguessable old endpoint value instead (see controller for details).
+Route::post('/push-resubscribe', [\App\Http\Controllers\Api\PushSubscriptionController::class, 'renew']);
+
 // Email Verification (signed URL — public)
 Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
     ->middleware(['signed', 'throttle:6,1'])
