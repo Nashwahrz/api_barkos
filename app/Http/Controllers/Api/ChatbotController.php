@@ -466,15 +466,18 @@ class ChatbotController extends Controller
                     $keywordArg = $functionCall['args']['keyword'] ?? '';
                     $items = $runProductSearch($keywordArg);
 
+                    $functionResponse = [
+                        'name'     => 'cari_produk',
+                        'response' => ['items' => $items],
+                    ];
+                    if (isset($functionCall['id'])) {
+                        $functionResponse['id'] = $functionCall['id'];
+                    }
+
                     $contents[] = ['role' => 'model', 'parts' => [['functionCall' => $functionCall]]];
                     $contents[] = [
-                        'role'  => 'function',
-                        'parts' => [[
-                            'functionResponse' => [
-                                'name'     => 'cari_produk',
-                                'response' => ['items' => $items],
-                            ],
-                        ]],
+                        'role'  => 'user',
+                        'parts' => [['functionResponse' => $functionResponse]],
                     ];
 
                     $secondResponse = Http::timeout(15)->post($geminiUrl, [
@@ -498,22 +501,27 @@ class ChatbotController extends Controller
                                 'url'      => $it['url'],
                             ], $items);
                         } else {
+                            \Illuminate\Support\Facades\Log::warning('Gemini second call: no text in response', ['body' => $secondResponse->body()]);
                             $aiText = $fallbackResponse($userMessage);
                         }
                     } else {
+                        \Illuminate\Support\Facades\Log::warning('Gemini second call failed', ['status' => $secondResponse->status(), 'body' => $secondResponse->body()]);
                         $aiText = $fallbackResponse($userMessage);
                     }
                 } elseif (isset($parts[0]['text'])) {
                     // Chit-chat / FAQ answered directly without needing product data.
                     $aiText = $parts[0]['text'];
                 } else {
+                    \Illuminate\Support\Facades\Log::warning('Gemini first call: no functionCall or text found', ['body' => $response->body()]);
                     $aiText = $fallbackResponse($userMessage);
                 }
             } else {
                 // Fallback untuk semua error Gemini (400, 401, quota habis, dll)
+                \Illuminate\Support\Facades\Log::warning('Gemini first call failed', ['status' => $response->status(), 'body' => $response->body()]);
                 $aiText = $fallbackResponse($userMessage);
             }
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Chatbot Gemini call exception', ['error' => $e->getMessage()]);
             $aiText = $fallbackResponse($userMessage);
         }
 
