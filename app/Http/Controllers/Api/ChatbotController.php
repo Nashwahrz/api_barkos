@@ -50,7 +50,8 @@ class ChatbotController extends Controller
             'kalo', 'kalau', 'belum', 'apa', 'semua', 'daftar', 'list', 'tampilkan', 'produk', 'kamu',
             'barang', 'barangnya', 'dengan', 'jarak', 'dekat', 'jauh', 'lokasi', 'posisi', 'paling',
             'terdekat', 'sekitar', 'mana', 'dimana', 'baru', 'terbaru', 'terakhir', 'semua', 'seluruh',
-            'saat', 'kini', 'skrg', 'dulu', 'hari', 'toko', 'lapak'
+            'saat', 'kini', 'skrg', 'dulu', 'hari', 'toko', 'lapak',
+            'sini', 'situ', 'sana', 'kos', 'kosan', 'rumah', 'tempat'
         ];
 
         $words    = explode(' ', strtolower(preg_replace('/[^a-zA-Z0-9\s]/', '', $allUserText)));
@@ -180,9 +181,44 @@ class ChatbotController extends Controller
         }
 
         $hasLocation = (bool)($userLat && $userLng);
-        $locationRules = $hasLocation 
-            ? "lokasi sudah dibagikan, gunakan info Jarak yang ada." 
+        $locationRules = $hasLocation
+            ? "lokasi sudah dibagikan, gunakan info Jarak yang ada."
             : "koordinat belum dibagikan (tidak ada info Jarak), minta user klik tombol 📍 (Pin Lokasi).";
+
+        // Struktural intents (terdekat/terbaru/semua) TIDAK boleh bergantung pada hasil
+        // filter kata kunci — kata sehari-hari yang lolos stopword list (mis. "sini",
+        // "saat") bisa membuat $products kosong padahal katalog aslinya tidak kosong.
+        // Jadi query ulang tanpa filter keyword, khusus untuk intent-intent ini.
+        $allAvailableProducts = \App\Models\Product::where('status_terjual', false)
+            ->with('category')->latest()->limit(50)->get();
+
+        $allDistances = [];
+        if ($hasLocation) {
+            foreach ($allAvailableProducts as $p) {
+                if ($p->latitude && $p->longitude) {
+                    $lat1 = deg2rad((float) $userLat);
+                    $lon1 = deg2rad((float) $userLng);
+                    $lat2 = deg2rad((float) $p->latitude);
+                    $lon2 = deg2rad((float) $p->longitude);
+                    $dLat = $lat2 - $lat1;
+                    $dLon = $lon2 - $lon1;
+                    $a = sin($dLat / 2) ** 2 + cos($lat1) * cos($lat2) * sin($dLon / 2) ** 2;
+                    $allDistances[$p->id] = round(6371 * 2 * asin(sqrt($a)), 1);
+                }
+            }
+        }
+
+        $allProductListString = $allAvailableProducts->isEmpty()
+            ? "Saat ini tidak ada barang yang tersedia di database Lapak Kos."
+            : $allAvailableProducts->map(function ($p) use ($allDistances) {
+                $distance = $allDistances[$p->id] ?? null;
+                $jarakText = $distance !== null ? ", Jarak: {$distance} km" : "";
+                $price = number_format($p->harga, 0, ',', '.');
+                $namaBarang = mb_convert_encoding($p->nama_barang, 'UTF-8', 'UTF-8');
+                $kondisi = mb_convert_encoding($p->kondisi, 'UTF-8', 'UTF-8');
+                $desc = mb_convert_encoding(substr(trim(preg_replace('/\s+/', ' ', $p->deskripsi ?? '')), 0, 150), 'UTF-8', 'UTF-8');
+                return "- [{$namaBarang}](/products/{$p->id}) (Kondisi: {$kondisi}{$jarakText}) - Rp {$price}\n  Detail: {$desc}...\n";
+            })->implode('');
 
         $systemPrompt = "Kamu adalah Miu, asisten cerdas dari 'Lapak Kos' (marketplace barang bekas mahasiswa). Tugasmu: membantu membandingkan barang, memberi saran, dan MEREKOMENDASIKAN BARANG HANYA dari database Lapak Kos kepada pengguna, serta MENJAWAB PERTANYAAN seputar cara penggunaan website Lapak Kos.\n"
             . "Selalu jawab dengan bahasa Indonesia yang santai, ramah, dan singkat (maksimal 4-5 kalimat). Gunakan emoji secukupnya.\n\n"
@@ -200,7 +236,7 @@ class ChatbotController extends Controller
 
         $suggestions = null;
 
-        $fallbackResponse = function($msg) use ($products, $productListString, $keywords, &$suggestions, $osrmDistances, $hasLocation) {
+        $fallbackResponse = function($msg) use ($products, $productListString, $keywords, &$suggestions, $hasLocation, $allAvailableProducts, $allDistances, $allProductListString) {
             // Bersihkan tanda baca untuk pengecekan kata
             $cleanMsg = strtolower(preg_replace('/[^a-zA-Z0-9\s]/', '', $msg));
             
@@ -220,20 +256,20 @@ class ChatbotController extends Controller
                 }
 
                 // Products with coordinates but no computed distance (edge case:
-                // OSRM & Haversine both skipped upstream because none had lat/lng at all).
-                $productsWithCoords = $products->filter(fn($p) => $p->latitude && $p->longitude);
+                // no product in the catalog has lat/lng set at all).
+                $productsWithCoords = $allAvailableProducts->filter(fn($p) => $p->latitude && $p->longitude);
                 if ($productsWithCoords->isEmpty()) {
                     $suggestions = ['Semua list barang', 'List barang terbaru'];
                     return "*(Mode Offline)* 🤖\nBelum ada barang yang penjualnya mengatur titik lokasi, jadi Miu belum bisa hitung jaraknya. Coba lihat semua barang yang tersedia dulu, yuk!";
                 }
 
                 $nearestProducts = $productsWithCoords
-                    ->sortBy(fn($p) => $osrmDistances[$p->id] ?? PHP_INT_MAX)
+                    ->sortBy(fn($p) => $allDistances[$p->id] ?? PHP_INT_MAX)
                     ->take(5);
 
                 $str = "";
                 foreach ($nearestProducts as $p) {
-                    $distance = $osrmDistances[$p->id] ?? null;
+                    $distance = $allDistances[$p->id] ?? null;
                     $jarakText = $distance !== null ? ", Jarak: {$distance} km" : "";
                     $price = number_format($p->harga, 0, ',', '.');
                     $url = "/products/{$p->id}";
@@ -248,10 +284,10 @@ class ChatbotController extends Controller
             // 2. Cek intent List Barang Terbaru (5 hari terakhir)
             $isListTerbaru = preg_match('/(list|daftar|tampilkan).*(baru|terbaru|terakhir)/', $cleanMsg);
             if ($isListTerbaru) {
-                $latestProducts = $products->filter(function($p) {
+                $latestProducts = $allAvailableProducts->filter(function($p) {
                     return $p->created_at && $p->created_at->diffInDays(now()) <= 5;
                 });
-                
+
                 if ($latestProducts->isEmpty()) {
                     $suggestions = ['Semua list barang', 'Barang terdekat dari sini'];
                     return "*(Mode Offline)* 🤖\nBelum ada barang baru yang ditambahkan dalam 5 hari terakhir.";
@@ -259,7 +295,7 @@ class ChatbotController extends Controller
 
                 $str = "";
                 foreach ($latestProducts as $p) {
-                    $distance = $osrmDistances[$p->id] ?? null;
+                    $distance = $allDistances[$p->id] ?? null;
                     $jarakText = $distance !== null ? ", Jarak: {$distance} km" : "";
                     $price = number_format($p->harga, 0, ',', '.');
                     $url = "/products/{$p->id}";
@@ -286,9 +322,9 @@ class ChatbotController extends Controller
 
             // 4. Cek intent Semua List Barang
             $isListAll = preg_match('/(semua|seluruh|daftar|list|katalog).* (barang|produk|item)|(barang|produk) (apa saja|yg ada|yang ada)/', $cleanMsg);
-            if ($isListAll || (empty($keywords) && !$products->isEmpty())) {
+            if ($isListAll || empty($keywords)) {
                 $suggestions = ['Barang terdekat dari sini', 'List barang terbaru'];
-                return "*(Mode Offline)* 🤖\nTentu! Berikut adalah semua daftar barang yang tersedia di Lapak Kos saat ini:\n\n" . $productListString;
+                return "*(Mode Offline)* 🤖\nTentu! Berikut adalah semua daftar barang yang tersedia di Lapak Kos saat ini:\n\n" . $allProductListString;
             }
 
             // 5. Jika mencari barang spesifik dan ketemu
