@@ -24,7 +24,7 @@ class KtpVerificationService
         }
 
         try {
-            $response = Http::attach(
+            $response = Http::timeout(20)->attach(
                 'file', file_get_contents($absoluteImagePath), 'ktp_document.jpg'
             )->post('https://api.ocr.space/parse/image', [
                 'apikey' => $apiKey,
