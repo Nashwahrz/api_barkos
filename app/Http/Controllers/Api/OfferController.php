@@ -35,6 +35,11 @@ class OfferController extends Controller
             return response()->json(['message' => 'Produk ini sudah terjual.'], 422);
         }
 
+        // Seller may disable negotiation for this product
+        if (!$product->is_offer_enabled) {
+            return response()->json(['message' => 'Penjual tidak menerima tawaran untuk produk ini.'], 422);
+        }
+
         // Validate minimum offer price
         if ($product->minimum_offer_price !== null && $request->offered_price < $product->minimum_offer_price) {
             return response()->json([

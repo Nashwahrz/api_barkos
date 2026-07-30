@@ -23,12 +23,14 @@ class Product extends Model
         'latitude',
         'longitude',
         'minimum_offer_price',
+        'is_offer_enabled',
         'is_promoted',
         'promoted_until',
     ];
 
     protected $casts = [
-        'is_promoted'    => 'boolean',
+        'is_promoted'      => 'boolean',
+        'is_offer_enabled' => 'boolean',
         'status_terjual' => 'boolean',
         'promoted_until' => 'datetime',
         'harga'          => 'integer',

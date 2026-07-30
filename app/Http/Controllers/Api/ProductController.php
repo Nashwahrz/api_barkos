@@ -128,6 +128,10 @@ class ProductController extends Controller
     {
         $data = $request->validated();
 
+        if (isset($data['is_offer_enabled']) && !$data['is_offer_enabled']) {
+            $data['minimum_offer_price'] = null;
+        }
+
         if ($request->hasFile('foto')) {
             $data['foto'] = $request->file('foto')->store('products', 'public');
         }
@@ -161,6 +165,10 @@ class ProductController extends Controller
         }
 
         $data = $request->validated();
+
+        if (isset($data['is_offer_enabled']) && !$data['is_offer_enabled']) {
+            $data['minimum_offer_price'] = null;
+        }
 
         if ($request->hasFile('foto')) {
             if ($product->foto) {

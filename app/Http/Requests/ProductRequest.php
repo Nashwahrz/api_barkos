@@ -26,6 +26,7 @@ class ProductRequest extends FormRequest
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'minimum_offer_price' => ['nullable', 'numeric', 'min:0', 'lte:harga'],
+            'is_offer_enabled' => ['nullable', 'boolean'],
         ];
     }
 }

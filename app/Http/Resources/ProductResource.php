@@ -16,6 +16,7 @@ class ProductResource extends JsonResource
             'deskripsi'      => $this->deskripsi,
             'harga'          => $this->harga,
             'minimum_offer_price' => $this->minimum_offer_price,
+            'is_offer_enabled' => (bool) $this->is_offer_enabled,
             'foto'           => $this->foto ? '/api/storage/' . $this->foto : null,
             'kondisi'        => $this->kondisi,
             'durasi_pemakaian' => $this->durasi_pemakaian,
