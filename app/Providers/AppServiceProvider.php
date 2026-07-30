@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Support\ServiceProvider;
 
@@ -41,6 +42,11 @@ class AppServiceProvider extends ServiceProvider
 
             // Return the frontend URL with the query parameters attached
             return $frontendUrl . "/auth/verify-email/{$id}/{$hash}?{$query}";
+        });
+
+        ResetPassword::createUrlUsing(function (object $notifiable, string $token) {
+            $frontendUrl = config('services.frontend_url');
+            return $frontendUrl . "/auth/reset-password?token={$token}&email=" . urlencode($notifiable->getEmailForPasswordReset());
         });
     }
 }

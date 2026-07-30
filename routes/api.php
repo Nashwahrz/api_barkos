@@ -33,6 +33,10 @@ Route::get('/storage/{path}', function ($path) {
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login',    [AuthController::class, 'login']);
+
+// Forgot / Reset Password
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:6,1');
+Route::post('/reset-password',  [AuthController::class, 'resetPassword'])->middleware('throttle:6,1');
 Route::post('/chatbot',  [\App\Http\Controllers\Api\ChatbotController::class, 'chat']);
 
 // Google OAuth
