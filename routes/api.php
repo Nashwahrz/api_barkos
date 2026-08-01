@@ -146,6 +146,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ── Admin Dashboard & Management ─────────────────────────────────────
     Route::get('/admin/stats',             [AdminDashboardController::class, 'stats']);
+    Route::get('/admin/stats/trends',      [AdminDashboardController::class, 'trends']);
     Route::get('/admin/recent-activities', [AdminDashboardController::class, 'recentActivities']);
     Route::get('/admin/promotions',        [PromotionController::class, 'adminIndex']);
     Route::delete('/admin/promotions/{promotion}', [PromotionController::class, 'destroy']);

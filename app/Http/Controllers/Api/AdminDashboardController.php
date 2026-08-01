@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Chat;
 use App\Models\Product;
 use App\Models\Report;
+use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Resources\ProductResource;
+use Illuminate\Support\Carbon;
 
 class AdminDashboardController extends Controller
 {
@@ -66,6 +68,38 @@ class AdminDashboardController extends Controller
             'recent_users' => $recentUsers,
             'recent_products' => $recentProducts,
             'recent_reports' => $recentReports,
+        ]);
+    }
+
+    /**
+     * Get monthly trend data (last 6 months) for the dashboard chart.
+     */
+    public function trends(Request $request): JsonResponse
+    {
+        if ($request->user()->role !== 'super_admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $months = collect(range(5, 0))->map(fn ($i) => Carbon::now()->subMonths($i)->startOfMonth());
+
+        $countByMonth = function (string $model, ?string $status = null) use ($months) {
+            return $months->map(function (Carbon $month) use ($model, $status) {
+                $query = $model::whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()]);
+                if ($status) {
+                    $query->where('status', $status);
+                }
+
+                return [
+                    'month' => $month->translatedFormat('M Y'),
+                    'value' => $query->count(),
+                ];
+            });
+        };
+
+        return response()->json([
+            'users' => $countByMonth(User::class),
+            'products' => $countByMonth(Product::class),
+            'transactions' => $countByMonth(Transaction::class, 'completed'),
         ]);
     }
 
