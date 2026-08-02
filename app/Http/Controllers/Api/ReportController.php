@@ -57,6 +57,8 @@ class ReportController extends Controller
             'status' => 'pending',
         ]);
 
+        \App\Jobs\NotifyAdminsOfNewReportJob::dispatchAfterResponse($report->load(['reporter', 'product.user']));
+
         return response()->json([
             'message' => 'Report submitted successfully',
             'data' => $report
