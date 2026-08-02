@@ -104,4 +104,43 @@ class ReportController extends Controller
             'data' => $report
         ]);
     }
+
+    /**
+     * Reject a report: the reported product is left untouched, report is dismissed.
+     */
+    public function reject(Request $request, Report $report): JsonResponse
+    {
+        if ($request->user()->role !== 'super_admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $report->update(['status' => 'dismissed']);
+
+        return response()->json([
+            'message' => 'Laporan berhasil ditolak',
+            'data' => $report->load(['reporter', 'product.user', 'product.category']),
+        ]);
+    }
+
+    /**
+     * Accept a report by deleting the reported product; the report is kept as
+     * a resolved record (product_id becomes null once the product is gone).
+     */
+    public function deleteReportedProduct(Request $request, Report $report): JsonResponse
+    {
+        if ($request->user()->role !== 'super_admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        if ($report->product) {
+            $report->product->delete();
+        }
+
+        $report->update(['status' => 'resolved']);
+
+        return response()->json([
+            'message' => 'Produk berhasil dihapus dan laporan diterima',
+            'data' => $report->fresh()->load(['reporter', 'product.user', 'product.category']),
+        ]);
+    }
 }

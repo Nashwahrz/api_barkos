@@ -130,6 +130,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/reports',         [ReportController::class, 'store']);
     Route::get('/reports/{report}', [ReportController::class, 'show']);
     Route::put('/reports/{report}', [ReportController::class, 'update']);
+    Route::patch('/reports/{report}/reject', [ReportController::class, 'reject']);
+    Route::delete('/reports/{report}/product', [ReportController::class, 'deleteReportedProduct']);
 
     // ── Transactions (Phase 3 — PRD §2.1.4, §2.2.3) ────────────────────
     Route::get('/transactions',                 [\App\Http\Controllers\Api\TransactionController::class, 'index']);
