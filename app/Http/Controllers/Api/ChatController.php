@@ -179,4 +179,43 @@ class ChatController extends Controller
             'data'    => new ChatResource($chat->load(['sender', 'receiver', 'product', 'replyTo.sender'])),
         ], 201);
     }
+
+    /**
+     * Delete a single message. Only a participant of the conversation may delete it,
+     * and deletion is permanent for both sides.
+     */
+    public function destroy(Chat $chat): JsonResponse
+    {
+        $authId = Auth::id();
+
+        if ($chat->sender_id !== $authId && $chat->receiver_id !== $authId) {
+            return response()->json(['message' => 'Tidak diizinkan menghapus pesan ini.'], 403);
+        }
+
+        $chat->delete();
+
+        return response()->json(['message' => 'Pesan berhasil dihapus']);
+    }
+
+    /**
+     * Delete the entire chat history between the auth user and another user for a
+     * specific product. Permanent for both sides.
+     */
+    public function destroyConversation(Product $product, User $user): JsonResponse
+    {
+        $authId  = Auth::id();
+        $otherId = $user->id;
+
+        Chat::where('product_id', $product->id)
+            ->where(function ($query) use ($authId, $otherId) {
+                $query->where(function ($q) use ($authId, $otherId) {
+                    $q->where('sender_id', $authId)->where('receiver_id', $otherId);
+                })->orWhere(function ($q) use ($authId, $otherId) {
+                    $q->where('sender_id', $otherId)->where('receiver_id', $authId);
+                });
+            })
+            ->delete();
+
+        return response()->json(['message' => 'Percakapan berhasil dihapus']);
+    }
 }
