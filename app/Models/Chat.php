@@ -12,6 +12,7 @@ class Chat extends Model
         'receiver_id',
         'product_id',
         'message',
+        'reply_to_id',
         'is_read'
     ];
 
@@ -37,5 +38,13 @@ class Chat extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * Get the message this chat is replying to, if any.
+     */
+    public function replyTo(): BelongsTo
+    {
+        return $this->belongsTo(Chat::class, 'reply_to_id');
     }
 }

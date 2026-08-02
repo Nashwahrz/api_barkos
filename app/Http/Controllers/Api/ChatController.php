@@ -77,7 +77,7 @@ class ChatController extends Controller
         $authId  = Auth::id();
         $otherId = $user->id;
 
-        $chats = Chat::with(['sender', 'receiver', 'product'])
+        $chats = Chat::with(['sender', 'receiver', 'product', 'replyTo.sender'])
             ->where('product_id', $product->id)
             ->where(function ($query) use ($authId, $otherId) {
                 $query->where(function ($q) use ($authId, $otherId) {
@@ -127,6 +127,7 @@ class ChatController extends Controller
         $request->validate([
             'message'     => 'required|string|max:2000',
             'receiver_id' => 'required|exists:users,id',
+            'reply_to_id' => 'nullable|integer|exists:chats,id',
         ]);
 
         $senderId   = Auth::id();
@@ -150,14 +151,24 @@ class ChatController extends Controller
             ], 403);
         }
 
+        // Reply must belong to the same product conversation.
+        $replyToId = $request->reply_to_id;
+        if ($replyToId) {
+            $replyTarget = Chat::where('id', $replyToId)->where('product_id', $product->id)->first();
+            if (!$replyTarget) {
+                $replyToId = null;
+            }
+        }
+
         $chat = Chat::create([
             'sender_id'   => $senderId,
             'receiver_id' => $receiverId,
             'product_id'  => $product->id,
             'message'     => $request->message,
+            'reply_to_id' => $replyToId,
             'is_read'     => false,
         ]);
-        
+
         $receiver = User::find($receiverId);
         if ($receiver) {
             $receiver->notify(new \App\Notifications\ChatNotification($chat));
@@ -165,7 +176,7 @@ class ChatController extends Controller
 
         return response()->json([
             'message' => 'Message sent successfully',
-            'data'    => new ChatResource($chat->load(['sender', 'receiver', 'product'])),
+            'data'    => new ChatResource($chat->load(['sender', 'receiver', 'product', 'replyTo.sender'])),
         ], 201);
     }
 }
