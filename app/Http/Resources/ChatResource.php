@@ -16,11 +16,16 @@ class ChatResource extends JsonResource
             'product' => new ProductResource($this->whenLoaded('product')),
             'message' => $this->message,
             'reply_to' => $this->whenLoaded('replyTo', function () {
-                return $this->replyTo ? [
+                if (!$this->replyTo) {
+                    return null;
+                }
+                return [
                     'id' => $this->replyTo->id,
                     'message' => $this->replyTo->message,
-                    'sender' => new UserResource($this->replyTo->whenLoaded('sender')),
-                ] : null;
+                    'sender' => $this->replyTo->relationLoaded('sender') && $this->replyTo->sender
+                        ? new UserResource($this->replyTo->sender)
+                        : null,
+                ];
             }),
             'is_read' => (bool) $this->is_read,
             'created_at' => $this->created_at,
