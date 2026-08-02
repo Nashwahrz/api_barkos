@@ -21,6 +21,8 @@ class UserResource extends JsonResource
             'latitude'          => $this->latitude,
             'longitude'         => $this->longitude,
             'email_verified_at' => $this->email_verified_at,
+            'is_online'         => $this->isOnline(),
+            'last_active_at'    => $this->last_active_at,
             'bank_accounts'     => $this->whenLoaded('bankAccounts'),
             'created_at'        => $this->created_at,
         ];

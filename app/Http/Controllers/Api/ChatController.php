@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ChatResource;
+use App\Http\Resources\UserResource;
 use App\Models\Chat;
 use App\Models\Product;
 use App\Models\User;
@@ -61,7 +62,7 @@ class ChatController extends Controller
 
             return [
                 'last_message' => new ChatResource($chat),
-                'other_user'   => ($chat->sender_id === $userId) ? $chat->receiver : $chat->sender,
+                'other_user'   => new UserResource(($chat->sender_id === $userId) ? $chat->receiver : $chat->sender),
                 'unread_count' => (int) $unreadCount,
             ];
         });

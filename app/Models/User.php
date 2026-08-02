@@ -90,7 +90,17 @@ class User extends Authenticatable implements MustVerifyEmail
             'is_identity_verified' => 'boolean',
             'latitude'          => 'decimal:7',
             'longitude'         => 'decimal:7',
+            'last_active_at'    => 'datetime',
         ];
+    }
+
+    /**
+     * A user counts as online if they've hit the API within the last 30 seconds
+     * (matches the chat page's 3s poll interval plus TrackUserActivity's throttle window).
+     */
+    public function isOnline(): bool
+    {
+        return $this->last_active_at !== null && $this->last_active_at->gt(now()->subSeconds(45));
     }
 
     /**
