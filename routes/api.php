@@ -174,6 +174,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Admin: Products (Phase 5.1)
     Route::get('/admin/products',          [AdminDashboardController::class, 'allProducts']);
+    Route::get('/admin/products/{product}', [AdminDashboardController::class, 'showProduct']);
     Route::delete('/admin/products/{product}', [AdminDashboardController::class, 'removeProduct']);
     // ── User Management (Admin) ──────────────────────────────────────────
     Route::get('/users',                    [UserController::class, 'index']);

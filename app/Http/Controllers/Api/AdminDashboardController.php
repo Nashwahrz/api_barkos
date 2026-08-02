@@ -120,6 +120,20 @@ class AdminDashboardController extends Controller
     }
 
     /**
+     * Phase 5.1 - Get a single product's full detail for admin management.
+     */
+    public function showProduct(Request $request, Product $product): JsonResponse
+    {
+        if ($request->user()->role !== 'super_admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        return response()->json([
+            'data' => new ProductResource($product->load(['user', 'category', 'images']))
+        ]);
+    }
+
+    /**
      * Phase 5.1 - Delete any product (Admin Only).
      */
     public function removeProduct(Request $request, Product $product): JsonResponse
