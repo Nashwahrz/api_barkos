@@ -20,10 +20,22 @@ class ReportController extends Controller
         }
 
         $reports = Report::with(['reporter', 'product.user', 'product.category'])->latest()->get();
+        $reports->each(fn ($report) => $this->normalizeProductPhoto($report));
 
         return response()->json([
             'data' => $reports
         ]);
+    }
+
+    /**
+     * Prefix a loaded report's product photo path so the frontend can resolve it
+     * the same way ProductResource does (raw DB paths otherwise 404).
+     */
+    private function normalizeProductPhoto(Report $report): void
+    {
+        if ($report->product && $report->product->foto && !str_starts_with($report->product->foto, '/api/storage/')) {
+            $report->product->foto = '/api/storage/' . $report->product->foto;
+        }
     }
 
     /**
@@ -60,8 +72,11 @@ class ReportController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        $report->load(['reporter', 'product.user', 'product.category']);
+        $this->normalizeProductPhoto($report);
+
         return response()->json([
-            'data' => $report->load(['reporter', 'product.user', 'product.category'])
+            'data' => $report
         ]);
     }
 
