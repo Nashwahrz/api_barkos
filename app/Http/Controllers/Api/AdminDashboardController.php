@@ -112,7 +112,13 @@ class AdminDashboardController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $products = Product::with(['user', 'category'])->latest()->get();
+        $query = Product::with(['user', 'category']);
+
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->query('user_id'));
+        }
+
+        $products = $query->latest()->get();
 
         return response()->json([
             'data' => ProductResource::collection($products)
