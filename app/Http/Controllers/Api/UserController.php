@@ -38,6 +38,16 @@ class UserController extends Controller
                 'asal_kampus' => $user->asal_kampus,
                 'role'        => $user->role,
                 'is_active'   => $user->is_active,
+                'created_at'  => $user->created_at,
+                'last_active_at' => $user->last_active_at,
+                'is_online'   => $user->isOnline(),
+                'activity'    => [
+                    'products_count'          => $user->products()->count(),
+                    'products_sold_count'     => $user->products()->where('status_terjual', true)->count(),
+                    'transactions_as_seller_count'   => $user->sellerTransactions()->count(),
+                    'transactions_completed_count'   => $user->sellerTransactions()->where('status', 'completed')->count(),
+                    'transactions_as_buyer_count'    => $user->buyerTransactions()->count(),
+                ],
             ]
         ]);
     }
