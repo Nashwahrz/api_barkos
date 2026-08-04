@@ -19,8 +19,24 @@ class UserController extends Controller
         }
 
         $users = User::latest()->get();
+        $users->each(fn (User $u) => $u->avatar = self::resolveAvatarUrl($u->avatar));
 
         return response()->json(['data' => $users]);
+    }
+
+    /**
+     * Normalize a stored avatar value into a usable URL: Google avatars are
+     * already full URLs, while self-uploaded avatars are bare storage paths
+     * (e.g. "avatars/xxx.jpg") that need the "/api/storage/" prefix — same
+     * transform as UserResource::toArray() applies elsewhere.
+     */
+    private static function resolveAvatarUrl(?string $avatar): ?string
+    {
+        if (!$avatar) {
+            return null;
+        }
+
+        return str_starts_with($avatar, 'http') ? $avatar : '/api/storage/' . $avatar;
     }
 
     /**
@@ -34,7 +50,7 @@ class UserController extends Controller
                 'name'        => $user->name,
                 'email'       => $user->email,
                 'phone'       => $user->phone,
-                'avatar'      => $user->avatar,
+                'avatar'      => self::resolveAvatarUrl($user->avatar),
                 'asal_kampus' => $user->asal_kampus,
                 'role'        => $user->role,
                 'is_active'   => $user->is_active,
