@@ -125,6 +125,7 @@ class PromotionController extends Controller
                 'ad_type'      => $request->ad_type ?? 'none',
                 'ad_media_url' => $adMediaUrl,
                 'ad_title'     => $request->ad_title,
+                'max_impressions' => $package->quota_impressions,
             ]);
 
             return response()->json([
@@ -174,6 +175,7 @@ class PromotionController extends Controller
             'ad_type'      => $request->ad_type ?? 'none',
             'ad_media_url' => $adMediaUrl,
             'ad_title'     => $request->ad_title,
+            'max_impressions' => $package->quota_impressions,
         ]);
 
         return response()->json([
@@ -402,6 +404,7 @@ class PromotionController extends Controller
         $package = PromotionPackage::create([
             'name'          => $request->name,
             'duration_days' => $request->duration_days,
+            'quota_impressions' => $request->quota_impressions ?? null,
             'price'         => $request->price,
             'is_active'     => true,
         ]);
@@ -426,11 +429,12 @@ class PromotionController extends Controller
         $request->validate([
             'name'          => 'sometimes|required|string|max:255',
             'duration_days' => 'sometimes|required|integer|min:1',
+            'quota_impressions' => 'sometimes|nullable|integer|min:1',
             'price'         => 'sometimes|required|numeric|min:0',
             'is_active'     => 'sometimes|boolean',
         ]);
 
-        $package->update($request->only(['name', 'duration_days', 'price', 'is_active']));
+        $package->update($request->only(['name', 'duration_days', 'quota_impressions', 'price', 'is_active']));
 
         return response()->json([
             'message' => 'Package updated successfully.',

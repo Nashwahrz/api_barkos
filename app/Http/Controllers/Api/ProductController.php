@@ -100,6 +100,11 @@ class ProductController extends Controller
             ])
             ->values();
 
+            $promotedProductIds = $products->filter(fn($p) => $p->is_promoted && ($p->promoted_until === null || $p->promoted_until > now()))->pluck('id')->toArray();
+            if (!empty($promotedProductIds)) {
+                \App\Jobs\ProcessPromotionImpressionsJob::dispatchAfterResponse($promotedProductIds);
+            }
+
             return ProductResource::collection($products);
         }
 
@@ -108,6 +113,11 @@ class ProductController extends Controller
             ->orderByRaw('CASE WHEN is_promoted = 1 AND (promoted_until IS NULL OR promoted_until > NOW()) THEN 1 ELSE 0 END DESC')
             ->latest()
             ->paginate(20);
+
+        $promotedProductIds = collect($products->items())->filter(fn($p) => $p->is_promoted && ($p->promoted_until === null || $p->promoted_until > now()))->pluck('id')->toArray();
+        if (!empty($promotedProductIds)) {
+            \App\Jobs\ProcessPromotionImpressionsJob::dispatchAfterResponse($promotedProductIds);
+        }
 
         return ProductResource::collection($products);
     }

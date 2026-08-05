@@ -25,6 +25,8 @@ class Promotion extends Model
         'manual_proof_path',
         'manual_review_status',
         'ocr_note',
+        'max_impressions',
+        'current_impressions',
     ];
 
     protected $casts = [
@@ -64,6 +66,10 @@ class Promotion extends Model
     {
         return $query->where('status', 'active')
                      ->where('payment_status', 'paid')
-                     ->where('end_at', '>', now());
+                     ->where('end_at', '>', now())
+                     ->where(function($q) {
+                         $q->whereNull('max_impressions')
+                           ->orWhereColumn('current_impressions', '<', 'max_impressions');
+                     });
     }
 }

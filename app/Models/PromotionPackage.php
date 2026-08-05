@@ -10,6 +10,7 @@ class PromotionPackage extends Model
     protected $fillable = [
         'name',
         'duration_days',
+        'quota_impressions',
         'price',
         'is_active',
     ];
