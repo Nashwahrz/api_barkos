@@ -207,7 +207,13 @@ class TransactionController extends Controller
 
         if ($request->action === 'confirm') {
             $transaction->update(['status' => 'confirmed']);
-            $message = 'Order dikonfirmasi. Hubungi pembeli untuk proses selanjutnya.';
+
+            // Tandai produk sebagai terjual SEGERA saat dikonfirmasi,
+            // agar pembeli lain tidak bisa memesan produk yang sama.
+            // Penjual tetap harus klik "Selesaikan" setelah barang diserahkan.
+            $transaction->product->update(['status_terjual' => true]);
+
+            $message = 'Order dikonfirmasi. Produk otomatis ditandai terjual. Hubungi pembeli untuk proses selanjutnya.';
 
             $buyer = \App\Models\User::find($transaction->buyer_id);
             $buyer->notify(new \App\Notifications\TransactionNotification(
@@ -232,6 +238,7 @@ class TransactionController extends Controller
             'data'    => new TransactionResource($transaction->fresh()->load(['product', 'buyer', 'seller'])),
         ]);
     }
+
 
     // ─────────────────────────────────────────────────────────────────────
     // PATCH /api/transactions/{id}/payment
@@ -280,7 +287,7 @@ class TransactionController extends Controller
 
     // ─────────────────────────────────────────────────────────────────────
     // PATCH /api/transactions/{id}/complete
-    // Seller confirms transaction is fully complete
+    // Seller marks physical handover as done (transaction fully complete)
     // ─────────────────────────────────────────────────────────────────────
     public function complete(Transaction $transaction): JsonResponse
     {
@@ -299,7 +306,8 @@ class TransactionController extends Controller
 
         $transaction->update(['status' => 'completed']);
 
-        // Mark product as sold
+        // Produk sudah ditandai terjual sejak confirm — tidak perlu diulang di sini.
+        // Pastikan tetap true (idempotent) kalau ada edge-case.
         $transaction->product->update(['status_terjual' => true]);
 
         $buyer = \App\Models\User::find($transaction->buyer_id);
@@ -310,10 +318,11 @@ class TransactionController extends Controller
         ));
 
         return response()->json([
-            'message' => 'Transaksi selesai! Produk ditandai sebagai terjual.',
+            'message' => 'Transaksi selesai!',
             'data'    => new TransactionResource($transaction->fresh()->load(['product', 'buyer', 'seller'])),
         ]);
     }
+
 
     // ─────────────────────────────────────────────────────────────────────
     // DELETE /api/transactions/{id}/cancel
