@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\AdminDashboardController;
 use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\BankAccountController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\FavoriteController;
 use App\Http\Controllers\Api\MidtransController;
 use Illuminate\Support\Facades\Route;
 
@@ -147,6 +148,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/notifications',                [\App\Http\Controllers\Api\NotificationController::class, 'index']);
     Route::patch('/notifications/read-all',     [\App\Http\Controllers\Api\NotificationController::class, 'markAllAsRead']);
     Route::patch('/notifications/{id}/read',    [\App\Http\Controllers\Api\NotificationController::class, 'markAsRead']);
+
+    // ── Favorites ──────────────────────────────────────────────────────
+    Route::get('/favorites',                    [FavoriteController::class, 'index']);
+    Route::post('/favorites/{product}/toggle',  [FavoriteController::class, 'toggle']);
 
     // ── Admin Dashboard & Management ─────────────────────────────────────
     Route::get('/admin/stats',             [AdminDashboardController::class, 'stats']);

@@ -36,6 +36,10 @@ class Product extends Model
         'harga'          => 'integer',
     ];
 
+    protected $appends = [
+        'is_favorited',
+    ];
+
     /**
      * Get the user that owns the product.
      */
@@ -90,5 +94,30 @@ class Product extends Model
     public function getIsPromotedAttribute($value)
     {
         return $value && (!$this->promoted_until || $this->promoted_until->isFuture());
+    }
+
+    /**
+     * Get the favorites for this product.
+     */
+    public function favorites(): HasMany
+    {
+        return $this->hasMany(Favorite::class);
+    }
+
+    /**
+     * Check if the product is favorited by the currently authenticated user.
+     */
+    public function getIsFavoritedAttribute()
+    {
+        if (!auth()->check()) {
+            return false;
+        }
+
+        // We check if the relation is loaded to avoid N+1 queries if we eager loaded it.
+        if ($this->relationLoaded('favorites')) {
+            return $this->favorites->contains('user_id', auth()->id());
+        }
+
+        return $this->favorites()->where('user_id', auth()->id())->exists();
     }
 }

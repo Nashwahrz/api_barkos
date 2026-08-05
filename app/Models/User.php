@@ -77,6 +77,14 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Get the favorites of the user.
+     */
+    public function favorites(): HasMany
+    {
+        return $this->hasMany(Favorite::class);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
