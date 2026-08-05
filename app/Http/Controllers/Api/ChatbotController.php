@@ -228,7 +228,9 @@ class ChatbotController extends Controller
             . "- Cara Mengedit Profil: Buka menu 'Profil' (ikon user). Di sana kamu bisa mengubah nama, foto, password, dan menentukan titik lokasi kosmu (Pin Lokasi).\n"
             . "- Cara Cek Pesanan (sebagai pembeli): Klik ikon 'Profil', lalu pilih menu 'Pesanan Saya' untuk melihat status pesanan yang sudah dibeli. Menu ini BEDA dengan menu 'Pesan (Chat)' yang isinya obrolan dengan penjual.\n"
             . "- Cara Cek Pesanan Masuk (sebagai penjual): Buka Dashboard Penjual, lalu pilih menu 'Pesanan Masuk' untuk melihat pesanan dari pembeli.\n"
-            . "- Info Menu: Terdapat menu Beranda, Katalog, Pesan (Chat), dan Profil (di dalamnya ada submenu 'Pesanan Saya'). Khusus penjual, ada menu tambahan seperti Dashboard, Lapak Saya, Pesanan Masuk, Tawaran Masuk, Promosi, dan Rekening.\n\n"
+            . "- Cara Cek Status Tawaran/Penawaran (sebagai pembeli): Klik ikon 'Profil', lalu pilih menu 'Penawaran Saya' untuk melihat status tawaran yang sudah diajukan (pending/diterima/ditolak).\n"
+            . "- Cara Cek Tawaran Masuk (sebagai penjual): Buka Dashboard Penjual, lalu pilih menu 'Tawaran Masuk' untuk melihat tawaran dari pembeli.\n"
+            . "- Info Menu: Terdapat menu Beranda, Katalog, Pesan (Chat), dan Profil (di dalamnya ada submenu 'Pesanan Saya' dan 'Penawaran Saya'). Khusus penjual, ada menu tambahan seperti Dashboard, Lapak Saya, Pesanan Masuk, Tawaran Masuk, Promosi, dan Rekening.\n\n"
             . "ATURAN SANGAT PENTING (HARUS DIPATUHI):\n"
             . "1. Kamu TIDAK punya data barang bawaan. WAJIB panggil fungsi cari_produk untuk mendapatkan data barang setiap kali user bertanya, mencari, membandingkan, atau menanyakan ketersediaan barang apa pun -- termasuk permintaan umum seperti 'apa saja yang ada' (panggil dengan keyword kosong untuk kasus ini).\n"
             . "2. DILARANG KERAS MENGARANG ATAU MENAMBAHKAN BARANG YANG TIDAK ADA DI HASIL FUNGSI cari_produk!\n"
@@ -337,18 +339,22 @@ class ChatbotController extends Controller
             // 3. Cek intent FAQ (HANYA JIKA ada kata tanya panduan)
             $isFaq = preg_match('/(cara|bagaimana|gimana|panduan|tutorial|langkah)/', $cleanMsg);
 
-            // Cek pesanan (beli/jual) HARUS dicek duluan agar tidak ketangkap regex isBeli
-            // di bawah (kata "pesan" adalah substring dari "pesanan").
+            // Cek pesanan/tawaran (beli/jual) HARUS dicek duluan agar tidak ketangkap regex
+            // isBeli di bawah (kata "pesan" adalah substring dari "pesanan").
             $isCekPesananJual = $isFaq && preg_match('/(pesanan|orderan).*(masuk)|(masuk).*(pesanan|orderan)/', $cleanMsg);
             $isCekPesananBeli = $isFaq && !$isCekPesananJual && preg_match('/(cek|lihat|liat|status|riwayat).*(pesanan|orderan)|(pesanan|orderan).*(saya|ku)/', $cleanMsg);
+            $isCekTawaranJual = $isFaq && preg_match('/(tawaran|penawaran).*(masuk)|(masuk).*(tawaran|penawaran)/', $cleanMsg);
+            $isCekTawaranBeli = $isFaq && !$isCekTawaranJual && preg_match('/(cek|lihat|liat|status|riwayat).*(tawaran|penawaran)|(tawaran|penawaran).*(saya|ku)/', $cleanMsg);
 
-            $isBeli   = $isFaq && !$isCekPesananBeli && !$isCekPesananJual && preg_match('/(beli|pesan|order|bayar|check out|checkout|belanja)/', $cleanMsg);
+            $isBeli   = $isFaq && !$isCekPesananBeli && !$isCekPesananJual && !$isCekTawaranBeli && !$isCekTawaranJual && preg_match('/(beli|pesan|order|bayar|check out|checkout|belanja)/', $cleanMsg);
             $isJual   = $isFaq && preg_match('/(jual|dagang|tambah|posting|pasang|lapak)/', $cleanMsg);
             $isProfil = $isFaq && preg_match('/(profil|edit|ubah|ganti|password|sandi|akun|lokasi|pin)/', $cleanMsg);
 
             $faqSuggestions = ['Semua list barang', 'Barang terdekat dari sini'];
             if ($isCekPesananJual) { $suggestions = $faqSuggestions; return "**Cara Cek Pesanan Masuk (Penjual):**\nBuka Dashboard Penjual, lalu pilih menu 'Pesanan Masuk' untuk melihat pesanan dari pembeli."; }
             if ($isCekPesananBeli) { $suggestions = $faqSuggestions; return "**Cara Cek Pesanan (Pembeli):**\nKlik ikon 'Profil', lalu pilih menu 'Pesanan Saya' untuk melihat status pesanan yang sudah kamu beli. Menu ini beda ya dengan menu 'Pesan (Chat)' yang isinya obrolan sama penjual."; }
+            if ($isCekTawaranJual) { $suggestions = $faqSuggestions; return "**Cara Cek Tawaran Masuk (Penjual):**\nBuka Dashboard Penjual, lalu pilih menu 'Tawaran Masuk' untuk melihat tawaran dari pembeli."; }
+            if ($isCekTawaranBeli) { $suggestions = $faqSuggestions; return "**Cara Cek Status Tawaran (Pembeli):**\nKlik ikon 'Profil', lalu pilih menu 'Penawaran Saya' untuk melihat status tawaran yang sudah kamu ajukan (pending/diterima/ditolak)."; }
             if ($isBeli) { $suggestions = $faqSuggestions; return "**Cara Membeli Barang:**\n1. Cari barang di 'Beranda' atau 'Katalog'.\n2. Klik barang yang diminati.\n3. Pilih 'Ajukan Penawaran' untuk nego, atau 'Chat Penjual'.\n4. Jika deal, selesaikan transaksi."; }
             if ($isJual) { $suggestions = $faqSuggestions; return "**Cara Menjual Barang:**\n1. Tekan tombol 'Mulai Jual'.\n2. Masuk ke Dashboard Penjual -> 'Lapak Saya'.\n3. Tambah produk beserta foto.\n4. Tunggu pembeli menghubungi kamu!"; }
             if ($isProfil) { $suggestions = $faqSuggestions; return "**Cara Mengedit Profil:**\nBuka menu 'Profil' di pojok kanan atas. Di sana kamu bisa mengubah Nama, Foto, Password, dan titik lokasi kosmu (Pin Lokasi)."; }
