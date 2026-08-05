@@ -244,7 +244,7 @@ class ChatbotController extends Controller
             $isGreeting = preg_match('/^(halo|hai|pagi|siang|sore|malam|ping|test|tes|woy|hy)$/i', trim($cleanMsg));
             if ($isGreeting) {
                 $suggestions = ['List barang terbaru', 'Barang terdekat dari sini', 'Semua list barang'];
-                return "*(Mode Offline)* 🤖\nHalo! Saat ini koneksi Miu ke server AI sedang terputus. Tapi tenang, kamu tetap bisa mencari barang atau bertanya panduan Lapak Kos di sini!";
+                return "Halo! 👋 Ada yang bisa Miu bantu? Kamu bisa cari barang atau tanya panduan Lapak Kos di sini!";
             }
 
             // 1.5 Cek intent Barang Terdekat / Sekitar Sini (opsional dikombinasikan dengan "murah")
@@ -253,7 +253,7 @@ class ChatbotController extends Controller
             if ($isTerdekat) {
                 if (!$hasLocation) {
                     $suggestions = ['Semua list barang', 'List barang terbaru'];
-                    return "*(Mode Offline)* 🤖\nMiu butuh tau lokasi kamu nih! Coba klik tombol 📍 (Pin Lokasi) di sebelah kotak ketik chat ya, biar Miu bisa menghitung jarak barang terdekat.";
+                    return "Miu butuh tau lokasi kamu nih! Coba klik tombol 📍 (Pin Lokasi) di sebelah kotak ketik chat ya, biar Miu bisa menghitung jarak barang terdekat.";
                 }
 
                 // Products with coordinates but no computed distance (edge case:
@@ -261,7 +261,7 @@ class ChatbotController extends Controller
                 $productsWithCoords = $allAvailableProducts->filter(fn($p) => $p->latitude && $p->longitude);
                 if ($productsWithCoords->isEmpty()) {
                     $suggestions = ['Semua list barang', 'List barang terbaru'];
-                    return "*(Mode Offline)* 🤖\nBelum ada barang yang penjualnya mengatur titik lokasi, jadi Miu belum bisa hitung jaraknya. Coba lihat semua barang yang tersedia dulu, yuk!";
+                    return "Belum ada barang yang penjualnya mengatur titik lokasi, jadi Miu belum bisa hitung jaraknya. Coba lihat semua barang yang tersedia dulu, yuk!";
                 }
 
                 $nearestProducts = $isMurah
@@ -280,7 +280,7 @@ class ChatbotController extends Controller
                 }
                 $suggestions = ['Semua list barang', 'List barang terbaru'];
                 $judul = $isMurah ? "barang bekas termurah di sekitarmu" : "barang terdekat dari lokasimu";
-                return "*(Mode Offline)* 🤖\nBerikut {$judul}:\n\n" . $str . "\n💡 *Untuk jarak rute yang lebih pasti, silakan cek langsung di halaman detail produk ya!*";
+                return "Berikut {$judul}:\n\n" . $str . "\n💡 *Untuk jarak rute yang lebih pasti, silakan cek langsung di halaman detail produk ya!*";
             }
 
             // 1.6 Cek intent Barang Murah (tanpa konteks lokasi)
@@ -288,7 +288,7 @@ class ChatbotController extends Controller
                 $cheapProducts = $allAvailableProducts->sortBy(fn($p) => (float) $p->harga)->take(5);
                 if ($cheapProducts->isEmpty()) {
                     $suggestions = ['Semua list barang', 'Barang terdekat dari sini'];
-                    return "*(Mode Offline)* 🤖\nBelum ada barang yang tersedia saat ini.";
+                    return "Belum ada barang yang tersedia saat ini.";
                 }
                 $str = "";
                 foreach ($cheapProducts as $p) {
@@ -301,7 +301,7 @@ class ChatbotController extends Controller
                     $str .= "- [{$namaBarang}]({$url}) (Kondisi: {$kondisi}{$jarakText}) - Rp {$price}\n";
                 }
                 $suggestions = ['Barang terdekat dari sini', 'Semua list barang'];
-                return "*(Mode Offline)* 🤖\nBerikut barang bekas termurah yang tersedia:\n\n" . $str;
+                return "Berikut barang bekas termurah yang tersedia:\n\n" . $str;
             }
 
             // 2. Cek intent List Barang Terbaru (5 hari terakhir)
@@ -313,7 +313,7 @@ class ChatbotController extends Controller
 
                 if ($latestProducts->isEmpty()) {
                     $suggestions = ['Semua list barang', 'Barang terdekat dari sini'];
-                    return "*(Mode Offline)* 🤖\nBelum ada barang baru yang ditambahkan dalam 5 hari terakhir.";
+                    return "Belum ada barang baru yang ditambahkan dalam 5 hari terakhir.";
                 }
 
                 $str = "";
@@ -328,7 +328,7 @@ class ChatbotController extends Controller
                     $str .= "- [{$namaBarang}]({$url}) (Kondisi: {$kondisi}{$jarakText}) - Rp {$price}\n  Detail: {$desc}...\n";
                 }
                 $suggestions = ['Barang terdekat dari sini', 'Semua list barang'];
-                return "*(Mode Offline)* 🤖\nBerikut daftar barang terbaru dalam 5 hari terakhir:\n\n" . $str;
+                return "Berikut daftar barang terbaru dalam 5 hari terakhir:\n\n" . $str;
             }
 
             // 3. Cek intent FAQ (HANYA JIKA ada kata tanya panduan)
@@ -339,26 +339,26 @@ class ChatbotController extends Controller
             $isProfil = $isFaq && preg_match('/(profil|edit|ubah|ganti|password|sandi|akun|lokasi|pin)/', $cleanMsg);
             
             $faqSuggestions = ['Semua list barang', 'Barang terdekat dari sini'];
-            if ($isBeli) { $suggestions = $faqSuggestions; return "*(Mode Offline)* 🤖\n**Cara Membeli Barang:**\n1. Cari barang di 'Beranda' atau 'Katalog'.\n2. Klik barang yang diminati.\n3. Pilih 'Ajukan Penawaran' untuk nego, atau 'Chat Penjual'.\n4. Jika deal, selesaikan transaksi."; }
-            if ($isJual) { $suggestions = $faqSuggestions; return "*(Mode Offline)* 🤖\n**Cara Menjual Barang:**\n1. Tekan tombol 'Mulai Jual'.\n2. Masuk ke Dashboard Penjual -> 'Lapak Saya'.\n3. Tambah produk beserta foto.\n4. Tunggu pembeli menghubungi kamu!"; }
-            if ($isProfil) { $suggestions = $faqSuggestions; return "*(Mode Offline)* 🤖\n**Cara Mengedit Profil:**\nBuka menu 'Profil' di pojok kanan atas. Di sana kamu bisa mengubah Nama, Foto, Password, dan titik lokasi kosmu (Pin Lokasi)."; }
+            if ($isBeli) { $suggestions = $faqSuggestions; return "**Cara Membeli Barang:**\n1. Cari barang di 'Beranda' atau 'Katalog'.\n2. Klik barang yang diminati.\n3. Pilih 'Ajukan Penawaran' untuk nego, atau 'Chat Penjual'.\n4. Jika deal, selesaikan transaksi."; }
+            if ($isJual) { $suggestions = $faqSuggestions; return "**Cara Menjual Barang:**\n1. Tekan tombol 'Mulai Jual'.\n2. Masuk ke Dashboard Penjual -> 'Lapak Saya'.\n3. Tambah produk beserta foto.\n4. Tunggu pembeli menghubungi kamu!"; }
+            if ($isProfil) { $suggestions = $faqSuggestions; return "**Cara Mengedit Profil:**\nBuka menu 'Profil' di pojok kanan atas. Di sana kamu bisa mengubah Nama, Foto, Password, dan titik lokasi kosmu (Pin Lokasi)."; }
 
             // 4. Cek intent Semua List Barang
             $isListAll = preg_match('/(semua|seluruh|daftar|list|katalog).* (barang|produk|item)|(barang|produk) (apa saja|yg ada|yang ada)/', $cleanMsg);
             if ($isListAll || empty($keywords)) {
                 $suggestions = ['Barang terdekat dari sini', 'List barang terbaru'];
-                return "*(Mode Offline)* 🤖\nTentu! Berikut adalah semua daftar barang yang tersedia di Lapak Kos saat ini:\n\n" . $allProductListString;
+                return "Tentu! Berikut adalah semua daftar barang yang tersedia di Lapak Kos saat ini:\n\n" . $allProductListString;
             }
 
             // 5. Jika mencari barang spesifik dan ketemu
             if (!$products->isEmpty()) {
                 $suggestions = ['Semua list barang', 'Barang terdekat dari sini'];
-                return "*(Mode Offline)* 🤖\nBerikut hasil pencarian barang yang paling relevan dengan permintaanmu:\n\n" . $productListString;
+                return "Berikut hasil pencarian barang yang paling relevan dengan permintaanmu:\n\n" . $productListString;
             }
             
             // 6. Fallback terakhir jika tidak ada barang dan bukan FAQ
             $suggestions = ['List barang terbaru', 'Barang terdekat dari sini', 'Semua list barang'];
-            return "*(Mode Offline)* 🤖\nMaaf, Miu kurang mengerti maksudmu karena saat ini Miu sedang dalam mode offline.\n\nKamu bisa mencoba beberapa perintah berikut:\n- 📦 **List barang terbaru** (melihat barang yang baru diunggah)\n- 📍 **Barang terdekat dari sini** (mencari barang di sekitar kosmu)\n- 🛍️ **Semua list barang** (melihat keseluruhan katalog)\n- ❓ Atau tanyakan panduan seperti **Cara membeli barang** atau **Cara mengedit profil**.";
+            return "Maaf, Miu kurang mengerti maksudmu. 🙏\n\nKamu bisa mencoba beberapa perintah berikut:\n- 📦 **List barang terbaru** (melihat barang yang baru diunggah)\n- 📍 **Barang terdekat dari sini** (mencari barang di sekitar kosmu)\n- 🛍️ **Semua list barang** (melihat keseluruhan katalog)\n- ❓ Atau tanyakan panduan seperti **Cara membeli barang** atau **Cara mengedit profil**.";
         };
 
         $apiKey = config('services.gemini.key');
