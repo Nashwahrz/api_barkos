@@ -368,7 +368,7 @@ class ChatbotController extends Controller
             
             // 6. Fallback terakhir jika tidak ada barang dan bukan FAQ
             $suggestions = ['List barang terbaru', 'Barang terdekat dari sini', 'Semua list barang'];
-            return "Hmm, Miu belum nangkep nih maksudnya apa 🤔\n\nCoba deh beberapa hal ini:\n- 📦 **List barang terbaru** (lihat barang yang baru diunggah)\n- 📍 **Barang terdekat dari sini** (cari barang di sekitar kosmu)\n- 🛍️ **Semua list barang** (lihat keseluruhan katalog)\n- ❓ Atau tanyakan panduan seperti **Cara membeli barang** atau **Cara mengedit profil**.";
+            return "Miu di sini cuma bisa bantu soal jual-beli barang bekas di Lapak Kos ya 😊\n\nCoba deh beberapa hal ini:\n- 📦 **List barang terbaru** (lihat barang yang baru diunggah)\n- 📍 **Barang terdekat dari sini** (cari barang di sekitar kosmu)\n- 🛍️ **Semua list barang** (lihat keseluruhan katalog)\n- ❓ Atau tanyakan panduan seperti **Cara membeli barang** atau **Cara mengedit profil**.";
         };
 
         $apiKey = config('services.gemini.key');
