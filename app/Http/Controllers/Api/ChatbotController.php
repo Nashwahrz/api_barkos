@@ -23,7 +23,7 @@ class ChatbotController extends Controller
         $cleanUserMsg = strtolower(preg_replace('/[^a-zA-Z0-9\s]/', '', $userMessage));
         $isCommand = preg_match('/^(halo|hai|pagi|siang|sore|malam|ping|test|tes|woy|hy)$/i', trim($cleanUserMsg))
                   || preg_match('/(list|daftar|tampilkan).*(baru|terbaru|terakhir)/', $cleanUserMsg)
-                  || preg_match('/(dekat|terdekat|jarak)/', $cleanUserMsg)
+                  || preg_match('/(dekat|terdekat|jarak|sekitar)/', $cleanUserMsg)
                   || preg_match('/(semua|seluruh|daftar|list|katalog).* (barang|produk|item)|(barang|produk) (apa saja|yg ada|yang ada)/', $cleanUserMsg)
                   || preg_match('/(cara|bagaimana|gimana|panduan|tutorial|langkah)/', $cleanUserMsg);
 
@@ -247,8 +247,9 @@ class ChatbotController extends Controller
                 return "*(Mode Offline)* 🤖\nHalo! Saat ini koneksi Miu ke server AI sedang terputus. Tapi tenang, kamu tetap bisa mencari barang atau bertanya panduan Lapak Kos di sini!";
             }
 
-            // 1.5 Cek intent Barang Terdekat
-            $isTerdekat = preg_match('/(dekat|terdekat|jarak)/', $cleanMsg);
+            // 1.5 Cek intent Barang Terdekat / Sekitar Sini (opsional dikombinasikan dengan "murah")
+            $isTerdekat = preg_match('/(dekat|terdekat|jarak|sekitar)/', $cleanMsg);
+            $isMurah    = preg_match('/(murah|termurah|hemat|terjangkau)/', $cleanMsg);
             if ($isTerdekat) {
                 if (!$hasLocation) {
                     $suggestions = ['Semua list barang', 'List barang terbaru'];
@@ -263,9 +264,9 @@ class ChatbotController extends Controller
                     return "*(Mode Offline)* 🤖\nBelum ada barang yang penjualnya mengatur titik lokasi, jadi Miu belum bisa hitung jaraknya. Coba lihat semua barang yang tersedia dulu, yuk!";
                 }
 
-                $nearestProducts = $productsWithCoords
-                    ->sortBy(fn($p) => $allDistances[$p->id] ?? PHP_INT_MAX)
-                    ->take(5);
+                $nearestProducts = $isMurah
+                    ? $productsWithCoords->sortBy(fn($p) => (float) $p->harga)->take(5)
+                    : $productsWithCoords->sortBy(fn($p) => $allDistances[$p->id] ?? PHP_INT_MAX)->take(5);
 
                 $str = "";
                 foreach ($nearestProducts as $p) {
@@ -278,7 +279,29 @@ class ChatbotController extends Controller
                     $str .= "- [{$namaBarang}]({$url}) (Kondisi: {$kondisi}{$jarakText}) - Rp {$price}\n";
                 }
                 $suggestions = ['Semua list barang', 'List barang terbaru'];
-                return "*(Mode Offline)* 🤖\nBerikut barang terdekat dari lokasimu:\n\n" . $str . "\n💡 *Untuk jarak rute yang lebih pasti, silakan cek langsung di halaman detail produk ya!*";
+                $judul = $isMurah ? "barang bekas termurah di sekitarmu" : "barang terdekat dari lokasimu";
+                return "*(Mode Offline)* 🤖\nBerikut {$judul}:\n\n" . $str . "\n💡 *Untuk jarak rute yang lebih pasti, silakan cek langsung di halaman detail produk ya!*";
+            }
+
+            // 1.6 Cek intent Barang Murah (tanpa konteks lokasi)
+            if ($isMurah) {
+                $cheapProducts = $allAvailableProducts->sortBy(fn($p) => (float) $p->harga)->take(5);
+                if ($cheapProducts->isEmpty()) {
+                    $suggestions = ['Semua list barang', 'Barang terdekat dari sini'];
+                    return "*(Mode Offline)* 🤖\nBelum ada barang yang tersedia saat ini.";
+                }
+                $str = "";
+                foreach ($cheapProducts as $p) {
+                    $distance = $allDistances[$p->id] ?? null;
+                    $jarakText = $distance !== null ? ", Jarak: {$distance} km" : "";
+                    $price = number_format($p->harga, 0, ',', '.');
+                    $url = "/products/{$p->id}";
+                    $namaBarang = mb_convert_encoding($p->nama_barang, 'UTF-8', 'UTF-8');
+                    $kondisi = mb_convert_encoding($p->kondisi, 'UTF-8', 'UTF-8');
+                    $str .= "- [{$namaBarang}]({$url}) (Kondisi: {$kondisi}{$jarakText}) - Rp {$price}\n";
+                }
+                $suggestions = ['Barang terdekat dari sini', 'Semua list barang'];
+                return "*(Mode Offline)* 🤖\nBerikut barang bekas termurah yang tersedia:\n\n" . $str;
             }
 
             // 2. Cek intent List Barang Terbaru (5 hari terakhir)
