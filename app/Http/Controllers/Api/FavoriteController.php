@@ -14,16 +14,16 @@ class FavoriteController extends Controller
      */
     public function index(Request $request)
     {
-        $favorites = $request->user()->favorites()->with('product.images')->latest()->get();
+        $favorites = $request->user()->favorites()->with(['product.images', 'product.user'])->latest()->get();
         
-        // Map to return just the products, or return the favorites with nested products
+        // Map to return just the products
         $products = $favorites->map(function ($favorite) {
             return $favorite->product;
         });
         
         return response()->json([
             'status' => 'success',
-            'data' => $products
+            'data' => \App\Http\Resources\ProductResource::collection($products)
         ]);
     }
 
