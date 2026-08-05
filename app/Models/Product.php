@@ -109,15 +109,15 @@ class Product extends Model
      */
     public function getIsFavoritedAttribute()
     {
-        if (!auth()->check()) {
+        if (!auth('sanctum')->check()) {
             return false;
         }
 
         // We check if the relation is loaded to avoid N+1 queries if we eager loaded it.
         if ($this->relationLoaded('favorites')) {
-            return $this->favorites->contains('user_id', auth()->id());
+            return $this->favorites->contains('user_id', auth('sanctum')->id());
         }
 
-        return $this->favorites()->where('user_id', auth()->id())->exists();
+        return $this->favorites()->where('user_id', auth('sanctum')->id())->exists();
     }
 }

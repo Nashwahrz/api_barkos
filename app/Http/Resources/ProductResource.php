@@ -22,6 +22,7 @@ class ProductResource extends JsonResource
             'durasi_pemakaian' => $this->durasi_pemakaian,
             'status_terjual' => (bool) $this->status_terjual,
             'is_promoted'    => (bool) $this->is_promoted,
+            'is_favorited'   => $this->is_favorited,
             'promoted_until' => $this->promoted_until,
             'latitude'       => $this->latitude,
             'longitude'      => $this->longitude,
