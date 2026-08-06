@@ -244,9 +244,11 @@ class ProductController extends Controller
         if ($product->user_id !== Auth::id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
-
-        $product->update(['status_terjual' => !$product->status_terjual]);
-
+        $isSold = !$product->status_terjual;
+        $product->update([
+            'status_terjual' => $isSold,
+            'sold_at'        => $isSold ? now() : null,
+        ]);
         return response()->json([
             'message'       => $product->status_terjual ? 'Produk ditandai sebagai terjual.' : 'Produk kembali tersedia.',
             'status_terjual' => $product->status_terjual,

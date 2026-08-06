@@ -116,6 +116,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/products/{product}/chats/{user}/read', [ChatController::class, 'markAsRead']);
     Route::delete('/products/{product}/chats/{user}',    [ChatController::class, 'destroyConversation']);
     Route::delete('/chats/{chat}',                        [ChatController::class, 'destroy']);
+    Route::get('/products/{product}/chats/{user}/status', [ChatController::class, 'chatStatus']);
+    Route::post('/products/{product}/chats/{user}/close', [ChatController::class, 'closeChat']);
 
     // ── Promotions (Phase 6.1) ──────────────────────────────────────────
     Route::get('/promotions/my', [PromotionController::class, 'myPromotions']);

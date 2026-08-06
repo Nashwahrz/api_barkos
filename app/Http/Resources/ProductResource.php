@@ -24,6 +24,7 @@ class ProductResource extends JsonResource
             'kondisi'        => $this->kondisi,
             'durasi_pemakaian' => $this->durasi_pemakaian,
             'status_terjual' => (bool) $this->status_terjual,
+            'sold_at'        => $this->sold_at,
             'is_promoted'    => $this->isPromotedFor($viewer?->id, $bypassTargeting),
             'is_favorited'   => $this->is_favorited,
             'promoted_until' => $this->promoted_until,

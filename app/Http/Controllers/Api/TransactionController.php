@@ -211,7 +211,7 @@ class TransactionController extends Controller
             // Tandai produk sebagai terjual SEGERA saat dikonfirmasi,
             // agar pembeli lain tidak bisa memesan produk yang sama.
             // Penjual tetap harus klik "Selesaikan" setelah barang diserahkan.
-            $transaction->product->update(['status_terjual' => true]);
+            $transaction->product->update(['status_terjual' => true, 'sold_at' => now()]);
 
             $message = 'Order dikonfirmasi. Produk otomatis ditandai terjual. Hubungi pembeli untuk proses selanjutnya.';
 
@@ -308,7 +308,7 @@ class TransactionController extends Controller
 
         // Produk sudah ditandai terjual sejak confirm — tidak perlu diulang di sini.
         // Pastikan tetap true (idempotent) kalau ada edge-case.
-        $transaction->product->update(['status_terjual' => true]);
+        $transaction->product->update(['status_terjual' => true, 'sold_at' => now()]);
 
         $buyer = \App\Models\User::find($transaction->buyer_id);
         $buyer->notify(new \App\Notifications\TransactionNotification(

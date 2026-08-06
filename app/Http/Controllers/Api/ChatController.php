@@ -39,7 +39,6 @@ class ChatController extends Controller
 
         $chats = Chat::with(['sender', 'receiver', 'product.user', 'product.category'])
             ->whereIn('id', $latestMessageIds)
-            ->where('created_at', '>=', now()->subDays(3))
             ->latest()
             ->get();
 
@@ -51,7 +50,6 @@ class ChatController extends Controller
             )
             ->where('receiver_id', $userId)
             ->where('is_read', false)
-            ->where('created_at', '>=', now()->subDays(3))
             ->groupBy('product_id', 'sender_id')
             ->get()
             ->keyBy(fn($row) => $row->product_id . '_' . $row->sender_id);
@@ -91,7 +89,6 @@ class ChatController extends Controller
                     $q->where('sender_id', $otherId)->where('receiver_id', $authId);
                 });
             })
-            ->where('created_at', '>=', now()->subDays(3))
             ->oldest()
             ->get();
 
@@ -119,7 +116,6 @@ class ChatController extends Controller
     {
         $count = Chat::where('receiver_id', Auth::id())
             ->where('is_read', false)
-            ->where('created_at', '>=', now()->subDays(3))
             ->count();
 
         return response()->json(['count' => $count]);
@@ -163,6 +159,24 @@ class ChatController extends Controller
                 return response()->json([
                     'message' => 'Tidak dapat mengirim pesan pada konteks produk ini.',
                 ], 403);
+            }
+
+            // Determine who the buyer is in this context
+            $buyerId = $isOwner ? $receiverId : $senderId;
+
+            // Check if chat is closed manually by the seller
+            $isClosed = DB::table('closed_chats')
+                ->where('product_id', $productId)
+                ->where('buyer_id', $buyerId)
+                ->exists();
+
+            if ($isClosed) {
+                return response()->json(['message' => 'Sesi percakapan ini telah ditutup oleh penjual.'], 403);
+            }
+
+            // Check if chat is closed automatically (3 days after product sold)
+            if ($product->status_terjual && $product->sold_at && \Carbon\Carbon::parse($product->sold_at)->addDays(3)->isPast()) {
+                return response()->json(['message' => 'Sesi percakapan ini telah otomatis ditutup (3 hari sejak produk terjual).'], 403);
             }
         }
 
@@ -232,5 +246,53 @@ class ChatController extends Controller
             ->delete();
 
         return response()->json(['message' => 'Percakapan berhasil dihapus']);
+    }
+
+    /**
+     * Get chat status (whether it is closed manually or automatically).
+     */
+    public function chatStatus($productId, User $user): JsonResponse
+    {
+        $product = Product::find($productId);
+        if (!$product) {
+            return response()->json(['is_closed' => false, 'message' => 'Product not found']);
+        }
+
+        $authId = Auth::id();
+        $isOwner = $product->user_id === $authId;
+        
+        // If auth user is not the owner and not the other user (e.g. admin), they can just view it.
+        $buyerId = $isOwner ? $user->id : $authId;
+
+        $isManuallyClosed = DB::table('closed_chats')
+            ->where('product_id', $productId)
+            ->where('buyer_id', $buyerId)
+            ->exists();
+
+        $isAutoClosed = $product->status_terjual && $product->sold_at && \Carbon\Carbon::parse($product->sold_at)->addDays(3)->isPast();
+
+        return response()->json([
+            'is_closed' => $isManuallyClosed || $isAutoClosed,
+            'is_manually_closed' => $isManuallyClosed,
+            'is_auto_closed' => $isAutoClosed,
+        ]);
+    }
+
+    /**
+     * Close a chat (Only seller can close it for a specific buyer).
+     */
+    public function closeChat($productId, User $user): JsonResponse
+    {
+        $product = Product::find($productId);
+        if (!$product || $product->user_id !== Auth::id()) {
+            return response()->json(['message' => 'Tidak diizinkan menutup percakapan ini.'], 403);
+        }
+
+        DB::table('closed_chats')->updateOrInsert(
+            ['product_id' => $productId, 'buyer_id' => $user->id],
+            ['created_at' => now(), 'updated_at' => now()]
+        );
+
+        return response()->json(['message' => 'Percakapan berhasil ditutup']);
     }
 }

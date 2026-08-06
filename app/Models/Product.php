@@ -20,6 +20,7 @@ class Product extends Model
         'kondisi',
         'durasi_pemakaian',
         'status_terjual',
+        'sold_at',
         'latitude',
         'longitude',
         'minimum_offer_price',
@@ -34,6 +35,7 @@ class Product extends Model
         'is_offer_enabled' => 'boolean',
         'status_terjual' => 'boolean',
         'promoted_until' => 'datetime',
+        'sold_at'        => 'datetime',
         'harga'          => 'integer',
     ];
 
