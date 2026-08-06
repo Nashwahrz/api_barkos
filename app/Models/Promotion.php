@@ -74,4 +74,19 @@ class Promotion extends Model
                            ->orWhereColumn('current_impressions', '<', 'max_impressions');
                      });
     }
+
+    /**
+     * Scope: promotions visible to a given viewer — untargeted promotions (no
+     * random-recipient cap) are visible to everyone; targeted ones only to the
+     * user IDs rolled into target_user_ids.
+     */
+    public function scopeVisibleTo($query, ?int $userId)
+    {
+        return $query->where(function ($q) use ($userId) {
+            $q->whereNull('target_user_ids');
+            if ($userId) {
+                $q->orWhereJsonContains('target_user_ids', $userId);
+            }
+        });
+    }
 }

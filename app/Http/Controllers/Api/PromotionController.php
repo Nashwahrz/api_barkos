@@ -38,6 +38,7 @@ class PromotionController extends Controller
     {
         $banners = Promotion::with(['product'])
             ->active()
+            ->visibleTo(auth('sanctum')->id())
             ->whereHas('product', function ($query) {
                 $query->where('status_terjual', false);
             })

@@ -34,7 +34,13 @@ class ProductController extends Controller
         $maxPrice = $request->query('max_price');
         $kondisi  = $request->query('kondisi');
 
-        $query = Product::with(['user', 'category'])
+        $viewerId = auth('sanctum')->id();
+
+        $query = Product::with(['user', 'category', 'promotions' => function ($q) {
+                $q->where('status', 'active')
+                  ->where('payment_status', 'paid')
+                  ->where('end_at', '>', now());
+            }])
             ->where('status_terjual', false);
 
         // ── Keyword filter ────────────────────────────────────────────────
@@ -78,7 +84,7 @@ class ProductController extends Controller
                   ->whereNotNull('longitude');
 
             // Fetch then apply precise Haversine in PHP
-            $products = $query->get()->map(function ($product) use ($lat, $lng, $earthR) {
+            $products = $query->get()->map(function ($product) use ($lat, $lng, $earthR, $viewerId) {
                 $pLat = (float) $product->latitude;
                 $pLng = (float) $product->longitude;
 
@@ -90,17 +96,18 @@ class ProductController extends Controller
 
                 $distanceM  = $earthR * 2 * asin(sqrt($a));
                 $product->distance_km = round($distanceM / 1000, 2);
+                $product->promoted_for_viewer = $this->isPromotedForViewer($product, $viewerId) ? 1 : 0;
 
                 return $product;
             })
             ->filter(fn($p) => ($p->distance_km * 1000) <= $radius)
             ->sortBy([
-                ['is_promoted', 'desc'],   // promoted products first
-                ['distance_km', 'asc'],    // then nearest
+                ['promoted_for_viewer', 'desc'],   // promoted-to-this-viewer products first
+                ['distance_km', 'asc'],            // then nearest
             ])
             ->values();
 
-            $promotedProductIds = $products->filter(fn($p) => $p->is_promoted && ($p->promoted_until === null || $p->promoted_until > now()))->pluck('id')->toArray();
+            $promotedProductIds = $products->filter(fn($p) => $p->promoted_for_viewer)->pluck('id')->toArray();
             if (!empty($promotedProductIds)) {
                 \App\Jobs\ProcessPromotionImpressionsJob::dispatchAfterResponse($promotedProductIds);
             }
@@ -108,18 +115,57 @@ class ProductController extends Controller
             return ProductResource::collection($products);
         }
 
-        // ── Fallback: no geo params → promoted first, then latest ─────────
+        // ── Fallback: no geo params → promoted (for this viewer) first, then latest ─────────
         $products = $query
-            ->orderByRaw('CASE WHEN is_promoted = 1 AND (promoted_until IS NULL OR promoted_until > NOW()) THEN 1 ELSE 0 END DESC')
+            ->orderByRaw(
+                "CASE WHEN is_promoted = 1 AND (promoted_until IS NULL OR promoted_until > NOW()) AND EXISTS (
+                    SELECT 1 FROM promotions
+                    WHERE promotions.product_id = products.id
+                      AND promotions.status = 'active'
+                      AND promotions.payment_status = 'paid'
+                      AND promotions.end_at > NOW()
+                      AND (promotions.target_user_ids IS NULL OR JSON_CONTAINS(promotions.target_user_ids, ?))
+                ) THEN 1 ELSE 0 END DESC",
+                [json_encode($viewerId)]
+            )
             ->latest()
             ->paginate(20);
 
-        $promotedProductIds = collect($products->items())->filter(fn($p) => $p->is_promoted && ($p->promoted_until === null || $p->promoted_until > now()))->pluck('id')->toArray();
+        $promotedProductIds = collect($products->items())
+            ->filter(fn($p) => $this->isPromotedForViewer($p, $viewerId))
+            ->pluck('id')->toArray();
         if (!empty($promotedProductIds)) {
             \App\Jobs\ProcessPromotionImpressionsJob::dispatchAfterResponse($promotedProductIds);
         }
 
         return ProductResource::collection($products);
+    }
+
+    /**
+     * Whether a product's active promotion should be surfaced (boosted/bannered) to
+     * this particular viewer — untargeted promotions show to everyone, targeted ones
+     * only to the random accounts rolled into the promotion's target_user_ids.
+     */
+    private function isPromotedForViewer(Product $product, ?int $viewerId): bool
+    {
+        if (!$product->is_promoted) {
+            return false;
+        }
+
+        $promotion = $product->relationLoaded('promotions')
+            ? $product->promotions->first()
+            : $product->promotions()
+                ->where('status', 'active')
+                ->where('payment_status', 'paid')
+                ->where('end_at', '>', now())
+                ->latest()
+                ->first();
+
+        if (!$promotion || empty($promotion->target_user_ids)) {
+            return true;
+        }
+
+        return $viewerId && in_array($viewerId, $promotion->target_user_ids);
     }
 
     /**
