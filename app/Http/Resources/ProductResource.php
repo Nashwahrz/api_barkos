@@ -10,6 +10,9 @@ class ProductResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $viewer = auth('sanctum')->user();
+        $bypassTargeting = $viewer && ($viewer->id === $this->user_id || $viewer->role === 'super_admin');
+
         return [
             'id'             => $this->id,
             'nama_barang'    => $this->nama_barang,
@@ -21,7 +24,7 @@ class ProductResource extends JsonResource
             'kondisi'        => $this->kondisi,
             'durasi_pemakaian' => $this->durasi_pemakaian,
             'status_terjual' => (bool) $this->status_terjual,
-            'is_promoted'    => (bool) $this->is_promoted,
+            'is_promoted'    => $this->isPromotedFor($viewer?->id, $bypassTargeting),
             'is_favorited'   => $this->is_favorited,
             'promoted_until' => $this->promoted_until,
             'latitude'       => $this->latitude,

@@ -96,7 +96,7 @@ class ProductController extends Controller
 
                 $distanceM  = $earthR * 2 * asin(sqrt($a));
                 $product->distance_km = round($distanceM / 1000, 2);
-                $product->promoted_for_viewer = $this->isPromotedForViewer($product, $viewerId) ? 1 : 0;
+                $product->promoted_for_viewer = $product->isPromotedFor($viewerId) ? 1 : 0;
 
                 return $product;
             })
@@ -132,40 +132,13 @@ class ProductController extends Controller
             ->paginate(20);
 
         $promotedProductIds = collect($products->items())
-            ->filter(fn($p) => $this->isPromotedForViewer($p, $viewerId))
+            ->filter(fn($p) => $p->isPromotedFor($viewerId))
             ->pluck('id')->toArray();
         if (!empty($promotedProductIds)) {
             \App\Jobs\ProcessPromotionImpressionsJob::dispatchAfterResponse($promotedProductIds);
         }
 
         return ProductResource::collection($products);
-    }
-
-    /**
-     * Whether a product's active promotion should be surfaced (boosted/bannered) to
-     * this particular viewer — untargeted promotions show to everyone, targeted ones
-     * only to the random accounts rolled into the promotion's target_user_ids.
-     */
-    private function isPromotedForViewer(Product $product, ?int $viewerId): bool
-    {
-        if (!$product->is_promoted) {
-            return false;
-        }
-
-        $promotion = $product->relationLoaded('promotions')
-            ? $product->promotions->first()
-            : $product->promotions()
-                ->where('status', 'active')
-                ->where('payment_status', 'paid')
-                ->where('end_at', '>', now())
-                ->latest()
-                ->first();
-
-        if (!$promotion || empty($promotion->target_user_ids)) {
-            return true;
-        }
-
-        return $viewerId && in_array($viewerId, $promotion->target_user_ids);
     }
 
     /**
@@ -208,7 +181,11 @@ class ProductController extends Controller
      */
     public function show(Product $product): ProductResource
     {
-        return new ProductResource($product->load(['user.bankAccounts', 'category', 'images']));
+        return new ProductResource($product->load(['user.bankAccounts', 'category', 'images', 'promotions' => function ($q) {
+            $q->where('status', 'active')
+              ->where('payment_status', 'paid')
+              ->where('end_at', '>', now());
+        }]));
     }
 
     /**

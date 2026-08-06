@@ -97,6 +97,38 @@ class Product extends Model
     }
 
     /**
+     * Whether this product's active promotion should be surfaced (boosted/bannered/badged)
+     * to a given viewer. Untargeted promotions (no random-recipient cap) show to everyone;
+     * targeted ones only to the accounts rolled into target_user_ids. $bypassTargeting lets
+     * the product owner and admins always see the true global status regardless of targeting.
+     */
+    public function isPromotedFor(?int $viewerId, bool $bypassTargeting = false): bool
+    {
+        if (!$this->is_promoted) {
+            return false;
+        }
+
+        if ($bypassTargeting) {
+            return true;
+        }
+
+        $promotion = $this->relationLoaded('promotions')
+            ? $this->promotions->first()
+            : $this->promotions()
+                ->where('status', 'active')
+                ->where('payment_status', 'paid')
+                ->where('end_at', '>', now())
+                ->latest()
+                ->first();
+
+        if (!$promotion || empty($promotion->target_user_ids)) {
+            return true;
+        }
+
+        return $viewerId && in_array($viewerId, $promotion->target_user_ids);
+    }
+
+    /**
      * Get the favorites for this product.
      */
     public function favorites(): HasMany
