@@ -26,6 +26,7 @@ class Product extends Model
         'is_offer_enabled',
         'is_promoted',
         'promoted_until',
+        'payment_method',
     ];
 
     protected $casts = [

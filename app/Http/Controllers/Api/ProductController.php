@@ -155,12 +155,27 @@ class ProductController extends Controller
 
         $product = Auth::user()->products()->create($data);
 
+        if (in_array($data['payment_method'] ?? '', ['bank_transfer', 'both'])) {
+            $bankName = $request->input('bank_name');
+            $accountNumber = $request->input('account_number');
+            if ($bankName && $accountNumber) {
+                \App\Models\BankAccount::updateOrCreate(
+                    ['user_id' => Auth::id()],
+                    [
+                        'bank_name' => $bankName,
+                        'account_number' => $accountNumber,
+                        'account_name' => Auth::user()->name,
+                    ]
+                );
+            }
+        }
+
         // Notify super_admins by email about the new product
         \App\Jobs\NotifyAdminsOfNewProductJob::dispatchAfterResponse($product);
 
         return response()->json([
             'message' => 'Product created successfully',
-            'data'    => new ProductResource($product->load(['user', 'category'])),
+            'data'    => new ProductResource($product->load(['user.bankAccounts', 'category'])),
         ], 201);
     }
 
@@ -200,9 +215,24 @@ class ProductController extends Controller
 
         $product->update($data);
 
+        if (in_array($data['payment_method'] ?? $product->payment_method, ['bank_transfer', 'both'])) {
+            $bankName = $request->input('bank_name');
+            $accountNumber = $request->input('account_number');
+            if ($bankName && $accountNumber) {
+                \App\Models\BankAccount::updateOrCreate(
+                    ['user_id' => Auth::id()],
+                    [
+                        'bank_name' => $bankName,
+                        'account_number' => $accountNumber,
+                        'account_name' => Auth::user()->name,
+                    ]
+                );
+            }
+        }
+
         return response()->json([
             'message' => 'Product updated successfully',
-            'data'    => new ProductResource($product->load(['user', 'category'])),
+            'data'    => new ProductResource($product->load(['user.bankAccounts', 'category'])),
         ]);
     }
 

@@ -27,6 +27,9 @@ class ProductRequest extends FormRequest
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'minimum_offer_price' => ['nullable', 'numeric', 'min:0', 'lte:harga'],
             'is_offer_enabled' => ['nullable', 'boolean'],
+            'payment_method' => ['required', 'string', Rule::in(['cod', 'bank_transfer', 'both'])],
+            'bank_name' => ['nullable', 'string', 'max:255'],
+            'account_number' => ['nullable', 'string', 'max:255'],
         ];
     }
 }
