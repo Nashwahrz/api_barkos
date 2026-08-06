@@ -39,6 +39,7 @@ class ChatController extends Controller
 
         $chats = Chat::with(['sender', 'receiver', 'product.user', 'product.category'])
             ->whereIn('id', $latestMessageIds)
+            ->where('created_at', '>=', now()->subDays(3))
             ->latest()
             ->get();
 
@@ -50,6 +51,7 @@ class ChatController extends Controller
             )
             ->where('receiver_id', $userId)
             ->where('is_read', false)
+            ->where('created_at', '>=', now()->subDays(3))
             ->groupBy('product_id', 'sender_id')
             ->get()
             ->keyBy(fn($row) => $row->product_id . '_' . $row->sender_id);
@@ -89,6 +91,7 @@ class ChatController extends Controller
                     $q->where('sender_id', $otherId)->where('receiver_id', $authId);
                 });
             })
+            ->where('created_at', '>=', now()->subDays(3))
             ->oldest()
             ->get();
 
@@ -116,6 +119,7 @@ class ChatController extends Controller
     {
         $count = Chat::where('receiver_id', Auth::id())
             ->where('is_read', false)
+            ->where('created_at', '>=', now()->subDays(3))
             ->count();
 
         return response()->json(['count' => $count]);
