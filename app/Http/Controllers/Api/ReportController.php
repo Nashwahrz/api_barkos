@@ -196,4 +196,27 @@ class ReportController extends Controller
             'data' => $report->fresh()->load(['reporter', 'product.user', 'product.category']),
         ]);
     }
+
+    /**
+     * Get users who have received 3 or more reports across all their products.
+     */
+    public function frequentViolators(Request $request): JsonResponse
+    {
+        if ($request->user()->role !== 'super_admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $users = User::withCount('receivedReports')
+            ->having('received_reports_count', '>=', 3)
+            ->orderByDesc('received_reports_count')
+            ->get();
+
+        $users->each(function (User $u) {
+            $u->avatar = str_starts_with((string)$u->avatar, 'http') ? $u->avatar : ($u->avatar ? '/api/storage/' . $u->avatar : null);
+        });
+
+        return response()->json([
+            'data' => $users
+        ]);
+    }
 }

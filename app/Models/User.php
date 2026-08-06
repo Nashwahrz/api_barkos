@@ -29,6 +29,14 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Get the reports received by the user's products.
+     */
+    public function receivedReports(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    {
+        return $this->hasManyThrough(Report::class, Product::class, 'user_id', 'product_id', 'id', 'id');
+    }
+
+    /**
      * Get the chats sent by the user.
      */
     public function sentChats(): HasMany

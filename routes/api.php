@@ -128,6 +128,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/payment-settings', [\App\Http\Controllers\Api\PaymentSettingController::class, 'show']);
 
     // ── Reports ─────────────────────────────────────────────────────────
+    Route::get('/admin/frequent-violators', [ReportController::class, 'frequentViolators']);
     Route::get('/reports',          [ReportController::class, 'index']);
     Route::post('/reports',         [ReportController::class, 'store']);
     Route::get('/reports/{report}', [ReportController::class, 'show']);
