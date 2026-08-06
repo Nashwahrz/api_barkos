@@ -5,12 +5,36 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Chat;
 use App\Models\Report;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ReportController extends Controller
 {
+    /**
+     * Send an automated moderation warning to a reported product's seller via chat,
+     * and notify them. Used both when a report first comes in and when admin acts on
+     * it — $sender is whichever "voice" (system admin or the acting admin) it's from.
+     */
+    private function sendModerationChat(Report $report, User $sender, string $message): void
+    {
+        $seller = $report->product?->user;
+        if (!$seller || $seller->id === $sender->id) {
+            return;
+        }
+
+        $chat = Chat::create([
+            'sender_id'   => $sender->id,
+            'receiver_id' => $seller->id,
+            'product_id'  => $report->product->id,
+            'message'     => $message,
+            'is_read'     => false,
+        ]);
+
+        $seller->notify(new \App\Notifications\ChatNotification($chat));
+    }
+
     /**
      * Display a listing of reports (Super Admin Only).
      */
@@ -58,7 +82,23 @@ class ReportController extends Controller
             'status' => 'pending',
         ]);
 
-        \App\Jobs\NotifyAdminsOfNewReportJob::dispatchAfterResponse($report->load(['reporter', 'product.user']));
+        $report->load(['reporter', 'product.user']);
+
+        // Warn the seller immediately via chat, from the platform's system admin
+        // voice (the reporter obviously isn't the sender, and no specific admin
+        // has acted yet at this point).
+        $systemAdmin = User::where('role', 'super_admin')->first();
+        if ($systemAdmin) {
+            $this->sendModerationChat(
+                $report,
+                $systemAdmin,
+                "⚠️ Produk Anda \"{$report->product->nama_barang}\" telah dilaporkan oleh pengguna lain.\n\nAlasan: {$report->reason}"
+                    . ($report->description ? "\nDetail: {$report->description}" : '')
+                    . "\n\nMohon periksa kembali produk Anda agar sesuai dengan ketentuan platform. Tim kami akan segera meninjau laporan ini."
+            );
+        }
+
+        \App\Jobs\NotifyAdminsOfNewReportJob::dispatchAfterResponse($report);
 
         return response()->json([
             'message' => 'Report submitted successfully',
@@ -134,24 +174,17 @@ class ReportController extends Controller
         }
 
         if ($report->product) {
-            $seller = $report->product->user;
-
             // Sent while the product still exists so product_id stays valid at
             // insert time; the chat row survives the delete below (product_id
             // just becomes null — see the chats FK migration) so the seller keeps
             // a permanent record of why their listing was removed.
-            if ($seller && $seller->id !== $request->user()->id) {
-                $chat = Chat::create([
-                    'sender_id'   => $request->user()->id,
-                    'receiver_id' => $seller->id,
-                    'product_id'  => $report->product->id,
-                    'message'     => "⚠️ Produk Anda \"{$report->product->nama_barang}\" telah dihapus oleh Admin karena melanggar ketentuan platform.\n\nAlasan pelaporan: {$report->reason}"
-                        . ($report->description ? "\nDetail: {$report->description}" : '')
-                        . "\n\nJika Anda merasa ini kesalahan, silakan balas pesan ini untuk menghubungi Admin.",
-                    'is_read'     => false,
-                ]);
-                $seller->notify(new \App\Notifications\ChatNotification($chat));
-            }
+            $this->sendModerationChat(
+                $report,
+                $request->user(),
+                "⚠️ Produk Anda \"{$report->product->nama_barang}\" telah dihapus oleh Admin karena melanggar ketentuan platform.\n\nAlasan pelaporan: {$report->reason}"
+                    . ($report->description ? "\nDetail: {$report->description}" : '')
+                    . "\n\nJika Anda merasa ini kesalahan, silakan balas pesan ini untuk menghubungi Admin."
+            );
 
             $report->product->delete();
         }
