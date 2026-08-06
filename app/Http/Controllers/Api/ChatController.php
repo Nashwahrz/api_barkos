@@ -72,14 +72,16 @@ class ChatController extends Controller
 
     /**
      * Get chat history between the auth user and another user for a specific product.
+     * Takes the raw product ID (not route-model-bound) since a thread must remain
+     * readable even after the product itself has been deleted (e.g. by moderation).
      */
-    public function messages(Product $product, User $user): AnonymousResourceCollection
+    public function messages($productId, User $user): AnonymousResourceCollection
     {
         $authId  = Auth::id();
         $otherId = $user->id;
 
         $chats = Chat::with(['sender', 'receiver', 'product', 'replyTo.sender'])
-            ->where('product_id', $product->id)
+            ->where('product_id', $productId)
             ->where(function ($query) use ($authId, $otherId) {
                 $query->where(function ($q) use ($authId, $otherId) {
                     $q->where('sender_id', $authId)->where('receiver_id', $otherId);
@@ -96,9 +98,9 @@ class ChatController extends Controller
     /**
      * Mark messages from another user as read for a specific product.
      */
-    public function markAsRead(Product $product, User $user): JsonResponse
+    public function markAsRead($productId, User $user): JsonResponse
     {
-        Chat::where('product_id', $product->id)
+        Chat::where('product_id', $productId)
             ->where('sender_id', $user->id)
             ->where('receiver_id', Auth::id())
             ->where('is_read', false)
@@ -123,7 +125,7 @@ class ChatController extends Controller
      * Send a new message.
      * Fixed: sellers can now reply to buyers; self-chat is prevented.
      */
-    public function store(Request $request, Product $product): JsonResponse
+    public function store(Request $request, $productId): JsonResponse
     {
         $request->validate([
             'message'     => 'required|string|max:2000',
@@ -141,21 +143,29 @@ class ChatController extends Controller
             ], 422);
         }
 
-        // Validate that the conversation is valid for this product:
-        // Either the sender is the owner (replying to buyer), or the receiver is the owner (buyer messaging seller).
-        $isOwner        = $product->user_id === $senderId;
-        $receiverIsOwner = $product->user_id === $receiverId;
+        // Admins may message any user regardless of product ownership (moderation
+        // follow-ups) — everyone else must be a participant of this product's
+        // buyer/seller conversation, and the product must still exist.
+        if ($request->user()->role !== 'super_admin') {
+            $product = Product::find($productId);
+            if (!$product) {
+                return response()->json(['message' => 'Produk ini sudah tidak tersedia.'], 404);
+            }
 
-        if (!$isOwner && !$receiverIsOwner) {
-            return response()->json([
-                'message' => 'Tidak dapat mengirim pesan pada konteks produk ini.',
-            ], 403);
+            $isOwner         = $product->user_id === $senderId;
+            $receiverIsOwner = $product->user_id === $receiverId;
+
+            if (!$isOwner && !$receiverIsOwner) {
+                return response()->json([
+                    'message' => 'Tidak dapat mengirim pesan pada konteks produk ini.',
+                ], 403);
+            }
         }
 
         // Reply must belong to the same product conversation.
         $replyToId = $request->reply_to_id;
         if ($replyToId) {
-            $replyTarget = Chat::where('id', $replyToId)->where('product_id', $product->id)->first();
+            $replyTarget = Chat::where('id', $replyToId)->where('product_id', $productId)->first();
             if (!$replyTarget) {
                 $replyToId = null;
             }
@@ -164,7 +174,7 @@ class ChatController extends Controller
         $chat = Chat::create([
             'sender_id'   => $senderId,
             'receiver_id' => $receiverId,
-            'product_id'  => $product->id,
+            'product_id'  => $productId,
             'message'     => $request->message,
             'reply_to_id' => $replyToId,
             'is_read'     => false,
@@ -202,12 +212,12 @@ class ChatController extends Controller
      * Delete the entire chat history between the auth user and another user for a
      * specific product. Permanent for both sides.
      */
-    public function destroyConversation(Product $product, User $user): JsonResponse
+    public function destroyConversation($productId, User $user): JsonResponse
     {
         $authId  = Auth::id();
         $otherId = $user->id;
 
-        Chat::where('product_id', $product->id)
+        Chat::where('product_id', $productId)
             ->where(function ($query) use ($authId, $otherId) {
                 $query->where(function ($q) use ($authId, $otherId) {
                     $q->where('sender_id', $authId)->where('receiver_id', $otherId);

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Chat;
 use App\Models\Report;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -133,6 +134,25 @@ class ReportController extends Controller
         }
 
         if ($report->product) {
+            $seller = $report->product->user;
+
+            // Sent while the product still exists so product_id stays valid at
+            // insert time; the chat row survives the delete below (product_id
+            // just becomes null — see the chats FK migration) so the seller keeps
+            // a permanent record of why their listing was removed.
+            if ($seller && $seller->id !== $request->user()->id) {
+                $chat = Chat::create([
+                    'sender_id'   => $request->user()->id,
+                    'receiver_id' => $seller->id,
+                    'product_id'  => $report->product->id,
+                    'message'     => "⚠️ Produk Anda \"{$report->product->nama_barang}\" telah dihapus oleh Admin karena melanggar ketentuan platform.\n\nAlasan pelaporan: {$report->reason}"
+                        . ($report->description ? "\nDetail: {$report->description}" : '')
+                        . "\n\nJika Anda merasa ini kesalahan, silakan balas pesan ini untuk menghubungi Admin.",
+                    'is_read'     => false,
+                ]);
+                $seller->notify(new \App\Notifications\ChatNotification($chat));
+            }
+
             $report->product->delete();
         }
 
