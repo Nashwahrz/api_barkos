@@ -107,11 +107,6 @@ class ProductController extends Controller
             ])
             ->values();
 
-            $promotedProductIds = $products->filter(fn($p) => $p->promoted_for_viewer)->pluck('id')->toArray();
-            if (!empty($promotedProductIds)) {
-                \App\Jobs\ProcessPromotionImpressionsJob::dispatchAfterResponse($promotedProductIds);
-            }
-
             return ProductResource::collection($products);
         }
 
@@ -130,13 +125,6 @@ class ProductController extends Controller
             )
             ->latest()
             ->paginate(20);
-
-        $promotedProductIds = collect($products->items())
-            ->filter(fn($p) => $p->isPromotedFor($viewerId))
-            ->pluck('id')->toArray();
-        if (!empty($promotedProductIds)) {
-            \App\Jobs\ProcessPromotionImpressionsJob::dispatchAfterResponse($promotedProductIds);
-        }
 
         return ProductResource::collection($products);
     }

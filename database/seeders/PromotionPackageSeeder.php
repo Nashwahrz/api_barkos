@@ -17,28 +17,24 @@ class PromotionPackageSeeder extends Seeder
             [
                 'name'              => 'Coba-Coba (10 Orang)',
                 'duration_days'     => 1,
-                'quota_impressions' => 10,
                 'price'             => 1000.00,
                 'is_active'         => true,
             ],
             [
                 'name'              => '1 Hari Boost',
                 'duration_days'     => 1,
-                'quota_impressions' => 500,
                 'price'             => 5000.00,
                 'is_active'         => true,
             ],
             [
                 'name'              => '3 Hari Boost',
                 'duration_days'     => 3,
-                'quota_impressions' => 1500,
                 'price'             => 12000.00,
                 'is_active'         => true,
             ],
             [
                 'name'              => '7 Hari Boost',
                 'duration_days'     => 7,
-                'quota_impressions' => 5000,
                 'price'             => 25000.00,
                 'is_active'         => true,
             ],
