@@ -79,6 +79,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/profile',  [AuthController::class, 'updateProfile']);
     Route::put('/password', [AuthController::class, 'updatePassword']);
     Route::put('/location', [AuthController::class, 'updateLocation']);
+    Route::get('/users/{user}/public-profile', [UserController::class, 'publicProfile']);
 
     // ── Bank Accounts (Seller) ──────────────────────────────────────────
     Route::apiResource('/bank-accounts', BankAccountController::class)->except(['show']);

@@ -40,6 +40,32 @@ class UserController extends Controller
     }
 
     /**
+     * Public-safe brief profile for any logged-in user to view about another user
+     * (e.g. tapping a seller's name on a product page or in a chat thread).
+     * Deliberately excludes contact details (email/phone/location) that the
+     * admin-only show() endpoint below returns.
+     */
+    public function publicProfile(User $user): JsonResponse
+    {
+        return response()->json([
+            'data' => [
+                'id'          => $user->id,
+                'name'        => $user->name,
+                'avatar'      => self::resolveAvatarUrl($user->avatar),
+                'asal_kampus' => $user->asal_kampus,
+                'role'        => $user->role,
+                'created_at'  => $user->created_at,
+                'is_online'   => $user->isOnline(),
+                'last_active_at' => $user->last_active_at,
+                'activity'    => [
+                    'products_count'        => $user->products()->where('status_terjual', false)->count(),
+                    'products_sold_count'   => $user->products()->where('status_terjual', true)->count(),
+                ],
+            ],
+        ]);
+    }
+
+    /**
      * Display the specified user profile.
      */
     public function show(User $user): JsonResponse
