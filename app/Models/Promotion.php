@@ -27,12 +27,14 @@ class Promotion extends Model
         'ocr_note',
         'max_impressions',
         'current_impressions',
+        'target_user_ids',
     ];
 
     protected $casts = [
-        'start_at'    => 'datetime',
-        'end_at'      => 'datetime',
-        'amount_paid' => 'decimal:2',
+        'start_at'        => 'datetime',
+        'end_at'          => 'datetime',
+        'amount_paid'     => 'decimal:2',
+        'target_user_ids' => 'array',
     ];
 
     /**

@@ -37,10 +37,16 @@ class SendPromotionBlastJob implements ShouldQueue
             // Get the seller ID to exclude them from the blast
             $sellerId = $this->promotion->product->user_id;
 
+            $query = User::where('id', '!=', $sellerId)->whereNotNull('email');
+
+            // When the package caps recipients, target_user_ids holds the random
+            // selection rolled in PromotionActivationService; null means no cap (blast to all).
+            if (!empty($this->promotion->target_user_ids)) {
+                $query->whereIn('id', $this->promotion->target_user_ids);
+            }
+
             // Chunk users to avoid memory limit issues if there are thousands of users
-            User::where('id', '!=', $sellerId)
-                ->whereNotNull('email')
-                ->chunk(100, function ($users) {
+            $query->chunk(100, function ($users) {
                     foreach ($users as $user) {
                         try {
                             Mail::to($user->email)->send(new PromotionBlastMail($this->promotion));

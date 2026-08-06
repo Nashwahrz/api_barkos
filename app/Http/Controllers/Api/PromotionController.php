@@ -8,6 +8,7 @@ use App\Models\PaymentSetting;
 use App\Models\Product;
 use App\Models\Promotion;
 use App\Models\PromotionPackage;
+use App\Models\User;
 use App\Services\PromotionActivationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -369,6 +370,54 @@ class PromotionController extends Controller
     }
 
     /**
+     * List the random-blast target accounts for a promotion (Admin).
+     */
+    public function recipients(Request $request, Promotion $promotion): JsonResponse
+    {
+        if ($request->user()->role !== 'super_admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $ids = $promotion->target_user_ids;
+        $users = $ids
+            ? User::whereIn('id', $ids)->get(['id', 'name', 'email', 'role'])
+            : collect();
+
+        return response()->json([
+            'data' => $users,
+            'is_targeted' => (bool) $ids,
+            'recipient_count' => $promotion->package?->random_recipient_count,
+        ]);
+    }
+
+    /**
+     * Re-roll the random recipient list for a promotion (Admin).
+     * Useful for demoing the random-targeting feature without waiting for a new purchase.
+     */
+    public function rerollRecipients(Request $request, Promotion $promotion): JsonResponse
+    {
+        if ($request->user()->role !== 'super_admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        if (!$promotion->package?->random_recipient_count) {
+            return response()->json(['message' => 'Paket promosi ini tidak memiliki batas jumlah akun random.'], 422);
+        }
+
+        $ids = $this->promotionActivationService->rollRandomRecipients($promotion);
+        $promotion->update(['target_user_ids' => $ids]);
+
+        $users = $ids
+            ? User::whereIn('id', $ids)->get(['id', 'name', 'email', 'role'])
+            : collect();
+
+        return response()->json([
+            'message' => 'Daftar akun random berhasil digenerate ulang.',
+            'data' => $users,
+        ]);
+    }
+
+    /**
      * Development only: Force a promotion to be paid bypassing Midtrans
      */
     public function forcePaid(Request $request): JsonResponse
@@ -399,12 +448,14 @@ class PromotionController extends Controller
             'name'          => 'required|string|max:255',
             'duration_days' => 'required|integer|min:1',
             'price'         => 'required|numeric|min:0',
+            'random_recipient_count' => 'nullable|integer|min:1',
         ]);
 
         $package = PromotionPackage::create([
             'name'          => $request->name,
             'duration_days' => $request->duration_days,
             'quota_impressions' => $request->quota_impressions ?? null,
+            'random_recipient_count' => $request->random_recipient_count ?? null,
             'price'         => $request->price,
             'is_active'     => true,
         ]);
@@ -430,11 +481,12 @@ class PromotionController extends Controller
             'name'          => 'sometimes|required|string|max:255',
             'duration_days' => 'sometimes|required|integer|min:1',
             'quota_impressions' => 'sometimes|nullable|integer|min:1',
+            'random_recipient_count' => 'sometimes|nullable|integer|min:1',
             'price'         => 'sometimes|required|numeric|min:0',
             'is_active'     => 'sometimes|boolean',
         ]);
 
-        $package->update($request->only(['name', 'duration_days', 'quota_impressions', 'price', 'is_active']));
+        $package->update($request->only(['name', 'duration_days', 'quota_impressions', 'random_recipient_count', 'price', 'is_active']));
 
         return response()->json([
             'message' => 'Package updated successfully.',

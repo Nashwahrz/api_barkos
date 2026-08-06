@@ -161,6 +161,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/admin/promotions/{promotion}', [PromotionController::class, 'destroy']);
     Route::patch('/admin/promotions/{promotion}/approve-payment', [PromotionController::class, 'approvePayment']);
     Route::patch('/admin/promotions/{promotion}/reject-payment', [PromotionController::class, 'rejectPayment']);
+    Route::get('/admin/promotions/{promotion}/recipients', [PromotionController::class, 'recipients']);
+    Route::post('/admin/promotions/{promotion}/recipients/reroll', [PromotionController::class, 'rerollRecipients']);
 
     // Admin: Promotions Packages
     Route::post('/admin/promotions/packages', [PromotionController::class, 'storePackage']);

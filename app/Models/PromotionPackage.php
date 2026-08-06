@@ -11,6 +11,7 @@ class PromotionPackage extends Model
         'name',
         'duration_days',
         'quota_impressions',
+        'random_recipient_count',
         'price',
         'is_active',
     ];
