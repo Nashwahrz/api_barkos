@@ -18,7 +18,7 @@ class UserController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $users = User::latest()->get();
+        $users = User::withCount('receivedReports')->latest()->get();
         $users->each(fn (User $u) => $u->avatar = self::resolveAvatarUrl($u->avatar));
 
         return response()->json(['data' => $users]);

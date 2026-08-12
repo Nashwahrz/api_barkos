@@ -24,6 +24,7 @@ class UserResource extends JsonResource
             'is_online'         => $this->isOnline(),
             'last_active_at'    => $this->last_active_at,
             'bank_accounts'     => $this->whenLoaded('bankAccounts'),
+            'received_reports_count' => $this->received_reports_count ?? 0,
             'created_at'        => $this->created_at,
         ];
     }

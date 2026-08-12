@@ -120,6 +120,7 @@ class AuthController extends Controller
     {
         $user = $request->user();
         $user->load('bankAccounts');
+        $user->loadCount('receivedReports');
         return new UserResource($user);
     }
 
