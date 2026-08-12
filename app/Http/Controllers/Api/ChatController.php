@@ -81,7 +81,11 @@ class ChatController extends Controller
         $otherId = $user->id;
 
         $chats = Chat::with(['sender', 'receiver', 'product', 'replyTo.sender'])
-            ->where('product_id', $productId)
+            ->when($productId == 0 || $productId === '0', function ($q) {
+                $q->whereNull('product_id');
+            }, function ($q) use ($productId) {
+                $q->where('product_id', $productId);
+            })
             ->where(function ($query) use ($authId, $otherId) {
                 $query->where(function ($q) use ($authId, $otherId) {
                     $q->where('sender_id', $authId)->where('receiver_id', $otherId);
