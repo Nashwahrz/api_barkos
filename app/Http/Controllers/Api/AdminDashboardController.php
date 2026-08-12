@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Resources\ProductResource;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 class AdminDashboardController extends Controller
 {
@@ -148,7 +149,18 @@ class AdminDashboardController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        $seller = $product->user;
+        $productName = $product->nama_barang;
+
+        if ($product->foto) {
+            Storage::disk('public')->delete($product->foto);
+        }
+
         $product->delete();
+
+        if ($seller) {
+            $seller->notify(new \App\Notifications\ProductDeletedByAdminNotification($productName));
+        }
 
         return response()->json([
             'message' => 'Produk berhasil dihapus oleh Admin.'
