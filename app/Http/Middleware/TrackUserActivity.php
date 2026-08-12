@@ -17,6 +17,13 @@ class TrackUserActivity
     {
         $user = $request->user();
 
+        if ($user && !$user->is_active) {
+            $user->tokens()->delete();
+            return response()->json([
+                'message' => "Akun Anda telah dinonaktifkan oleh Admin karena indikasi pelanggaran.\n\nSilakan hubungi dukungan kami melalui email: admin@lapakkos.com\n\nTemplate Pesan:\nHalo Admin Lapak Kos, akun saya dengan email {$user->email} telah dinonaktifkan. Saya ingin mengajukan banding/penjelasan terkait hal ini. Mohon bantuannya."
+            ], 403);
+        }
+
         // Throttle writes: only touch the timestamp if it's stale, so we're not
         // hitting the DB on every single poll request.
         if ($user && (!$user->last_active_at || $user->last_active_at->lt(now()->subSeconds(30)))) {

@@ -88,6 +88,14 @@ class AuthController extends Controller
         }
 
         $user = User::where('email', $request->email)->firstOrFail();
+
+        if (!$user->is_active) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "Akun Anda telah dinonaktifkan oleh Admin karena indikasi pelanggaran.\n\nSilakan hubungi dukungan kami melalui email: admin@lapakkos.com\n\nTemplate Pesan:\nHalo Admin Lapak Kos, akun saya dengan email {$user->email} telah dinonaktifkan. Saya ingin mengajukan banding/penjelasan terkait hal ini. Mohon bantuannya.",
+            ], 403);
+        }
+
         $token = $user->createToken('auth_token')->plainTextToken;
         $user->load('bankAccounts');
 
