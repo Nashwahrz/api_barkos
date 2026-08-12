@@ -41,6 +41,9 @@ class ProductController extends Controller
                   ->where('payment_status', 'paid')
                   ->where('end_at', '>', now());
             }])
+            ->whereHas('user', function ($q) {
+                $q->where('is_active', true);
+            })
             ->where('status_terjual', false);
 
         // ── Keyword filter ────────────────────────────────────────────────
