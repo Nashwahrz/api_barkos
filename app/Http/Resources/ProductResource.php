@@ -23,6 +23,7 @@ class ProductResource extends JsonResource
             'foto'           => $this->foto ? '/api/storage/' . $this->foto : null,
             'kondisi'        => $this->kondisi,
             'durasi_pemakaian' => $this->durasi_pemakaian,
+            'payment_method' => $this->payment_method,
             'status_terjual' => (bool) $this->status_terjual,
             'sold_at'        => $this->sold_at,
             'is_promoted'    => $this->isPromotedFor($viewer?->id, $bypassTargeting),
