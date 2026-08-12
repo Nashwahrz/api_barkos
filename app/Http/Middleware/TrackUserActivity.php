@@ -20,7 +20,7 @@ class TrackUserActivity
         if ($user && !$user->is_active) {
             $user->tokens()->delete();
             return response()->json([
-                'message' => "Akun Anda telah dinonaktifkan oleh Admin karena indikasi pelanggaran.\n\nSilakan hubungi dukungan kami melalui email: kostmartpadang.com\n\nTemplate Pesan:\nHalo Admin Lapak Kos, akun saya dengan email {$user->email} telah dinonaktifkan. Saya ingin mengajukan banding/penjelasan terkait hal ini. Mohon bantuannya."
+                'message' => "Akun Anda telah dinonaktifkan oleh Admin karena indikasi pelanggaran.\n\nSilakan hubungi dukungan kami melalui email: kostmartpadang@gmail.com\n\nTemplate Pesan:\nHalo Admin Lapak Kos, akun saya dengan email {$user->email} telah dinonaktifkan. Saya ingin mengajukan banding/penjelasan terkait hal ini. Mohon bantuannya."
             ], 403);
         }
 

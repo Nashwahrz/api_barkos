@@ -92,7 +92,7 @@ class AuthController extends Controller
         if (!$user->is_active) {
             return response()->json([
                 'status' => 'error',
-                'message' => "Akun Anda telah dinonaktifkan oleh Admin karena indikasi pelanggaran.\n\nSilakan hubungi dukungan kami melalui email: kostmartpadang.com\n\nTemplate Pesan:\nHalo Admin Lapak Kos, akun saya dengan email {$user->email} telah dinonaktifkan. Saya ingin mengajukan banding/penjelasan terkait hal ini. Mohon bantuannya.",
+                'message' => "Akun Anda telah dinonaktifkan oleh Admin karena indikasi pelanggaran.\n\nSilakan hubungi dukungan kami melalui email: kostmartpadang@gmail.com\n\nTemplate Pesan:\nHalo Admin Lapak Kos, akun saya dengan email {$user->email} telah dinonaktifkan. Saya ingin mengajukan banding/penjelasan terkait hal ini. Mohon bantuannya.",
             ], 403);
         }
 
