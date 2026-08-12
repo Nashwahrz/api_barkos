@@ -77,7 +77,6 @@ class UserController extends Controller
                 'email'       => $user->email,
                 'phone'       => $user->phone,
                 'avatar'      => self::resolveAvatarUrl($user->avatar),
-                'identity_document_url' => self::resolveAvatarUrl($user->identity_document_path),
                 'asal_kampus' => $user->asal_kampus,
                 'role'        => $user->role,
                 'is_active'   => $user->is_active,
