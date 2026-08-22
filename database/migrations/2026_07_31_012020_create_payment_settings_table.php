@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('payment_settings', function (Blueprint $table) {
-            $table->id();
+            $table->increments('id');
             $table->boolean('midtrans_enabled')->default(true);
             $table->boolean('manual_transfer_enabled')->default(false);
             $table->string('qris_image_path', 100)->nullable();

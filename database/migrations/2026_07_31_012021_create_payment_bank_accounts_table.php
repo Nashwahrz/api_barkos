@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('payment_bank_accounts', function (Blueprint $table) {
-            $table->id();
+            $table->increments('id');
             $table->string('bank_name', 100);
             $table->string('account_number', 100);
             $table->string('account_name', 100);

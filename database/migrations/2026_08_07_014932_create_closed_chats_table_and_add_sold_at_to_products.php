@@ -16,10 +16,10 @@ return new class extends Migration
         });
 
         Schema::create('closed_chats', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('product_id');
+            $table->increments('id');
+            $table->unsignedInteger('product_id');
             $table->foreign('product_id')->references('id')->on('products')->cascadeOnDelete();
-            $table->unsignedBigInteger('buyer_id');
+            $table->unsignedInteger('buyer_id');
             $table->foreign('buyer_id')->references('id')->on('users')->cascadeOnDelete();
             $table->timestamps();
 

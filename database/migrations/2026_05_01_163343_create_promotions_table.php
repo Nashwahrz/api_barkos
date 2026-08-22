@@ -13,12 +13,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('promotions', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('product_id');
+            $table->increments('id');
+            $table->unsignedInteger('product_id');
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
-            $table->unsignedBigInteger('seller_id');
+            $table->unsignedInteger('seller_id');
             $table->foreign('seller_id')->references('id')->on('users')->onDelete('cascade');
-            $table->unsignedBigInteger('package_id');
+            $table->unsignedInteger('package_id');
             $table->foreign('package_id')->references('id')->on('promotion_packages')->onDelete('cascade');
             $table->timestamp('start_at');
             $table->timestamp('end_at');

@@ -12,12 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('offers', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('product_id');
+            $table->increments('id');
+            $table->unsignedInteger('product_id');
             $table->foreign('product_id')->references('id')->on('products')->cascadeOnDelete();
-            $table->unsignedBigInteger('buyer_id');
+            $table->unsignedInteger('buyer_id');
             $table->foreign('buyer_id')->references('id')->on('users')->cascadeOnDelete();
-            $table->unsignedBigInteger('seller_id');
+            $table->unsignedInteger('seller_id');
             $table->foreign('seller_id')->references('id')->on('users')->cascadeOnDelete();
             $table->integer('offered_price');
             $table->enum('status', ['pending', 'accepted', 'rejected', 'cancelled'])->default('pending');
