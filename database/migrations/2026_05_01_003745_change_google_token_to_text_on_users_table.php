@@ -23,8 +23,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('google_token')->nullable()->change();
-            $table->string('avatar')->nullable()->change();
+            $table->string('google_token', 100)->nullable()->change();
+            $table->string('avatar', 100)->nullable()->change();
         });
     }
 };

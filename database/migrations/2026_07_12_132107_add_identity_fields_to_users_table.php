@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('identity_document_path')->nullable()->after('asal_kampus');
+            $table->string('identity_document_path', 100)->nullable()->after('asal_kampus');
             $table->boolean('is_identity_verified')->default(false)->after('identity_document_path');
         });
     }

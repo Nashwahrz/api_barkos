@@ -13,8 +13,10 @@ return new class extends Migration
     {
         Schema::create('reports', function (Blueprint $blueprint) {
             $blueprint->id();
-            $blueprint->foreignId('reporter_id')->constrained('users')->onDelete('cascade');
-            $blueprint->foreignId('product_id')->nullable()->constrained('products')->onDelete('cascade');
+            $blueprint->unsignedBigInteger('reporter_id');
+            $blueprint->foreign('reporter_id')->references('id')->on('users')->onDelete('cascade');
+            $blueprint->unsignedBigInteger('product_id')->nullable();
+            $blueprint->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
             $blueprint->string('reason');
             $blueprint->text('description')->nullable();
             $blueprint->enum('status', ['pending', 'investigated', 'resolved', 'dismissed'])->default('pending');

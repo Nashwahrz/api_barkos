@@ -12,8 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('chats', function (Blueprint $table) {
-            $table->foreignId('reply_to_id')->nullable()->after('message')
-                ->constrained('chats')->nullOnDelete();
+            $table->unsignedBigInteger('reply_to_id')->nullable()->after('message')
+                ;
+            $table->foreign('reply_to_id')->references('id')->on('chats')->nullOnDelete();
         });
     }
 

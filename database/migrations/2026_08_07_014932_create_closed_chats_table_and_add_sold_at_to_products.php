@@ -17,8 +17,10 @@ return new class extends Migration
 
         Schema::create('closed_chats', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('product_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('buyer_id')->constrained('users')->cascadeOnDelete();
+            $table->unsignedBigInteger('product_id');
+            $table->foreign('product_id')->references('id')->on('products')->cascadeOnDelete();
+            $table->unsignedBigInteger('buyer_id');
+            $table->foreign('buyer_id')->references('id')->on('users')->cascadeOnDelete();
             $table->timestamps();
 
             $table->unique(['product_id', 'buyer_id']);

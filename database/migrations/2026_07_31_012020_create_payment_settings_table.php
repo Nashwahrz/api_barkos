@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->boolean('midtrans_enabled')->default(true);
             $table->boolean('manual_transfer_enabled')->default(false);
-            $table->string('qris_image_path')->nullable();
+            $table->string('qris_image_path', 100)->nullable();
             $table->timestamps();
         });
     }

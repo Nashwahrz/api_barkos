@@ -14,9 +14,12 @@ return new class extends Migration
     {
         Schema::create('promotions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('product_id')->constrained()->onDelete('cascade');
-            $table->foreignId('seller_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('package_id')->constrained('promotion_packages')->onDelete('cascade');
+            $table->unsignedBigInteger('product_id');
+            $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
+            $table->unsignedBigInteger('seller_id');
+            $table->foreign('seller_id')->references('id')->on('users')->onDelete('cascade');
+            $table->unsignedBigInteger('package_id');
+            $table->foreign('package_id')->references('id')->on('promotion_packages')->onDelete('cascade');
             $table->timestamp('start_at');
             $table->timestamp('end_at');
             $table->decimal('amount_paid', 12, 2);

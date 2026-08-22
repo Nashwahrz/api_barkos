@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('testimonis', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
-            $table->string('nama');
-            $table->string('pekerjaan');
+            $table->string('nama', 50);
+            $table->string('pekerjaan', 100);
             $table->enum('jenis kelamin', ['laki-laki', 'perempuan'])->nullable();
             $table->date('tanggal_lahir');
         });
