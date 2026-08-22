@@ -11,10 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('categories', function (Blueprint $table) {
-            $table->increments('id');
-            $table->string('name', 50);
-            $table->timestamps();
+        Schema::table('testimonis', function (Blueprint $table) {
+            $table->renameColumn('jenis kelamin', 'jenis_kelamin');
         });
     }
 
@@ -23,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('categories');
+        Schema::table('testimonis', function (Blueprint $table) {
+            //
+        });
     }
 };

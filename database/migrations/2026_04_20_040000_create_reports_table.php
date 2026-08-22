@@ -12,9 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('reports', function (Blueprint $blueprint) {
-            $blueprint->id();
-            $blueprint->foreignId('reporter_id')->constrained('users')->onDelete('cascade');
-            $blueprint->foreignId('product_id')->nullable()->constrained('products')->onDelete('cascade');
+            $blueprint->increments('id');
+            $blueprint->unsignedInteger('reporter_id');
+            $blueprint->foreign('reporter_id')->references('id')->on('users')->onDelete('cascade');
+            $blueprint->unsignedInteger('product_id')->nullable();
+            $blueprint->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
             $blueprint->string('reason');
             $blueprint->text('description')->nullable();
             $blueprint->enum('status', ['pending', 'investigated', 'resolved', 'dismissed'])->default('pending');

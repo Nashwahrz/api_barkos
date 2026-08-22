@@ -13,13 +13,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('transactions', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('product_id')->constrained()->onDelete('cascade');
-            $table->foreignId('buyer_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('seller_id')->constrained('users')->onDelete('cascade');
+            $table->increments('id');
+            $table->unsignedInteger('product_id');
+            $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
+            $table->unsignedInteger('buyer_id');
+            $table->foreign('buyer_id')->references('id')->on('users')->onDelete('cascade');
+            $table->unsignedInteger('seller_id');
+            $table->foreign('seller_id')->references('id')->on('users')->onDelete('cascade');
             $table->enum('payment_method', ['cod', 'bank_transfer']);
             $table->enum('status', ['pending', 'confirmed', 'completed', 'cancelled'])->default('pending');
-            $table->string('payment_proof_path')->nullable();
+            $table->string('payment_proof_path', 100)->nullable();
             $table->decimal('agreed_price', 12, 2);
             $table->text('notes')->nullable();
             $table->timestamps();

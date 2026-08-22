@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('promotions', function (Blueprint $table) {
-            $table->string('order_id')->nullable()->unique()->after('id');
-            $table->string('snap_token')->nullable()->after('order_id');
-            $table->string('payment_status')->default('pending')->after('amount_paid');
+            $table->string('order_id', 100)->nullable()->unique()->after('id');
+            $table->string('snap_token', 255)->nullable()->after('order_id');
+            $table->string('payment_status', 50)->default('pending')->after('amount_paid');
         });
     }
 

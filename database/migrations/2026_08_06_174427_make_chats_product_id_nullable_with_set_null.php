@@ -23,7 +23,7 @@ return new class extends Migration
             $table->dropForeign(['product_id']);
         });
 
-        DB::statement('ALTER TABLE chats MODIFY product_id BIGINT UNSIGNED NULL');
+        DB::statement('ALTER TABLE chats MODIFY product_id INT UNSIGNED NULL');
 
         Schema::table('chats', function (Blueprint $table) {
             $table->foreign('product_id')->references('id')->on('products')->nullOnDelete();
@@ -40,7 +40,7 @@ return new class extends Migration
             $table->dropForeign(['product_id']);
         });
 
-        DB::statement('ALTER TABLE chats MODIFY product_id BIGINT UNSIGNED NOT NULL');
+        DB::statement('ALTER TABLE chats MODIFY product_id INT UNSIGNED NOT NULL');
 
         Schema::table('chats', function (Blueprint $table) {
             $table->foreign('product_id')->references('id')->on('products')->cascadeOnDelete();

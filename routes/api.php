@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\BankAccountController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\FavoriteController;
 use App\Http\Controllers\Api\MidtransController;
+use App\Http\Controllers\Api\TestimoniController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -194,4 +195,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/users/{user}',             [UserController::class, 'show']);
     Route::patch('/users/{user}/status',    [UserController::class, 'toggleStatus']);
     Route::delete('/users/{user}',          [UserController::class, 'destroy']);
+
+  
 });
+
+  // ── Testimoni Management ─────────────────────────────────
+    Route::get('/testimonis', [TestimoniController::class, 'index']);
+    Route::post('/testimonis', [TestimoniController::class, 'store']);
+    Route::get('/testimonis/{testimoni}', [TestimoniController::class,
+    'show']);
+    Route::put('/testimonis/{testimoni}', [TestimoniController::class, 'update']);
+    Route::delete('/testimonis/{testimoni}', [TestimoniController::class, 'destroy']);

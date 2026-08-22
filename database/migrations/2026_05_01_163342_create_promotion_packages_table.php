@@ -13,7 +13,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('promotion_packages', function (Blueprint $table) {
-            $table->id();
+            $table->increments('id');
             $table->string('name', 100);         // e.g. "1 Hari Boost"
             $table->integer('duration_days');    // durasi dalam hari
             $table->decimal('price', 12, 2);     // harga dalam IDR

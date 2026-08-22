@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('promotions', function (Blueprint $table) {
-            $table->string('payment_method')->default('midtrans')->after('payment_status');
-            $table->string('manual_proof_path')->nullable()->after('payment_method');
-            $table->string('manual_review_status')->default('none')->after('manual_proof_path');
+            $table->string('payment_method', 50)->default('midtrans')->after('payment_status');
+            $table->string('manual_proof_path', 100)->nullable()->after('payment_method');
+            $table->string('manual_review_status', 100)->default('none')->after('manual_proof_path');
             $table->text('ocr_note')->nullable()->after('manual_review_status');
         });
     }

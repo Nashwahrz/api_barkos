@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('payment_bank_accounts', function (Blueprint $table) {
-            $table->id();
-            $table->string('bank_name');
-            $table->string('account_number');
-            $table->string('account_name');
+            $table->increments('id');
+            $table->string('bank_name', 100);
+            $table->string('account_number', 100);
+            $table->string('account_name', 100);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

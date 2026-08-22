@@ -13,10 +13,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('promotions', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('product_id')->constrained()->onDelete('cascade');
-            $table->foreignId('seller_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('package_id')->constrained('promotion_packages')->onDelete('cascade');
+            $table->increments('id');
+            $table->unsignedInteger('product_id');
+            $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
+            $table->unsignedInteger('seller_id');
+            $table->foreign('seller_id')->references('id')->on('users')->onDelete('cascade');
+            $table->unsignedInteger('package_id');
+            $table->foreign('package_id')->references('id')->on('promotion_packages')->onDelete('cascade');
             $table->timestamp('start_at');
             $table->timestamp('end_at');
             $table->decimal('amount_paid', 12, 2);
