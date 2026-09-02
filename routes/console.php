@@ -13,13 +13,13 @@ Artisan::command('inspire', function () {
 // Phase 6.1 - Auto demote expired promotions
 Schedule::call(function () {
     DB::table('products')
-        ->where('is_promoted', true)
-        ->whereNotNull('promoted_until')
-        ->where('promoted_until', '<', Carbon::now())
-        ->update(['is_promoted' => false]);
-    
+        ->where('dipromosikan', true)
+        ->whereNotNull('dipromosikan_hingga')
+        ->where('dipromosikan_hingga', '<', Carbon::now())
+        ->update(['dipromosikan' => false]);
+
     DB::table('promotions')
         ->where('status', 'active')
-        ->where('end_at', '<', Carbon::now())
+        ->where('berakhir_pada', '<', Carbon::now())
         ->update(['status' => 'expired']);
 })->everyMinute();

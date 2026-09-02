@@ -16,14 +16,14 @@ class TransactionResource extends JsonResource
     {
         return [
             'id'                   => $this->id,
-            'payment_method'       => $this->payment_method,
+            'metode_pembayaran'    => $this->metode_pembayaran,
             'status'               => $this->status,
-            'agreed_price'         => $this->agreed_price,
-            'notes'                => $this->notes,
-            'payment_proof_url'    => $this->payment_proof_path
-                                        ? '/api/storage/' . $this->payment_proof_path
+            'harga_disepakati'     => $this->harga_disepakati,
+            'catatan'              => $this->catatan,
+            'url_bukti_pembayaran' => $this->jalur_bukti_pembayaran
+                                        ? '/api/storage/' . $this->jalur_bukti_pembayaran
                                         : null,
-            'has_payment_proof'    => !is_null($this->payment_proof_path),
+            'punya_bukti_pembayaran' => !is_null($this->jalur_bukti_pembayaran),
             'product'              => $this->whenLoaded('product', fn() => [
                 'id'          => $this->product->id,
                 'nama_barang' => $this->product->nama_barang,
@@ -35,15 +35,15 @@ class TransactionResource extends JsonResource
             ]),
             'buyer'                => $this->whenLoaded('buyer', fn() => [
                 'id'     => $this->buyer->id,
-                'name'   => $this->buyer->name,
-                'phone'  => $this->buyer->phone,
-                'avatar' => $this->buyer->avatar ? (str_starts_with($this->buyer->avatar, 'http') ? $this->buyer->avatar : '/api/storage/' . $this->buyer->avatar) : null,
+                'nama'   => $this->buyer->nama,
+                'no_telepon'  => $this->buyer->no_telepon,
+                'foto_profil' => $this->buyer->foto_profil ? (str_starts_with($this->buyer->foto_profil, 'http') ? $this->buyer->foto_profil : '/api/storage/' . $this->buyer->foto_profil) : null,
             ]),
             'seller'               => $this->whenLoaded('seller', fn() => [
                 'id'     => $this->seller->id,
-                'name'   => $this->seller->name,
-                'phone'  => $this->seller->phone,
-                'avatar' => $this->seller->avatar ? (str_starts_with($this->seller->avatar, 'http') ? $this->seller->avatar : '/api/storage/' . $this->seller->avatar) : null,
+                'nama'   => $this->seller->nama,
+                'no_telepon'  => $this->seller->no_telepon,
+                'foto_profil' => $this->seller->foto_profil ? (str_starts_with($this->seller->foto_profil, 'http') ? $this->seller->foto_profil : '/api/storage/' . $this->seller->foto_profil) : null,
                 'bank_accounts' => $this->seller->bankAccounts ?? [],
             ]),
             'created_at'           => $this->created_at,

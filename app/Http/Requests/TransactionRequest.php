@@ -18,22 +18,22 @@ class TransactionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'product_id'     => 'required|exists:products,id',
-            'payment_method' => 'required|in:cod,bank_transfer',
-            'agreed_price'   => 'required|integer|min:1',
-            'notes'          => 'nullable|string|max:500',
+            'product_id'        => 'required|exists:products,id',
+            'metode_pembayaran' => 'required|in:cod,bank_transfer',
+            'harga_disepakati'  => 'required|integer|min:1',
+            'catatan'           => 'nullable|string|max:500',
         ];
     }
 
     public function messages(): array
     {
         return [
-            'product_id.required'     => 'Produk harus dipilih.',
-            'product_id.exists'       => 'Produk tidak ditemukan.',
-            'payment_method.required' => 'Metode pembayaran harus dipilih.',
-            'payment_method.in'       => 'Metode pembayaran harus COD atau transfer bank.',
-            'agreed_price.required'   => 'Harga kesepakatan harus diisi.',
-            'agreed_price.min'        => 'Harga harus lebih dari 0.',
+            'product_id.required'        => 'Produk harus dipilih.',
+            'product_id.exists'          => 'Produk tidak ditemukan.',
+            'metode_pembayaran.required' => 'Metode pembayaran harus dipilih.',
+            'metode_pembayaran.in'       => 'Metode pembayaran harus COD atau transfer bank.',
+            'harga_disepakati.required'  => 'Harga kesepakatan harus diisi.',
+            'harga_disepakati.min'       => 'Harga harus lebih dari 0.',
         ];
     }
 }

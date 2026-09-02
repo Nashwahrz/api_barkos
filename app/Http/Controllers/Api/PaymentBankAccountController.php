@@ -37,10 +37,10 @@ class PaymentBankAccountController extends Controller
         ]);
 
         $account = PaymentBankAccount::create([
-            'bank_name' => $request->bank_name,
-            'account_number' => $request->account_number,
-            'account_name' => $request->account_name,
-            'is_active' => true,
+            'nama_bank' => $request->bank_name,
+            'nomor_rekening' => $request->account_number,
+            'nama_pemilik_rekening' => $request->account_name,
+            'aktif' => true,
         ]);
 
         return response()->json(['message' => 'Rekening berhasil ditambahkan.', 'data' => $account], 201);
@@ -64,7 +64,21 @@ class PaymentBankAccountController extends Controller
             'is_active' => 'sometimes|boolean',
         ]);
 
-        $account->update($request->only(['bank_name', 'account_number', 'account_name', 'is_active']));
+        $data = [];
+        if ($request->has('bank_name')) {
+            $data['nama_bank'] = $request->input('bank_name');
+        }
+        if ($request->has('account_number')) {
+            $data['nomor_rekening'] = $request->input('account_number');
+        }
+        if ($request->has('account_name')) {
+            $data['nama_pemilik_rekening'] = $request->input('account_name');
+        }
+        if ($request->has('is_active')) {
+            $data['aktif'] = $request->boolean('is_active');
+        }
+
+        $account->update($data);
 
         return response()->json(['message' => 'Rekening berhasil diperbarui.', 'data' => $account]);
     }

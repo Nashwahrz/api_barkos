@@ -13,7 +13,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use NotificationChannels\WebPush\HasPushSubscriptions;
 
-#[Fillable(['name', 'email', 'password', 'asal_kampus', 'role', 'google_id', 'avatar', 'google_token', 'email_verified_at', 'phone', 'is_active', 'latitude', 'longitude', 'identity_document_path', 'is_identity_verified'])]
+#[Fillable(['nama', 'email', 'password', 'asal_kampus', 'role', 'google_id', 'foto_profil', 'google_token', 'email_verified_at', 'no_telepon', 'aktif', 'latitude', 'longitude', 'jalur_dokumen_identitas', 'identitas_terverifikasi'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -102,11 +102,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password'          => 'hashed',
-            'is_active'         => 'boolean',
-            'is_identity_verified' => 'boolean',
+            'aktif'             => 'boolean',
+            'identitas_terverifikasi' => 'boolean',
             'latitude'          => 'decimal:7',
             'longitude'         => 'decimal:7',
-            'last_active_at'    => 'datetime',
+            'terakhir_aktif_pada' => 'datetime',
         ];
     }
 
@@ -116,7 +116,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function isOnline(): bool
     {
-        return $this->last_active_at !== null && $this->last_active_at->gt(now()->subSeconds(45));
+        return $this->terakhir_aktif_pada !== null && $this->terakhir_aktif_pada->gt(now()->subSeconds(45));
     }
 
     /**

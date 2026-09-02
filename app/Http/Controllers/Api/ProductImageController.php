@@ -32,13 +32,13 @@ class ProductImageController extends Controller
             $path  = $file->store('products', 'public');
             $image = ProductImage::create([
                 'product_id' => $product->id,
-                'image_path' => $path,
-                'is_primary' => false,
+                'jalur_gambar' => $path,
+                'utama' => false,
             ]);
             $uploaded[] = [
-                'id'         => $image->id,
-                'image_path' => '/api/storage/' . $path,
-                'is_primary' => false,
+                'id'           => $image->id,
+                'jalur_gambar' => '/api/storage/' . $path,
+                'utama'        => false,
             ];
         }
 
@@ -62,7 +62,7 @@ class ProductImageController extends Controller
             return response()->json(['message' => 'Image does not belong to this product'], 422);
         }
 
-        Storage::disk('public')->delete($image->image_path);
+        Storage::disk('public')->delete($image->jalur_gambar);
         $image->delete();
 
         return response()->json(['message' => 'Gambar berhasil dihapus.']);
@@ -79,9 +79,9 @@ class ProductImageController extends Controller
         }
 
         // Unset all primary flags for this product's images first
-        ProductImage::where('product_id', $product->id)->update(['is_primary' => false]);
+        ProductImage::where('product_id', $product->id)->update(['utama' => false]);
 
-        $image->update(['is_primary' => true]);
+        $image->update(['utama' => true]);
 
         return response()->json(['message' => 'Gambar utama berhasil diubah.']);
     }

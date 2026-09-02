@@ -22,7 +22,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         User::factory()->create([
-            'name' => 'Super Admin',
+            'nama' => 'Super Admin',
             'email' => 'kostmartpadang@gmail.com',
             'asal_kampus' => 'PNP',
             'role' => 'super_admin',

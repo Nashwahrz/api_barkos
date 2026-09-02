@@ -10,29 +10,29 @@ class Promotion extends Model
     protected $fillable = [
         'order_id',
         'snap_token',
-        'payment_status',
+        'status_pembayaran',
         'product_id',
         'seller_id',
         'package_id',
-        'start_at',
-        'end_at',
-        'amount_paid',
+        'mulai_pada',
+        'berakhir_pada',
+        'jumlah_dibayar',
         'status',
-        'ad_type',
-        'ad_media_url',
-        'ad_title',
-        'payment_method',
-        'manual_proof_path',
-        'manual_review_status',
-        'ocr_note',
-        'target_user_ids',
+        'jenis_iklan',
+        'url_media_iklan',
+        'judul_iklan',
+        'metode_pembayaran',
+        'jalur_bukti_manual',
+        'status_peninjauan_manual',
+        'catatan_ocr',
+        'id_pengguna_target',
     ];
 
     protected $casts = [
-        'start_at'        => 'datetime',
-        'end_at'          => 'datetime',
-        'amount_paid'     => 'decimal:2',
-        'target_user_ids' => 'array',
+        'mulai_pada'         => 'datetime',
+        'berakhir_pada'      => 'datetime',
+        'jumlah_dibayar'     => 'decimal:2',
+        'id_pengguna_target' => 'array',
     ];
 
     /**
@@ -60,26 +60,26 @@ class Promotion extends Model
     }
 
     /**
-     * Scope: only active promotions (status=active AND end_at > now AND payment_status = paid).
+     * Scope: only active promotions (status=active AND berakhir_pada > now AND status_pembayaran = paid).
      */
     public function scopeActive($query)
     {
         return $query->where('status', 'active')
-                     ->where('payment_status', 'paid')
-                     ->where('end_at', '>', now());
+                     ->where('status_pembayaran', 'paid')
+                     ->where('berakhir_pada', '>', now());
     }
 
     /**
      * Scope: promotions visible to a given viewer — untargeted promotions (no
      * random-recipient cap) are visible to everyone; targeted ones only to the
-     * user IDs rolled into target_user_ids.
+     * user IDs rolled into id_pengguna_target.
      */
     public function scopeVisibleTo($query, ?int $userId)
     {
         return $query->where(function ($q) use ($userId) {
-            $q->whereNull('target_user_ids');
+            $q->whereNull('id_pengguna_target');
             if ($userId) {
-                $q->orWhereJsonContains('target_user_ids', $userId);
+                $q->orWhereJsonContains('id_pengguna_target', $userId);
             }
         });
     }

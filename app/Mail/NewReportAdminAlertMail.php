@@ -23,7 +23,7 @@ class NewReportAdminAlertMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Laporan Baru: ' . $this->report->reason,
+            subject: 'Laporan Baru: ' . $this->report->alasan,
         );
     }
 

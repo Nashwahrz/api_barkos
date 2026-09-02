@@ -7,14 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 class PaymentSetting extends Model
 {
     protected $fillable = [
-        'midtrans_enabled',
-        'manual_transfer_enabled',
-        'qris_image_path',
+        'midtrans_diaktifkan',
+        'transfer_manual_diaktifkan',
+        'jalur_gambar_qris',
     ];
 
     protected $casts = [
-        'midtrans_enabled' => 'boolean',
-        'manual_transfer_enabled' => 'boolean',
+        'midtrans_diaktifkan' => 'boolean',
+        'transfer_manual_diaktifkan' => 'boolean',
     ];
 
     /**
@@ -23,8 +23,8 @@ class PaymentSetting extends Model
     public static function current(): self
     {
         return static::firstOrCreate(['id' => 1], [
-            'midtrans_enabled' => true,
-            'manual_transfer_enabled' => false,
+            'midtrans_diaktifkan' => true,
+            'transfer_manual_diaktifkan' => false,
         ]);
     }
 }

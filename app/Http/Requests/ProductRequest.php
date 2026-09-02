@@ -25,9 +25,9 @@ class ProductRequest extends FormRequest
             'status_terjual' => ['nullable', 'boolean'],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
-            'minimum_offer_price' => ['nullable', 'numeric', 'min:0', 'lte:harga'],
-            'is_offer_enabled' => ['nullable', 'boolean'],
-            'payment_method' => ['required', 'string', Rule::in(['cod', 'bank_transfer', 'both'])],
+            'harga_minimum_tawaran' => ['nullable', 'numeric', 'min:0', 'lte:harga'],
+            'tawaran_diaktifkan' => ['nullable', 'boolean'],
+            'metode_pembayaran' => ['required', 'string', Rule::in(['cod', 'bank_transfer', 'both'])],
             'bank_name' => ['nullable', 'string', 'max:255'],
             'account_number' => ['nullable', 'string', 'max:255'],
         ];

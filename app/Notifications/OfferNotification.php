@@ -75,7 +75,7 @@ class OfferNotification extends Notification implements ShouldQueue
     {
         return (new MailMessage)
             ->subject('Pemberitahuan Penawaran Lapak Kos: ' . $this->offer->product->nama_barang)
-            ->greeting('Halo ' . $notifiable->name . '!')
+            ->greeting('Halo ' . $notifiable->nama . '!')
             ->line($this->message)
             ->action('Lihat Detail', config('services.frontend_url') . '/seller/offers')
             ->line('Terima kasih telah menggunakan Lapak Kos!');

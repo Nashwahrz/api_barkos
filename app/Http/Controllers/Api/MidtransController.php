@@ -47,17 +47,17 @@ class MidtransController extends Controller
         }
 
         if ($transactionStatus == 'capture' || $transactionStatus == 'settlement') {
-            if ($promotion->payment_status !== 'paid') {
+            if ($promotion->status_pembayaran !== 'paid') {
                 $this->promotionActivationService->activate($promotion);
                 Log::info('Midtrans Webhook: Promotion activated', ['order_id' => $orderId]);
             }
         } else if ($transactionStatus == 'cancel' || $transactionStatus == 'deny' || $transactionStatus == 'expire') {
-            $promotion->payment_status = 'failed';
+            $promotion->status_pembayaran = 'failed';
             $promotion->status = 'expired';
             $promotion->save();
             Log::info('Midtrans Webhook: Promotion failed/expired', ['order_id' => $orderId]);
         } else if ($transactionStatus == 'pending') {
-            $promotion->payment_status = 'pending';
+            $promotion->status_pembayaran = 'pending';
             $promotion->save();
         }
 

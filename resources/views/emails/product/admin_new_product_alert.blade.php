@@ -3,13 +3,13 @@
 
 Halo Admin,
 
-Penjual **{{ $product->user->name ?? 'seorang penjual' }}** ({{ $product->user->email ?? '-' }}) baru saja mengunggah produk baru di Lapak Kos.
+Penjual **{{ $product->user->nama ?? 'seorang penjual' }}** ({{ $product->user->email ?? '-' }}) baru saja mengunggah produk baru di Lapak Kos.
 
 @component('mail::panel')
 **Nama Barang:** {{ $product->nama_barang }}<br>
 **Harga:** Rp {{ number_format($product->harga, 0, ',', '.') }}<br>
 **Kondisi:** {{ $product->kondisi }}<br>
-**Kategori:** {{ $product->category->name ?? '-' }}<br>
+**Kategori:** {{ $product->category->nama ?? '-' }}<br>
 **Deskripsi:** {{ Str::limit($product->deskripsi, 100) }}
 @endcomponent
 

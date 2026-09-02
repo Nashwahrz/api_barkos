@@ -1,18 +1,18 @@
 @component('mail::message')
-# Laporan Baru: {{ $report->reason }}
+# Laporan Baru: {{ $report->alasan }}
 
 Halo Admin,
 
-**{{ $report->reporter->name ?? 'Seorang pengguna' }}** ({{ $report->reporter->email ?? '-' }}) baru saja mengirimkan laporan{{ $report->product ? ' terhadap produk berikut' : '' }}.
+**{{ $report->reporter->nama ?? 'Seorang pengguna' }}** ({{ $report->reporter->email ?? '-' }}) baru saja mengirimkan laporan{{ $report->product ? ' terhadap produk berikut' : '' }}.
 
 @component('mail::panel')
-**Alasan:** {{ $report->reason }}<br>
-@if($report->description)
-**Deskripsi:** {{ Str::limit($report->description, 200) }}<br>
+**Alasan:** {{ $report->alasan }}<br>
+@if($report->deskripsi)
+**Deskripsi:** {{ Str::limit($report->deskripsi, 200) }}<br>
 @endif
 @if($report->product)
 **Produk Dilaporkan:** {{ $report->product->nama_barang }}<br>
-**Penjual:** {{ $report->product->user->name ?? '-' }}
+**Penjual:** {{ $report->product->user->nama ?? '-' }}
 @endif
 @endcomponent
 

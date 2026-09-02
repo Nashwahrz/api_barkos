@@ -26,7 +26,7 @@ class PromotionController extends Controller
      */
     public function packages(): JsonResponse
     {
-        $packages = PromotionPackage::where('is_active', true)->get();
+        $packages = PromotionPackage::where('aktif', true)->get();
         return response()->json(['data' => $packages]);
     }
 
@@ -42,22 +42,22 @@ class PromotionController extends Controller
             ->whereHas('product', function ($query) {
                 $query->where('status_terjual', false);
             })
-            ->whereIn('ad_type', ['image', 'video'])
-            ->whereNotNull('ad_media_url')
+            ->whereIn('jenis_iklan', ['image', 'video'])
+            ->whereNotNull('url_media_iklan')
             ->latest()
             ->take(10)
             ->get()
             ->map(function ($promo) {
-                $mediaUrl = $promo->ad_media_url;
+                $mediaUrl = $promo->url_media_iklan;
                 if ($mediaUrl && str_starts_with($mediaUrl, '/storage/')) {
                     $mediaUrl = '/api' . $mediaUrl;
                 }
 
                 return [
                     'id'           => $promo->id,
-                    'ad_type'      => $promo->ad_type,
-                    'ad_media_url' => $mediaUrl,
-                    'ad_title'     => $promo->ad_title,
+                    'jenis_iklan'      => $promo->jenis_iklan,
+                    'url_media_iklan' => $mediaUrl,
+                    'judul_iklan'     => $promo->judul_iklan,
                     'product_id'   => $promo->product_id,
                     'product_name' => $promo->product?->nama_barang,
                     'product_price'=> $promo->product?->harga,
@@ -79,12 +79,12 @@ class PromotionController extends Controller
         $request->validate([
             'product_id'    => 'required|exists:products,id',
             'package_id'    => 'required|exists:promotion_packages,id',
-            'payment_method' => 'required|in:midtrans,manual_transfer',
+            'metode_pembayaran' => 'required|in:midtrans,manual_transfer',
             // Ad fields — optional
-            'ad_type'       => 'nullable|in:none,image,video',
-            'ad_media_url'  => 'nullable|string|max:2000',
-            'ad_media_file' => 'nullable|file|mimes:jpeg,png,jpg,webp,gif,mp4,mov,avi,webm,mkv|max:2097152', // max 2GB
-            'ad_title'      => 'nullable|string|max:200',
+            'jenis_iklan'       => 'nullable|in:none,image,video',
+            'url_media_iklan'  => 'nullable|string|max:2000',
+            'file_media_iklan' => 'nullable|file|mimes:jpeg,png,jpg,webp,gif,mp4,mov,avi,webm,mkv|max:2097152', // max 2GB
+            'judul_iklan'      => 'nullable|string|max:200',
         ]);
 
         $product = Product::findOrFail($request->product_id);
@@ -97,36 +97,36 @@ class PromotionController extends Controller
         $package = PromotionPackage::findOrFail($request->package_id);
 
         $paymentSetting = PaymentSetting::current();
-        if ($request->payment_method === 'midtrans' && !$paymentSetting->midtrans_enabled) {
+        if ($request->metode_pembayaran === 'midtrans' && !$paymentSetting->midtrans_diaktifkan) {
             return response()->json(['message' => 'Metode pembayaran Midtrans sedang tidak tersedia.'], 422);
         }
-        if ($request->payment_method === 'manual_transfer' && !$paymentSetting->manual_transfer_enabled) {
+        if ($request->metode_pembayaran === 'manual_transfer' && !$paymentSetting->transfer_manual_diaktifkan) {
             return response()->json(['message' => 'Metode transfer manual sedang tidak tersedia.'], 422);
         }
 
         // Prepare ad media
-        $adMediaUrl = $request->ad_media_url;
-        if ($request->hasFile('ad_media_file')) {
-            $path = $request->file('ad_media_file')->store('promotions', 'public');
+        $adMediaUrl = $request->url_media_iklan;
+        if ($request->hasFile('file_media_iklan')) {
+            $path = $request->file('file_media_iklan')->store('promotions', 'public');
             $adMediaUrl = '/api/storage/' . $path;
         }
 
-        if ($request->payment_method === 'manual_transfer') {
+        if ($request->metode_pembayaran === 'manual_transfer') {
             $promotion = Promotion::create([
                 'order_id'     => 'PROMO-' . time() . '-' . $request->user()->id,
-                'payment_status' => 'pending',
-                'payment_method' => 'manual_transfer',
-                'manual_review_status' => 'pending',
+                'status_pembayaran' => 'pending',
+                'metode_pembayaran' => 'manual_transfer',
+                'status_peninjauan_manual' => 'pending',
                 'product_id'   => $product->id,
                 'seller_id'    => $request->user()->id,
                 'package_id'   => $package->id,
                 'status'       => 'active',
-                'start_at'     => Carbon::now(),
-                'end_at'       => Carbon::now(),
-                'amount_paid'  => $package->price,
-                'ad_type'      => $request->ad_type ?? 'none',
-                'ad_media_url' => $adMediaUrl,
-                'ad_title'     => $request->ad_title,
+                'mulai_pada'     => Carbon::now(),
+                'berakhir_pada'       => Carbon::now(),
+                'jumlah_dibayar'  => $package->harga,
+                'jenis_iklan'      => $request->jenis_iklan ?? 'none',
+                'url_media_iklan' => $adMediaUrl,
+                'judul_iklan'     => $request->judul_iklan,
             ]);
 
             return response()->json([
@@ -146,10 +146,10 @@ class PromotionController extends Controller
         $params = [
             'transaction_details' => [
                 'order_id' => $orderId,
-                'gross_amount' => (int) $package->price,
+                'gross_amount' => (int) $package->harga,
             ],
             'customer_details' => [
-                'first_name' => $request->user()->name,
+                'first_name' => $request->user()->nama,
                 'email' => $request->user()->email,
             ],
         ];
@@ -164,18 +164,18 @@ class PromotionController extends Controller
         $promotion = Promotion::create([
             'order_id'     => $orderId,
             'snap_token'   => $snapToken,
-            'payment_status' => 'pending',
-            'payment_method' => 'midtrans',
+            'status_pembayaran' => 'pending',
+            'metode_pembayaran' => 'midtrans',
             'product_id'   => $product->id,
             'seller_id'    => $request->user()->id,
             'package_id'   => $package->id,
             'status'       => 'active', // overall promotion status, but payment is pending
-            'start_at'     => Carbon::now(), // Will be properly adjusted on success webhook
-            'end_at'       => Carbon::now(), // Will be properly adjusted on success webhook
-            'amount_paid'  => $package->price,
-            'ad_type'      => $request->ad_type ?? 'none',
-            'ad_media_url' => $adMediaUrl,
-            'ad_title'     => $request->ad_title,
+            'mulai_pada'     => Carbon::now(), // Will be properly adjusted on success webhook
+            'berakhir_pada'       => Carbon::now(), // Will be properly adjusted on success webhook
+            'jumlah_dibayar'  => $package->harga,
+            'jenis_iklan'      => $request->jenis_iklan ?? 'none',
+            'url_media_iklan' => $adMediaUrl,
+            'judul_iklan'     => $request->judul_iklan,
         ]);
 
         return response()->json([
@@ -193,7 +193,7 @@ class PromotionController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        if ($promotion->payment_method !== 'manual_transfer' || $promotion->payment_status !== 'pending') {
+        if ($promotion->metode_pembayaran !== 'manual_transfer' || $promotion->status_pembayaran !== 'pending') {
             return response()->json(['message' => 'Promosi ini tidak dapat diupload bukti transfernya.'], 422);
         }
 
@@ -201,15 +201,15 @@ class PromotionController extends Controller
             'proof_image' => 'required|image|max:10240',
         ]);
 
-        if ($promotion->manual_proof_path) {
-            Storage::disk('public')->delete($promotion->manual_proof_path);
+        if ($promotion->jalur_bukti_manual) {
+            Storage::disk('public')->delete($promotion->jalur_bukti_manual);
         }
 
         $path = $request->file('proof_image')->store('payments/promotions', 'public');
         $promotion->update([
-            'manual_proof_path' => $path,
-            'manual_review_status' => 'pending',
-            'ocr_note' => null,
+            'jalur_bukti_manual' => $path,
+            'status_peninjauan_manual' => 'pending',
+            'catatan_ocr' => null,
         ]);
 
         ProcessPromotionPaymentProofJob::dispatch($promotion);
@@ -230,12 +230,12 @@ class PromotionController extends Controller
         }
 
         $promotion = Promotion::findOrFail($id);
-        if ($promotion->payment_method !== 'manual_transfer') {
+        if ($promotion->metode_pembayaran !== 'manual_transfer') {
             return response()->json(['message' => 'Promosi ini bukan pembayaran transfer manual.'], 422);
         }
 
         $this->promotionActivationService->activate($promotion);
-        $promotion->update(['manual_review_status' => 'approved']);
+        $promotion->update(['status_peninjauan_manual' => 'approved']);
 
         return response()->json(['message' => 'Pembayaran disetujui, promosi diaktifkan.', 'data' => $promotion]);
     }
@@ -250,13 +250,13 @@ class PromotionController extends Controller
         }
 
         $promotion = Promotion::findOrFail($id);
-        if ($promotion->payment_method !== 'manual_transfer') {
+        if ($promotion->metode_pembayaran !== 'manual_transfer') {
             return response()->json(['message' => 'Promosi ini bukan pembayaran transfer manual.'], 422);
         }
 
         $promotion->update([
-            'payment_status' => 'failed',
-            'manual_review_status' => 'rejected',
+            'status_pembayaran' => 'failed',
+            'status_peninjauan_manual' => 'rejected',
         ]);
 
         return response()->json(['message' => 'Pembayaran ditolak.', 'data' => $promotion]);
@@ -271,7 +271,7 @@ class PromotionController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        if ($promotion->payment_status !== 'pending') {
+        if ($promotion->status_pembayaran !== 'pending') {
             return response()->json(['message' => 'Hanya promosi berstatus pending yang dapat diubah metode pembayarannya.'], 422);
         }
 
@@ -286,10 +286,10 @@ class PromotionController extends Controller
         $params = [
             'transaction_details' => [
                 'order_id' => $newOrderId,
-                'gross_amount' => (int) $promotion->amount_paid,
+                'gross_amount' => (int) $promotion->jumlah_dibayar,
             ],
             'customer_details' => [
-                'first_name' => $request->user()->name,
+                'first_name' => $request->user()->nama,
                 'email' => $request->user()->email,
             ],
         ];
@@ -329,11 +329,11 @@ class PromotionController extends Controller
             ->latest()
             ->get()
             ->map(function ($promo) {
-                if ($promo->ad_media_url && str_starts_with($promo->ad_media_url, '/storage/')) {
-                    $promo->ad_media_url = '/api' . $promo->ad_media_url;
+                if ($promo->url_media_iklan && str_starts_with($promo->url_media_iklan, '/storage/')) {
+                    $promo->url_media_iklan = '/api' . $promo->url_media_iklan;
                 }
-                if ($promo->manual_proof_path && !str_starts_with($promo->manual_proof_path, '/api/storage/')) {
-                    $promo->manual_proof_path = '/api/storage/' . $promo->manual_proof_path;
+                if ($promo->jalur_bukti_manual && !str_starts_with($promo->jalur_bukti_manual, '/api/storage/')) {
+                    $promo->jalur_bukti_manual = '/api/storage/' . $promo->jalur_bukti_manual;
                 }
                 if ($promo->product && $promo->product->foto && !str_starts_with($promo->product->foto, '/api/storage/')) {
                     $promo->product->foto = '/api/storage/' . $promo->product->foto;
@@ -354,11 +354,11 @@ class PromotionController extends Controller
         }
 
         $promotions = Promotion::with(['product', 'package', 'seller'])->latest()->get()->map(function ($promo) {
-            if ($promo->ad_media_url && str_starts_with($promo->ad_media_url, '/storage/')) {
-                $promo->ad_media_url = '/api' . $promo->ad_media_url;
+            if ($promo->url_media_iklan && str_starts_with($promo->url_media_iklan, '/storage/')) {
+                $promo->url_media_iklan = '/api' . $promo->url_media_iklan;
             }
-            if ($promo->manual_proof_path && !str_starts_with($promo->manual_proof_path, '/api/storage/')) {
-                $promo->manual_proof_path = '/api/storage/' . $promo->manual_proof_path;
+            if ($promo->jalur_bukti_manual && !str_starts_with($promo->jalur_bukti_manual, '/api/storage/')) {
+                $promo->jalur_bukti_manual = '/api/storage/' . $promo->jalur_bukti_manual;
             }
             if ($promo->product && $promo->product->foto && !str_starts_with($promo->product->foto, '/api/storage/')) {
                 $promo->product->foto = '/api/storage/' . $promo->product->foto;
@@ -377,15 +377,15 @@ class PromotionController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $ids = $promotion->target_user_ids;
+        $ids = $promotion->id_pengguna_target;
         $users = $ids
-            ? User::whereIn('id', $ids)->get(['id', 'name', 'email', 'role'])
+            ? User::whereIn('id', $ids)->get(['id', 'nama', 'email', 'role'])
             : collect();
 
         return response()->json([
             'data' => $users,
             'is_targeted' => (bool) $ids,
-            'recipient_count' => $promotion->package?->random_recipient_count,
+            'recipient_count' => $promotion->package?->jumlah_penerima_acak,
         ]);
     }
 
@@ -399,15 +399,15 @@ class PromotionController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        if (!$promotion->package?->random_recipient_count) {
+        if (!$promotion->package?->jumlah_penerima_acak) {
             return response()->json(['message' => 'Paket promosi ini tidak memiliki batas jumlah akun random.'], 422);
         }
 
         $ids = $this->promotionActivationService->rollRandomRecipients($promotion);
-        $promotion->update(['target_user_ids' => $ids]);
+        $promotion->update(['id_pengguna_target' => $ids]);
 
         $users = $ids
-            ? User::whereIn('id', $ids)->get(['id', 'name', 'email', 'role'])
+            ? User::whereIn('id', $ids)->get(['id', 'nama', 'email', 'role'])
             : collect();
 
         return response()->json([
@@ -451,11 +451,11 @@ class PromotionController extends Controller
         ]);
 
         $package = PromotionPackage::create([
-            'name'          => $request->name,
-            'duration_days' => $request->duration_days,
-            'random_recipient_count' => $request->random_recipient_count ?? null,
-            'price'         => $request->price,
-            'is_active'     => true,
+            'nama'          => $request->name,
+            'durasi_hari'   => $request->duration_days,
+            'jumlah_penerima_acak' => $request->random_recipient_count ?? null,
+            'harga'         => $request->price,
+            'aktif'         => true,
         ]);
 
         return response()->json([
@@ -483,7 +483,24 @@ class PromotionController extends Controller
             'is_active'     => 'sometimes|boolean',
         ]);
 
-        $package->update($request->only(['name', 'duration_days', 'random_recipient_count', 'price', 'is_active']));
+        $data = [];
+        if ($request->has('random_recipient_count')) {
+            $data['jumlah_penerima_acak'] = $request->input('random_recipient_count');
+        }
+        if ($request->has('name')) {
+            $data['nama'] = $request->input('name');
+        }
+        if ($request->has('duration_days')) {
+            $data['durasi_hari'] = $request->input('duration_days');
+        }
+        if ($request->has('price')) {
+            $data['harga'] = $request->input('price');
+        }
+        if ($request->has('is_active')) {
+            $data['aktif'] = $request->boolean('is_active');
+        }
+
+        $package->update($data);
 
         return response()->json([
             'message' => 'Package updated successfully.',
@@ -524,8 +541,8 @@ class PromotionController extends Controller
 
         if ($promotion->product) {
             $promotion->product->update([
-                'is_promoted' => false,
-                'promoted_until' => null,
+                'dipromosikan' => false,
+                'dipromosikan_hingga' => null,
             ]);
         }
 

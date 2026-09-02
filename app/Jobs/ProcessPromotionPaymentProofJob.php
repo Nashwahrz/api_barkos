@@ -28,19 +28,19 @@ class ProcessPromotionPaymentProofJob implements ShouldQueue
     public function handle(PaymentProofVerificationService $verificationService): void
     {
         try {
-            $absolutePath = Storage::disk('public')->path($this->promotion->manual_proof_path);
-            $result = $verificationService->verify($absolutePath, (float) $this->promotion->amount_paid);
+            $absolutePath = Storage::disk('public')->path($this->promotion->jalur_bukti_manual);
+            $result = $verificationService->verify($absolutePath, (float) $this->promotion->jumlah_dibayar);
 
             $prefix = $result['matched'] ? '[MATCH] ' : '[TIDAK COCOK] ';
             $this->promotion->update([
-                'manual_review_status' => 'ocr_checked',
-                'ocr_note' => $prefix . str_replace("\n", ' ', $result['text']),
+                'status_peninjauan_manual' => 'ocr_checked',
+                'catatan_ocr' => $prefix . str_replace("\n", ' ', $result['text']),
             ]);
         } catch (\Exception $e) {
             Log::error('Promotion payment proof OCR check failed.', ['promotion_id' => $this->promotion->id, 'error' => $e->getMessage()]);
             $this->promotion->update([
-                'manual_review_status' => 'ocr_checked',
-                'ocr_note' => '[GAGAL DICEK] ' . $e->getMessage(),
+                'status_peninjauan_manual' => 'ocr_checked',
+                'catatan_ocr' => '[GAGAL DICEK] ' . $e->getMessage(),
             ]);
         }
 

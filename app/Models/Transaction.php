@@ -11,15 +11,15 @@ class Transaction extends Model
         'product_id',
         'buyer_id',
         'seller_id',
-        'payment_method',
+        'metode_pembayaran',
         'status',
-        'payment_proof_path',
-        'agreed_price',
-        'notes',
+        'jalur_bukti_pembayaran',
+        'harga_disepakati',
+        'catatan',
     ];
 
     protected $casts = [
-        'agreed_price' => 'decimal:2',
+        'harga_disepakati' => 'decimal:2',
     ];
 
     /**

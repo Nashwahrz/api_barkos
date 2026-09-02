@@ -32,7 +32,7 @@ class PromotionBlastMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Promo: ' . ($this->promotion->ad_title ?? $this->promotion->product->nama_barang),
+            subject: 'Promo: ' . ($this->promotion->judul_iklan ?? $this->promotion->product->nama_barang),
         );
     }
 

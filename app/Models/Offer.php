@@ -10,7 +10,7 @@ class Offer extends Model
         'product_id',
         'buyer_id',
         'seller_id',
-        'offered_price',
+        'harga_tawaran',
         'status',
     ];
 

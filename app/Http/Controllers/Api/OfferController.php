@@ -20,7 +20,7 @@ class OfferController extends Controller
     public function store(Request $request, Product $product): JsonResponse
     {
         $request->validate([
-            'offered_price' => 'required|integer|min:1',
+            'harga_tawaran' => 'required|integer|min:1',
         ]);
 
         $buyer = Auth::user();
@@ -36,14 +36,14 @@ class OfferController extends Controller
         }
 
         // Seller may disable negotiation for this product
-        if (!$product->is_offer_enabled) {
+        if (!$product->tawaran_diaktifkan) {
             return response()->json(['message' => 'Penjual tidak menerima tawaran untuk produk ini.'], 422);
         }
 
         // Validate minimum offer price
-        if ($product->minimum_offer_price !== null && $request->offered_price < $product->minimum_offer_price) {
+        if ($product->harga_minimum_tawaran !== null && $request->harga_tawaran < $product->harga_minimum_tawaran) {
             return response()->json([
-                'message' => 'Penawaran Anda di bawah harga minimum yang ditetapkan penjual (Rp ' . number_format($product->minimum_offer_price, 0, ',', '.') . ').'
+                'message' => 'Penawaran Anda di bawah harga minimum yang ditetapkan penjual (Rp ' . number_format($product->harga_minimum_tawaran, 0, ',', '.') . ').'
             ], 422);
         }
 
@@ -61,14 +61,14 @@ class OfferController extends Controller
             'product_id'    => $product->id,
             'buyer_id'      => $buyer->id,
             'seller_id'     => $product->user_id,
-            'offered_price' => $request->offered_price,
+            'harga_tawaran' => $request->harga_tawaran,
             'status'        => 'pending',
         ]);
 
         $seller = \App\Models\User::find($product->user_id);
         $seller->notify(new \App\Notifications\OfferNotification(
             $offer,
-            "{$buyer->name} menawar produk {$product->nama_barang} Anda seharga Rp " . number_format($request->offered_price, 0, ',', '.'),
+            "{$buyer->nama} menawar produk {$product->nama_barang} Anda seharga Rp " . number_format($request->harga_tawaran, 0, ',', '.'),
             'offer_received'
         ));
 
@@ -141,7 +141,7 @@ class OfferController extends Controller
                 $buyer = \App\Models\User::find($offer->buyer_id);
                 $buyer->notify(new \App\Notifications\OfferNotification(
                     $offer,
-                    "Penawaran Anda untuk produk {$offer->product->nama_barang} seharga Rp " . number_format($offer->offered_price, 0, ',', '.') . " telah DITERIMA.",
+                    "Penawaran Anda untuk produk {$offer->product->nama_barang} seharga Rp " . number_format($offer->harga_tawaran, 0, ',', '.') . " telah DITERIMA.",
                     'offer_accepted'
                 ));
             } else {
@@ -151,7 +151,7 @@ class OfferController extends Controller
                 $buyer = \App\Models\User::find($offer->buyer_id);
                 $buyer->notify(new \App\Notifications\OfferNotification(
                     $offer,
-                    "Penawaran Anda untuk produk {$offer->product->nama_barang} seharga Rp " . number_format($offer->offered_price, 0, ',', '.') . " telah DITOLAK.",
+                    "Penawaran Anda untuk produk {$offer->product->nama_barang} seharga Rp " . number_format($offer->harga_tawaran, 0, ',', '.') . " telah DITOLAK.",
                     'offer_rejected'
                 ));
             }

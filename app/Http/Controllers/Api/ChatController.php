@@ -49,7 +49,7 @@ class ChatController extends Controller
                 DB::raw('COUNT(*) as unread_count')
             )
             ->where('receiver_id', $userId)
-            ->where('is_read', false)
+            ->where('sudah_dibaca', false)
             ->groupBy('product_id', 'sender_id')
             ->get()
             ->keyBy(fn($row) => $row->product_id . '_' . $row->sender_id);
@@ -107,8 +107,8 @@ class ChatController extends Controller
         Chat::where('product_id', $productId)
             ->where('sender_id', $user->id)
             ->where('receiver_id', Auth::id())
-            ->where('is_read', false)
-            ->update(['is_read' => true]);
+            ->where('sudah_dibaca', false)
+            ->update(['sudah_dibaca' => true]);
 
         return response()->json(['message' => 'Messages marked as read']);
     }
@@ -119,7 +119,7 @@ class ChatController extends Controller
     public function unreadCount(): JsonResponse
     {
         $count = Chat::where('receiver_id', Auth::id())
-            ->where('is_read', false)
+            ->where('sudah_dibaca', false)
             ->count();
 
         return response()->json(['count' => $count]);
@@ -179,7 +179,7 @@ class ChatController extends Controller
             }
 
             // Check if chat is closed automatically (3 days after product sold)
-            if ($product->status_terjual && $product->sold_at && \Carbon\Carbon::parse($product->sold_at)->addDays(3)->isPast()) {
+            if ($product->status_terjual && $product->terjual_pada && \Carbon\Carbon::parse($product->terjual_pada)->addDays(3)->isPast()) {
                 return response()->json(['message' => 'Sesi percakapan ini telah otomatis ditutup (3 hari sejak produk terjual).'], 403);
             }
         }
@@ -197,9 +197,9 @@ class ChatController extends Controller
             'sender_id'   => $senderId,
             'receiver_id' => $receiverId,
             'product_id'  => $productId,
-            'message'     => $request->message,
-            'reply_to_id' => $replyToId,
-            'is_read'     => false,
+            'pesan'       => $request->message,
+            'id_balasan'  => $replyToId,
+            'sudah_dibaca' => false,
         ]);
 
         $receiver = User::find($receiverId);
@@ -273,7 +273,7 @@ class ChatController extends Controller
             ->where('buyer_id', $buyerId)
             ->exists();
 
-        $isAutoClosed = $product->status_terjual && $product->sold_at && \Carbon\Carbon::parse($product->sold_at)->addDays(3)->isPast();
+        $isAutoClosed = $product->status_terjual && $product->terjual_pada && \Carbon\Carbon::parse($product->terjual_pada)->addDays(3)->isPast();
 
         return response()->json([
             'is_closed' => $isManuallyClosed || $isAutoClosed,

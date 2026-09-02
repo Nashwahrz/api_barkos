@@ -109,16 +109,16 @@ class TransactionController extends Controller
             return response()->json(['message' => 'Anda sudah memiliki order aktif untuk produk ini.'], 422);
         }
 
-        // Validate agreed_price
+        // Validate harga_disepakati
         $isValidPrice = false;
-        if ((int)$request->agreed_price === (int)$product->harga) {
+        if ((int)$request->harga_disepakati === (int)$product->harga) {
             $isValidPrice = true;
         } else {
             // Check if there is an accepted offer with this price
             $acceptedOffer = \App\Models\Offer::where('product_id', $product->id)
                 ->where('buyer_id', $buyer->id)
                 ->where('status', 'accepted')
-                ->where('offered_price', $request->agreed_price)
+                ->where('harga_tawaran', $request->harga_disepakati)
                 ->exists();
             if ($acceptedOffer) {
                 $isValidPrice = true;
@@ -133,16 +133,16 @@ class TransactionController extends Controller
             'product_id'     => $product->id,
             'buyer_id'       => $buyer->id,
             'seller_id'      => $product->user_id,
-            'payment_method' => $request->payment_method,
+            'metode_pembayaran' => $request->metode_pembayaran,
             'status'         => 'pending',
-            'agreed_price'   => $request->agreed_price,
-            'notes'          => $request->notes,
+            'harga_disepakati'   => $request->harga_disepakati,
+            'catatan'          => $request->catatan,
         ]);
 
         $seller = \App\Models\User::find($product->user_id);
         $seller->notify(new \App\Notifications\TransactionNotification(
             $transaction,
-            "Pesanan baru masuk dari {$buyer->name} untuk produk {$product->nama_barang} seharga Rp " . number_format($request->agreed_price, 0, ',', '.'),
+            "Pesanan baru masuk dari {$buyer->nama} untuk produk {$product->nama_barang} seharga Rp " . number_format($request->harga_disepakati, 0, ',', '.'),
             'new_order'
         ));
 
@@ -159,10 +159,10 @@ class TransactionController extends Controller
     public function updatePaymentMethod(Request $request, Transaction $transaction): JsonResponse
     {
         $request->validate([
-            'payment_method' => 'required|in:cod,bank_transfer',
+            'metode_pembayaran' => 'required|in:cod,bank_transfer',
         ], [
-            'payment_method.required' => 'Metode pembayaran harus dipilih.',
-            'payment_method.in'       => 'Metode pembayaran harus COD atau transfer bank.',
+            'metode_pembayaran.required' => 'Metode pembayaran harus dipilih.',
+            'metode_pembayaran.in'       => 'Metode pembayaran harus COD atau transfer bank.',
         ]);
 
         if ($transaction->buyer_id !== Auth::id()) {
@@ -178,7 +178,7 @@ class TransactionController extends Controller
         }
 
         $transaction->update([
-            'payment_method' => $request->payment_method
+            'metode_pembayaran' => $request->metode_pembayaran
         ]);
 
         return response()->json([
@@ -211,7 +211,7 @@ class TransactionController extends Controller
             // Tandai produk sebagai terjual SEGERA saat dikonfirmasi,
             // agar pembeli lain tidak bisa memesan produk yang sama.
             // Penjual tetap harus klik "Selesaikan" setelah barang diserahkan.
-            $transaction->product->update(['status_terjual' => true, 'sold_at' => now()]);
+            $transaction->product->update(['status_terjual' => true, 'terjual_pada' => now()]);
 
             $message = 'Order dikonfirmasi. Produk otomatis ditandai terjual. Hubungi pembeli untuk proses selanjutnya.';
 
@@ -255,7 +255,7 @@ class TransactionController extends Controller
             return response()->json(['message' => 'Hanya pembeli yang bisa upload bukti bayar.'], 403);
         }
 
-        if ($transaction->payment_method !== 'bank_transfer') {
+        if ($transaction->metode_pembayaran !== 'bank_transfer') {
             return response()->json(['message' => 'Upload bukti hanya untuk transaksi bank transfer.'], 422);
         }
 
@@ -264,13 +264,13 @@ class TransactionController extends Controller
         }
 
         // Delete old proof if exists
-        if ($transaction->payment_proof_path) {
-            Storage::disk('public')->delete($transaction->payment_proof_path);
+        if ($transaction->jalur_bukti_pembayaran) {
+            Storage::disk('public')->delete($transaction->jalur_bukti_pembayaran);
         }
 
         $path = $request->file('payment_proof')->store('payments', 'public');
 
-        $transaction->update(['payment_proof_path' => $path]);
+        $transaction->update(['jalur_bukti_pembayaran' => $path]);
 
         $seller = \App\Models\User::find($transaction->seller_id);
         $seller->notify(new \App\Notifications\TransactionNotification(
@@ -281,7 +281,7 @@ class TransactionController extends Controller
 
         return response()->json([
             'message'           => 'Bukti pembayaran berhasil diunggah. Menunggu konfirmasi penjual.',
-            'payment_proof_url' => '/api/storage/' . $path,
+            'url_bukti_pembayaran' => '/api/storage/' . $path,
         ]);
     }
 
@@ -300,7 +300,7 @@ class TransactionController extends Controller
         }
 
         // For bank transfer, payment proof must be uploaded
-        if ($transaction->payment_method === 'bank_transfer' && !$transaction->payment_proof_path) {
+        if ($transaction->metode_pembayaran === 'bank_transfer' && !$transaction->jalur_bukti_pembayaran) {
             return response()->json(['message' => 'Pembeli belum mengunggah bukti pembayaran.'], 422);
         }
 
@@ -308,7 +308,7 @@ class TransactionController extends Controller
 
         // Produk sudah ditandai terjual sejak confirm — tidak perlu diulang di sini.
         // Pastikan tetap true (idempotent) kalau ada edge-case.
-        $transaction->product->update(['status_terjual' => true, 'sold_at' => now()]);
+        $transaction->product->update(['status_terjual' => true, 'terjual_pada' => now()]);
 
         $buyer = \App\Models\User::find($transaction->buyer_id);
         $buyer->notify(new \App\Notifications\TransactionNotification(

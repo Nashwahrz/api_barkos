@@ -52,13 +52,13 @@ class AuthController extends Controller
         }
 
         $user = User::create([
-            'name' => $request->name,
+            'nama' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'asal_kampus' => $request->asal_kampus,
             'role' => $request->role ?? 'pembeli',
-            'identity_document_path' => $documentPath,
-            'is_identity_verified' => $documentPath ? true : false,
+            'jalur_dokumen_identitas' => $documentPath,
+            'identitas_terverifikasi' => $documentPath ? true : false,
         ]);
 
         event(new Registered($user));
@@ -89,7 +89,7 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->firstOrFail();
 
-        if (!$user->is_active) {
+        if (!$user->aktif) {
             return response()->json([
                 'status' => 'error',
                 'message' => "Akun Anda telah dinonaktifkan oleh Admin karena indikasi pelanggaran.\n\nSilakan hubungi dukungan kami melalui email: kostmartpadang@gmail.com\n\nTemplate Pesan:\nHalo Admin Lapak Kos, akun saya dengan email {$user->email} telah dinonaktifkan. Saya ingin mengajukan banding/penjelasan terkait hal ini. Mohon bantuannya.",
@@ -178,8 +178,8 @@ class AuthController extends Controller
 
         $user->update([
             'role' => 'penjual',
-            'identity_document_path' => $documentPath,
-            'is_identity_verified' => $documentPath ? true : false,
+            'jalur_dokumen_identitas' => $documentPath,
+            'identitas_terverifikasi' => $documentPath ? true : false,
         ]);
 
         return response()->json([
@@ -202,14 +202,23 @@ class AuthController extends Controller
         ]);
 
         $user = $request->user();
-        $data = $request->only(['name', 'phone', 'asal_kampus']);
+        $data = [];
+        if ($request->has('name')) {
+            $data['nama'] = $request->input('name');
+        }
+        if ($request->has('phone')) {
+            $data['no_telepon'] = $request->input('phone');
+        }
+        if ($request->has('asal_kampus')) {
+            $data['asal_kampus'] = $request->input('asal_kampus');
+        }
 
         if ($request->hasFile('avatar')) {
             // Delete old avatar if exists and not a Google avatar URL
-            if ($user->avatar && !str_starts_with($user->avatar, 'http')) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar);
+            if ($user->foto_profil && !str_starts_with($user->foto_profil, 'http')) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->foto_profil);
             }
-            $data['avatar'] = $request->file('avatar')->store('avatars', 'public');
+            $data['foto_profil'] = $request->file('avatar')->store('avatars', 'public');
         }
 
         $user->update($data);

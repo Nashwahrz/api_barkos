@@ -30,11 +30,11 @@ class CategoryController extends Controller
         }
 
         $request->validate([
-            'name' => 'required|string|max:255|unique:categories,name',
+            'nama' => 'required|string|max:255|unique:categories,nama',
             'description' => 'nullable|string',
         ]);
 
-        $category = Category::create($request->only('name', 'description'));
+        $category = Category::create($request->only('nama', 'description'));
 
         return response()->json([
             'message' => 'Kategori berhasil ditambahkan.',
@@ -52,11 +52,11 @@ class CategoryController extends Controller
         }
 
         $request->validate([
-            'name' => 'required|string|max:255|unique:categories,name,' . $category->id,
+            'nama' => 'required|string|max:255|unique:categories,nama,' . $category->id,
             'description' => 'nullable|string',
         ]);
 
-        $category->update($request->only('name', 'description'));
+        $category->update($request->only('nama', 'description'));
 
         return response()->json([
             'message' => 'Kategori berhasil diperbarui.',

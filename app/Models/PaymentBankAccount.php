@@ -7,13 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 class PaymentBankAccount extends Model
 {
     protected $fillable = [
-        'bank_name',
-        'account_number',
-        'account_name',
-        'is_active',
+        'nama_bank',
+        'nomor_rekening',
+        'nama_pemilik_rekening',
+        'aktif',
     ];
 
     protected $casts = [
-        'is_active' => 'boolean',
+        'aktif' => 'boolean',
     ];
 }

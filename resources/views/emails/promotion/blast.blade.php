@@ -1,15 +1,15 @@
 <x-mail::message>
-# Promo dari {{ $product->user->name ?? 'Lapak Kos' }}
+# Promo dari {{ $product->user->nama ?? 'Lapak Kos' }}
 
-Ada penawaran dari **{{ $product->user->name ?? 'Lapak Kos' }}** yang mungkin Anda minati.
+Ada penawaran dari **{{ $product->user->nama ?? 'Lapak Kos' }}** yang mungkin Anda minati.
 
-@if($promotion->ad_type === 'image')
-![Gambar Produk]({{ url('storage/' . $promotion->ad_media_url) }})
+@if($promotion->jenis_iklan === 'image')
+![Gambar Produk]({{ url('storage/' . $promotion->url_media_iklan) }})
 @else
 **[Video Promo Tersedia!]**
 @endif
 
-**{{ $promotion->ad_title ?? $product->nama_barang }}**
+**{{ $promotion->judul_iklan ?? $product->nama_barang }}**
 
 > {{ $product->deskripsi }}
 

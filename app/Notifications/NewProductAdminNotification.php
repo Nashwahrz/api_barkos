@@ -30,7 +30,7 @@ class NewProductAdminNotification extends Notification implements ShouldQueue
     {
         return [
             'product_id' => $this->product->id,
-            'message'    => 'Penjual ' . ($this->product->user->name ?? '-') . ' mengunggah produk baru: ' . $this->product->nama_barang,
+            'message'    => 'Penjual ' . ($this->product->user->nama ?? '-') . ' mengunggah produk baru: ' . $this->product->nama_barang,
             'type'       => 'admin_new_product',
         ];
     }

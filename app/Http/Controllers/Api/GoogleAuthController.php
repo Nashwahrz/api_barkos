@@ -39,16 +39,16 @@ class GoogleAuthController extends Controller
                 // Link Google ID if not already linked
                 $user->update([
                     'google_id' => $googleUser->id,
-                    'avatar' => $googleUser->avatar,
+                    'foto_profil' => $googleUser->avatar,
                     'google_token' => $googleUser->token,
                 ]);
             } else {
                 // Create new user
                 $user = User::create([
-                    'name' => $googleUser->name,
+                    'nama' => $googleUser->name,
                     'email' => $googleUser->email,
                     'google_id' => $googleUser->id,
-                    'avatar' => $googleUser->avatar,
+                    'foto_profil' => $googleUser->avatar,
                     'password' => bcrypt(Str::random(16)), // Random password for social logins
                     'google_token' => $googleUser->token,
                     'role' => 'pembeli', // Default role

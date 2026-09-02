@@ -15,7 +15,7 @@ class PromotionActivationService
      */
     public function activate(Promotion $promotion): void
     {
-        if ($promotion->payment_status === 'paid') {
+        if ($promotion->status_pembayaran === 'paid') {
             return;
         }
 
@@ -23,20 +23,20 @@ class PromotionActivationService
         $product = $promotion->product;
 
         $startDate = Carbon::now();
-        if ($product->is_promoted && $product->promoted_until && Carbon::parse($product->promoted_until)->isFuture()) {
-            $startDate = Carbon::parse($product->promoted_until);
+        if ($product->dipromosikan && $product->dipromosikan_hingga && Carbon::parse($product->dipromosikan_hingga)->isFuture()) {
+            $startDate = Carbon::parse($product->dipromosikan_hingga);
         }
-        $endDate = $startDate->copy()->addDays($package->duration_days);
+        $endDate = $startDate->copy()->addDays($package->durasi_hari);
 
-        $promotion->payment_status = 'paid';
-        $promotion->start_at = $startDate;
-        $promotion->end_at = $endDate;
-        $promotion->target_user_ids = $this->rollRandomRecipients($promotion);
+        $promotion->status_pembayaran = 'paid';
+        $promotion->mulai_pada = $startDate;
+        $promotion->berakhir_pada = $endDate;
+        $promotion->id_pengguna_target = $this->rollRandomRecipients($promotion);
         $promotion->save();
 
         $product->update([
-            'is_promoted' => true,
-            'promoted_until' => $endDate,
+            'dipromosikan' => true,
+            'dipromosikan_hingga' => $endDate,
         ]);
 
         SendPromotionBlastJob::dispatchAfterResponse($promotion);
@@ -44,12 +44,12 @@ class PromotionActivationService
 
     /**
      * Pick a fresh set of random recipient user IDs, sized by the promotion's
-     * package `random_recipient_count`. Returns null when the package has no
+     * package `jumlah_penerima_acak`. Returns null when the package has no
      * cap configured — callers then treat the blast as going to everyone.
      */
     public function rollRandomRecipients(Promotion $promotion): ?array
     {
-        $count = $promotion->package?->random_recipient_count;
+        $count = $promotion->package?->jumlah_penerima_acak;
         if (!$count || $count <= 0) {
             return null;
         }

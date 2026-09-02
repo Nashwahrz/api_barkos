@@ -28,8 +28,8 @@ class ReportController extends Controller
             'sender_id'   => $sender->id,
             'receiver_id' => $seller->id,
             'product_id'  => $report->product->id,
-            'message'     => $message,
-            'is_read'     => false,
+            'pesan'       => $message,
+            'sudah_dibaca' => false,
         ]);
 
         $seller->notify(new \App\Notifications\ChatNotification($chat));
@@ -77,8 +77,8 @@ class ReportController extends Controller
         $report = Report::create([
             'reporter_id' => Auth::id(),
             'product_id' => $request->product_id,
-            'reason' => $request->reason,
-            'description' => $request->description,
+            'alasan' => $request->reason,
+            'deskripsi' => $request->description,
             'status' => 'pending',
         ]);
 
@@ -92,8 +92,8 @@ class ReportController extends Controller
             $this->sendModerationChat(
                 $report,
                 $systemAdmin,
-                "⚠️ Produk Anda \"{$report->product->nama_barang}\" telah dilaporkan oleh pengguna lain.\n\nAlasan: {$report->reason}"
-                    . ($report->description ? "\nDetail: {$report->description}" : '')
+                "⚠️ Produk Anda \"{$report->product->nama_barang}\" telah dilaporkan oleh pengguna lain.\n\nAlasan: {$report->alasan}"
+                    . ($report->deskripsi ? "\nDetail: {$report->deskripsi}" : '')
                     . "\n\nMohon periksa kembali produk Anda agar sesuai dengan ketentuan platform. Tim kami akan segera meninjau laporan ini."
             );
         }
@@ -181,8 +181,8 @@ class ReportController extends Controller
             $this->sendModerationChat(
                 $report,
                 $request->user(),
-                "⚠️ Produk Anda \"{$report->product->nama_barang}\" telah dihapus oleh Admin karena melanggar ketentuan platform.\n\nAlasan pelaporan: {$report->reason}"
-                    . ($report->description ? "\nDetail: {$report->description}" : '')
+                "⚠️ Produk Anda \"{$report->product->nama_barang}\" telah dihapus oleh Admin karena melanggar ketentuan platform.\n\nAlasan pelaporan: {$report->alasan}"
+                    . ($report->deskripsi ? "\nDetail: {$report->deskripsi}" : '')
                     . "\n\nJika Anda merasa ini kesalahan, silakan balas pesan ini untuk menghubungi Admin."
             );
 
@@ -212,7 +212,7 @@ class ReportController extends Controller
             ->get();
 
         $users->each(function (User $u) {
-            $u->avatar = str_starts_with((string)$u->avatar, 'http') ? $u->avatar : ($u->avatar ? '/api/storage/' . $u->avatar : null);
+            $u->foto_profil = str_starts_with((string)$u->foto_profil, 'http') ? $u->foto_profil : ($u->foto_profil ? '/api/storage/' . $u->foto_profil : null);
         });
 
         return response()->json([

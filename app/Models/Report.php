@@ -13,8 +13,8 @@ class Report extends Model
     protected $fillable = [
         'reporter_id',
         'product_id',
-        'reason',
-        'description',
+        'alasan',
+        'deskripsi',
         'status',
     ];
 

@@ -17,7 +17,7 @@ class OfferResource extends JsonResource
             'product'       => new ProductResource($this->whenLoaded('product')),
             'buyer'         => new UserResource($this->whenLoaded('buyer')),
             'seller'        => new UserResource($this->whenLoaded('seller')),
-            'offered_price' => $this->offered_price,
+            'harga_tawaran' => $this->harga_tawaran,
             'status'        => $this->status,
             'created_at'    => $this->created_at,
             'updated_at'    => $this->updated_at,

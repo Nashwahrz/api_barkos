@@ -25,12 +25,12 @@ class PromotionPaymentNotification extends Notification implements ShouldQueue
 
     public function toDatabase(object $notifiable): array
     {
-        $matched = $this->promotion->manual_review_status === 'ocr_checked'
-            && str_contains((string) $this->promotion->ocr_note, '[MATCH]');
+        $matched = $this->promotion->status_peninjauan_manual === 'ocr_checked'
+            && str_contains((string) $this->promotion->catatan_ocr, '[MATCH]');
 
         return [
             'promotion_id' => $this->promotion->id,
-            'message'       => 'Bukti transfer manual dari ' . ($this->promotion->seller->name ?? '-')
+            'message'       => 'Bukti transfer manual dari ' . ($this->promotion->seller->nama ?? '-')
                 . ' untuk produk ' . ($this->promotion->product->nama_barang ?? '-')
                 . ' perlu ditinjau.',
             'ocr_matched'   => $matched,

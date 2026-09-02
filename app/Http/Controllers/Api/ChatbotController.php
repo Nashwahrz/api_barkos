@@ -159,7 +159,7 @@ class ChatbotController extends Controller
                 
                 $namaBarang = mb_convert_encoding($p->nama_barang, 'UTF-8', 'UTF-8');
                 $kondisi = mb_convert_encoding($p->kondisi, 'UTF-8', 'UTF-8');
-                $kategori = mb_convert_encoding($p->category?->name ?? '', 'UTF-8', 'UTF-8');
+                $kategori = mb_convert_encoding($p->category?->nama ?? '', 'UTF-8', 'UTF-8');
                 
                 $desc = substr(trim(preg_replace('/\s+/', ' ', $p->deskripsi ?? '')), 0, 150);
                 $desc = mb_convert_encoding($desc, 'UTF-8', 'UTF-8');
@@ -483,7 +483,7 @@ class ChatbotController extends Controller
                     'nama'      => mb_convert_encoding($p->nama_barang, 'UTF-8', 'UTF-8'),
                     'harga'     => (int) $p->harga,
                     'kondisi'   => mb_convert_encoding($p->kondisi, 'UTF-8', 'UTF-8'),
-                    'kategori'  => mb_convert_encoding($p->category?->name ?? '', 'UTF-8', 'UTF-8'),
+                    'kategori'  => mb_convert_encoding($p->category?->nama ?? '', 'UTF-8', 'UTF-8'),
                     'deskripsi' => substr(trim(preg_replace('/\s+/', ' ', $p->deskripsi ?? '')), 0, 150),
                     'jarak_km'  => $distances[$p->id] ?? null,
                     'url'       => "/products/{$p->id}",

@@ -21,7 +21,7 @@ class PromotionSeeder extends Seeder
         $this->call(PromotionPackage::class === PromotionPackageSeeder::class ? [] : [PromotionPackageSeeder::class]);
 
         // Get a package
-        $package = PromotionPackage::where('name', '7 Hari Boost')->first();
+        $package = PromotionPackage::where('nama', '7 Hari Boost')->first();
         if (!$package) {
             $package = PromotionPackage::first();
         }
@@ -30,7 +30,7 @@ class PromotionSeeder extends Seeder
         $seller = User::firstOrCreate(
             ['email' => 'penjual@example.com'],
             [
-                'name' => 'Penjual Dummy',
+                'nama' => 'Penjual Dummy',
                 'password' => bcrypt('password'), // password
                 'role' => 'penjual',
                 'asal_kampus' => 'Universitas Gadjah Mada'
@@ -39,7 +39,7 @@ class PromotionSeeder extends Seeder
 
         // Ensure we have a category
         $category = Category::firstOrCreate(
-            ['name' => 'Elektronik']
+            ['nama' => 'Elektronik']
         );
 
         // Ensure we have a product
@@ -52,8 +52,8 @@ class PromotionSeeder extends Seeder
                 'harga' => 2500000,
                 'kondisi' => 'sangat baik',
                 'status_terjual' => false,
-                'is_promoted' => true,
-                'promoted_until' => Carbon::now()->addDays($package->duration_days),
+                'dipromosikan' => true,
+                'dipromosikan_hingga' => Carbon::now()->addDays($package->durasi_hari),
             ]
         );
 
@@ -65,9 +65,9 @@ class PromotionSeeder extends Seeder
                 'package_id' => $package->id,
             ],
             [
-                'start_at' => Carbon::now(),
-                'end_at' => Carbon::now()->addDays($package->duration_days),
-                'amount_paid' => $package->price,
+                'mulai_pada' => Carbon::now(),
+                'berakhir_pada' => Carbon::now()->addDays($package->durasi_hari),
+                'jumlah_dibayar' => $package->harga,
                 'status' => 'active',
             ]
         );

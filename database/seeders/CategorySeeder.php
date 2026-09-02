@@ -13,19 +13,19 @@ class CategorySeeder extends Seeder
     public function run(): void
     {
         $categories = [
-            ['name' => 'Elektronik & Gadget'],
-            ['name' => 'Furniture & Perabotan'],
-            ['name' => 'Kasur & Alat Tidur'],
-            ['name' => 'Peralatan Mandi & Cuci'],
-            ['name' => 'Alat Masak & Makan'],
-            ['name' => 'Buku & Alat Tulis Kampus'],
-            ['name' => 'Kendaraan & Aksesoris'],
-            ['name' => 'Pakaian & Fashion'],
-            ['name' => 'Lain-lain (Lainnya)'],
+            ['nama' => 'Elektronik & Gadget'],
+            ['nama' => 'Furniture & Perabotan'],
+            ['nama' => 'Kasur & Alat Tidur'],
+            ['nama' => 'Peralatan Mandi & Cuci'],
+            ['nama' => 'Alat Masak & Makan'],
+            ['nama' => 'Buku & Alat Tulis Kampus'],
+            ['nama' => 'Kendaraan & Aksesoris'],
+            ['nama' => 'Pakaian & Fashion'],
+            ['nama' => 'Lain-lain (Lainnya)'],
         ];
 
         foreach ($categories as $category) {
-            Category::firstOrCreate(['name' => $category['name']]);
+            Category::firstOrCreate(['nama' => $category['nama']]);
         }
     }
 }

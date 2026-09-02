@@ -38,11 +38,11 @@ class ProductController extends Controller
 
         $query = Product::with(['user', 'category', 'promotions' => function ($q) {
                 $q->where('status', 'active')
-                  ->where('payment_status', 'paid')
-                  ->where('end_at', '>', now());
+                  ->where('status_pembayaran', 'paid')
+                  ->where('berakhir_pada', '>', now());
             }])
             ->whereHas('user', function ($q) {
-                $q->where('is_active', true);
+                $q->where('aktif', true);
             })
             ->where('status_terjual', false);
 
@@ -116,13 +116,13 @@ class ProductController extends Controller
         // ── Fallback: no geo params → promoted (for this viewer) first, then latest ─────────
         $products = $query
             ->orderByRaw(
-                "CASE WHEN is_promoted = 1 AND (promoted_until IS NULL OR promoted_until > NOW()) AND EXISTS (
+                "CASE WHEN dipromosikan = 1 AND (dipromosikan_hingga IS NULL OR dipromosikan_hingga > NOW()) AND EXISTS (
                     SELECT 1 FROM promotions
                     WHERE promotions.product_id = products.id
                       AND promotions.status = 'active'
-                      AND promotions.payment_status = 'paid'
-                      AND promotions.end_at > NOW()
-                      AND (promotions.target_user_ids IS NULL OR JSON_CONTAINS(promotions.target_user_ids, ?))
+                      AND promotions.status_pembayaran = 'paid'
+                      AND promotions.berakhir_pada > NOW()
+                      AND (promotions.id_pengguna_target IS NULL OR JSON_CONTAINS(promotions.id_pengguna_target, ?))
                 ) THEN 1 ELSE 0 END DESC",
                 [json_encode($viewerId)]
             )
@@ -148,8 +148,8 @@ class ProductController extends Controller
     {
         $data = $request->validated();
 
-        if (isset($data['is_offer_enabled']) && !$data['is_offer_enabled']) {
-            $data['minimum_offer_price'] = null;
+        if (isset($data['tawaran_diaktifkan']) && !$data['tawaran_diaktifkan']) {
+            $data['harga_minimum_tawaran'] = null;
         }
 
         if ($request->hasFile('foto')) {
@@ -158,16 +158,16 @@ class ProductController extends Controller
 
         $product = Auth::user()->products()->create($data);
 
-        if (in_array($data['payment_method'] ?? '', ['bank_transfer', 'both'])) {
+        if (in_array($data['metode_pembayaran'] ?? '', ['bank_transfer', 'both'])) {
             $bankName = $request->input('bank_name');
             $accountNumber = $request->input('account_number');
             if ($bankName && $accountNumber) {
                 \App\Models\BankAccount::updateOrCreate(
                     ['user_id' => Auth::id()],
                     [
-                        'bank_name' => $bankName,
-                        'account_number' => $accountNumber,
-                        'account_name' => Auth::user()->name,
+                        'nama_bank' => $bankName,
+                        'nomor_rekening' => $accountNumber,
+                        'nama_pemilik_rekening' => Auth::user()->nama,
                     ]
                 );
             }
@@ -189,8 +189,8 @@ class ProductController extends Controller
     {
         return new ProductResource($product->load(['user.bankAccounts', 'category', 'images', 'promotions' => function ($q) {
             $q->where('status', 'active')
-              ->where('payment_status', 'paid')
-              ->where('end_at', '>', now());
+              ->where('status_pembayaran', 'paid')
+              ->where('berakhir_pada', '>', now());
         }]));
     }
 
@@ -205,8 +205,8 @@ class ProductController extends Controller
 
         $data = $request->validated();
 
-        if (isset($data['is_offer_enabled']) && !$data['is_offer_enabled']) {
-            $data['minimum_offer_price'] = null;
+        if (isset($data['tawaran_diaktifkan']) && !$data['tawaran_diaktifkan']) {
+            $data['harga_minimum_tawaran'] = null;
         }
 
         if ($request->hasFile('foto')) {
@@ -218,16 +218,16 @@ class ProductController extends Controller
 
         $product->update($data);
 
-        if (in_array($data['payment_method'] ?? $product->payment_method, ['bank_transfer', 'both'])) {
+        if (in_array($data['metode_pembayaran'] ?? $product->metode_pembayaran, ['bank_transfer', 'both'])) {
             $bankName = $request->input('bank_name');
             $accountNumber = $request->input('account_number');
             if ($bankName && $accountNumber) {
                 \App\Models\BankAccount::updateOrCreate(
                     ['user_id' => Auth::id()],
                     [
-                        'bank_name' => $bankName,
-                        'account_number' => $accountNumber,
-                        'account_name' => Auth::user()->name,
+                        'nama_bank' => $bankName,
+                        'nomor_rekening' => $accountNumber,
+                        'nama_pemilik_rekening' => Auth::user()->nama,
                     ]
                 );
             }
@@ -250,7 +250,7 @@ class ProductController extends Controller
         $isSold = !$product->status_terjual;
         $product->update([
             'status_terjual' => $isSold,
-            'sold_at'        => $isSold ? now() : null,
+            'terjual_pada'   => $isSold ? now() : null,
         ]);
         return response()->json([
             'message'       => $product->status_terjual ? 'Produk ditandai sebagai terjual.' : 'Produk kembali tersedia.',

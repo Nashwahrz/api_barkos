@@ -30,7 +30,7 @@ class NewReportAdminNotification extends Notification implements ShouldQueue
     {
         return [
             'report_id' => $this->report->id,
-            'message'   => ($this->report->reporter->name ?? 'Seorang pengguna') . ' membuat laporan: ' . $this->report->reason,
+            'message'   => ($this->report->reporter->nama ?? 'Seorang pengguna') . ' membuat laporan: ' . $this->report->alasan,
             'type'      => 'admin_new_report',
         ];
     }

@@ -64,7 +64,7 @@ class ProductDeletedByAdminNotification extends Notification implements ShouldQu
     {
         return (new MailMessage)
             ->subject('Produk Dihapus Admin - Lapak Kos')
-            ->greeting('Halo ' . $notifiable->name . '!')
+            ->greeting('Halo ' . $notifiable->nama . '!')
             ->line("Produk Anda dengan nama '{$this->productName}' telah dihapus oleh Admin karena indikasi pelanggaran ketentuan Lapak Kos.")
             ->action('Lihat Produk Saya', config('services.frontend_url') . '/seller/products')
             ->line('Jika Anda merasa ini adalah kesalahan, silakan hubungi tim dukungan kami.');

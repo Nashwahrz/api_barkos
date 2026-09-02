@@ -15,34 +15,34 @@ class PromotionPackageSeeder extends Seeder
     {
         $packages = [
             [
-                'name'              => 'Coba-Coba (10 Orang)',
-                'duration_days'     => 1,
-                'price'             => 1000.00,
-                'is_active'         => true,
+                'nama'              => 'Coba-Coba (10 Orang)',
+                'durasi_hari'       => 1,
+                'harga'             => 1000.00,
+                'aktif'             => true,
             ],
             [
-                'name'              => '1 Hari Boost',
-                'duration_days'     => 1,
-                'price'             => 5000.00,
-                'is_active'         => true,
+                'nama'              => '1 Hari Boost',
+                'durasi_hari'       => 1,
+                'harga'             => 5000.00,
+                'aktif'             => true,
             ],
             [
-                'name'              => '3 Hari Boost',
-                'duration_days'     => 3,
-                'price'             => 12000.00,
-                'is_active'         => true,
+                'nama'              => '3 Hari Boost',
+                'durasi_hari'       => 3,
+                'harga'             => 12000.00,
+                'aktif'             => true,
             ],
             [
-                'name'              => '7 Hari Boost',
-                'duration_days'     => 7,
-                'price'             => 25000.00,
-                'is_active'         => true,
+                'nama'              => '7 Hari Boost',
+                'durasi_hari'       => 7,
+                'harga'             => 25000.00,
+                'aktif'             => true,
             ],
         ];
 
         foreach ($packages as $package) {
             PromotionPackage::firstOrCreate(
-                ['name' => $package['name']],
+                ['nama' => $package['nama']],
                 $package
             );
         }

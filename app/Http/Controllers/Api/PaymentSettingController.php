@@ -20,10 +20,10 @@ class PaymentSettingController extends Controller
 
         return response()->json([
             'data' => [
-                'midtrans_enabled' => $settings->midtrans_enabled,
-                'manual_transfer_enabled' => $settings->manual_transfer_enabled,
-                'qris_image_url' => $settings->qris_image_path ? '/api/storage/' . $settings->qris_image_path : null,
-                'bank_accounts' => PaymentBankAccount::where('is_active', true)->get(),
+                'midtrans_enabled' => $settings->midtrans_diaktifkan,
+                'manual_transfer_enabled' => $settings->transfer_manual_diaktifkan,
+                'qris_image_url' => $settings->jalur_gambar_qris ? '/api/storage/' . $settings->jalur_gambar_qris : null,
+                'bank_accounts' => PaymentBankAccount::where('aktif', true)->get(),
             ],
         ]);
     }
@@ -46,17 +46,17 @@ class PaymentSettingController extends Controller
         $settings = PaymentSetting::current();
 
         if ($request->hasFile('qris_image')) {
-            if ($settings->qris_image_path) {
-                Storage::disk('public')->delete($settings->qris_image_path);
+            if ($settings->jalur_gambar_qris) {
+                Storage::disk('public')->delete($settings->jalur_gambar_qris);
             }
-            $settings->qris_image_path = $request->file('qris_image')->store('payments/qris', 'public');
+            $settings->jalur_gambar_qris = $request->file('qris_image')->store('payments/qris', 'public');
         }
 
         if ($request->has('midtrans_enabled')) {
-            $settings->midtrans_enabled = $request->boolean('midtrans_enabled');
+            $settings->midtrans_diaktifkan = $request->boolean('midtrans_enabled');
         }
         if ($request->has('manual_transfer_enabled')) {
-            $settings->manual_transfer_enabled = $request->boolean('manual_transfer_enabled');
+            $settings->transfer_manual_diaktifkan = $request->boolean('manual_transfer_enabled');
         }
 
         $settings->save();
@@ -64,9 +64,9 @@ class PaymentSettingController extends Controller
         return response()->json([
             'message' => 'Pengaturan pembayaran berhasil diperbarui.',
             'data' => [
-                'midtrans_enabled' => $settings->midtrans_enabled,
-                'manual_transfer_enabled' => $settings->manual_transfer_enabled,
-                'qris_image_url' => $settings->qris_image_path ? '/api/storage/' . $settings->qris_image_path : null,
+                'midtrans_enabled' => $settings->midtrans_diaktifkan,
+                'manual_transfer_enabled' => $settings->transfer_manual_diaktifkan,
+                'qris_image_url' => $settings->jalur_gambar_qris ? '/api/storage/' . $settings->jalur_gambar_qris : null,
             ],
         ]);
     }

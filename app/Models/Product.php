@@ -20,22 +20,22 @@ class Product extends Model
         'kondisi',
         'durasi_pemakaian',
         'status_terjual',
-        'sold_at',
+        'terjual_pada',
         'latitude',
         'longitude',
-        'minimum_offer_price',
-        'is_offer_enabled',
-        'is_promoted',
-        'promoted_until',
-        'payment_method',
+        'harga_minimum_tawaran',
+        'tawaran_diaktifkan',
+        'dipromosikan',
+        'dipromosikan_hingga',
+        'metode_pembayaran',
     ];
 
     protected $casts = [
-        'is_promoted'      => 'boolean',
-        'is_offer_enabled' => 'boolean',
+        'dipromosikan'       => 'boolean',
+        'tawaran_diaktifkan' => 'boolean',
         'status_terjual' => 'boolean',
-        'promoted_until' => 'datetime',
-        'sold_at'        => 'datetime',
+        'dipromosikan_hingga' => 'datetime',
+        'terjual_pada'   => 'datetime',
         'harga'          => 'integer',
     ];
 
@@ -94,20 +94,20 @@ class Product extends Model
     /**
      * Dynamically determine if the product is currently promoted.
      */
-    public function getIsPromotedAttribute($value)
+    public function getDipromosikanAttribute($value)
     {
-        return $value && (!$this->promoted_until || $this->promoted_until->isFuture());
+        return $value && (!$this->dipromosikan_hingga || $this->dipromosikan_hingga->isFuture());
     }
 
     /**
      * Whether this product's active promotion should be surfaced (boosted/bannered/badged)
      * to a given viewer. Untargeted promotions (no random-recipient cap) show to everyone;
-     * targeted ones only to the accounts rolled into target_user_ids. $bypassTargeting lets
+     * targeted ones only to the accounts rolled into id_pengguna_target. $bypassTargeting lets
      * the product owner and admins always see the true global status regardless of targeting.
      */
     public function isPromotedFor(?int $viewerId, bool $bypassTargeting = false): bool
     {
-        if (!$this->is_promoted) {
+        if (!$this->dipromosikan) {
             return false;
         }
 
@@ -119,16 +119,16 @@ class Product extends Model
             ? $this->promotions->first()
             : $this->promotions()
                 ->where('status', 'active')
-                ->where('payment_status', 'paid')
-                ->where('end_at', '>', now())
+                ->where('status_pembayaran', 'paid')
+                ->where('berakhir_pada', '>', now())
                 ->latest()
                 ->first();
 
-        if (!$promotion || empty($promotion->target_user_ids)) {
+        if (!$promotion || empty($promotion->id_pengguna_target)) {
             return true;
         }
 
-        return $viewerId && in_array($viewerId, $promotion->target_user_ids);
+        return $viewerId && in_array($viewerId, $promotion->id_pengguna_target);
     }
 
     /**

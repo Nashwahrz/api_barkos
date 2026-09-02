@@ -19,7 +19,7 @@ class UserController extends Controller
         }
 
         $users = User::withCount('receivedReports')->latest()->get();
-        $users->each(fn (User $u) => $u->avatar = self::resolveAvatarUrl($u->avatar));
+        $users->each(fn (User $u) => $u->foto_profil = self::resolveAvatarUrl($u->foto_profil));
 
         return response()->json(['data' => $users]);
     }
@@ -50,13 +50,13 @@ class UserController extends Controller
         return response()->json([
             'data' => [
                 'id'          => $user->id,
-                'name'        => $user->name,
-                'avatar'      => self::resolveAvatarUrl($user->avatar),
+                'nama'        => $user->nama,
+                'foto_profil' => self::resolveAvatarUrl($user->foto_profil),
                 'asal_kampus' => $user->asal_kampus,
                 'role'        => $user->role,
                 'created_at'  => $user->created_at,
                 'is_online'   => $user->isOnline(),
-                'last_active_at' => $user->last_active_at,
+                'terakhir_aktif_pada' => $user->terakhir_aktif_pada,
                 'activity'    => [
                     'products_count'        => $user->products()->where('status_terjual', false)->count(),
                     'products_sold_count'   => $user->products()->where('status_terjual', true)->count(),
@@ -73,15 +73,15 @@ class UserController extends Controller
         return response()->json([
             'data' => [
                 'id'          => $user->id,
-                'name'        => $user->name,
+                'nama'        => $user->nama,
                 'email'       => $user->email,
-                'phone'       => $user->phone,
-                'avatar'      => self::resolveAvatarUrl($user->avatar),
+                'no_telepon'  => $user->no_telepon,
+                'foto_profil' => self::resolveAvatarUrl($user->foto_profil),
                 'asal_kampus' => $user->asal_kampus,
                 'role'        => $user->role,
-                'is_active'   => $user->is_active,
+                'aktif'       => $user->aktif,
                 'created_at'  => $user->created_at,
-                'last_active_at' => $user->last_active_at,
+                'terakhir_aktif_pada' => $user->terakhir_aktif_pada,
                 'is_online'   => $user->isOnline(),
                 'activity'    => [
                     'products_count'          => $user->products()->count(),
@@ -109,11 +109,11 @@ class UserController extends Controller
             return response()->json(['message' => 'Cannot deactivate super admin'], 422);
         }
 
-        $user->update(['is_active' => !$user->is_active]);
+        $user->update(['aktif' => !$user->aktif]);
 
         return response()->json([
-            'message'   => $user->is_active ? 'Akun pengguna diaktifkan.' : 'Akun pengguna dinonaktifkan.',
-            'is_active' => $user->is_active,
+            'message' => $user->aktif ? 'Akun pengguna diaktifkan.' : 'Akun pengguna dinonaktifkan.',
+            'aktif'   => $user->aktif,
         ]);
     }
 

@@ -11,9 +11,9 @@ class Chat extends Model
         'sender_id',
         'receiver_id',
         'product_id',
-        'message',
-        'reply_to_id',
-        'is_read'
+        'pesan',
+        'id_balasan',
+        'sudah_dibaca'
     ];
 
     /**
@@ -45,6 +45,6 @@ class Chat extends Model
      */
     public function replyTo(): BelongsTo
     {
-        return $this->belongsTo(Chat::class, 'reply_to_id');
+        return $this->belongsTo(Chat::class, 'id_balasan');
     }
 }

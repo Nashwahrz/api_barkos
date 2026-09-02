@@ -25,9 +25,9 @@ class BankAccountController extends Controller
 
         $account = BankAccount::create([
             'user_id' => Auth::id(),
-            'bank_name' => $request->bank_name,
-            'account_number' => $request->account_number,
-            'account_name' => $request->account_name,
+            'nama_bank' => $request->bank_name,
+            'nomor_rekening' => $request->account_number,
+            'nama_pemilik_rekening' => $request->account_name,
         ]);
 
         return response()->json(['message' => 'Rekening berhasil ditambahkan', 'data' => $account], 201);
@@ -45,7 +45,11 @@ class BankAccountController extends Controller
             'account_name' => 'required|string|max:100',
         ]);
 
-        $bankAccount->update($request->only('bank_name', 'account_number', 'account_name'));
+        $bankAccount->update([
+            'nama_bank' => $request->bank_name,
+            'nomor_rekening' => $request->account_number,
+            'nama_pemilik_rekening' => $request->account_name,
+        ]);
 
         return response()->json(['message' => 'Rekening berhasil diubah', 'data' => $bankAccount]);
     }

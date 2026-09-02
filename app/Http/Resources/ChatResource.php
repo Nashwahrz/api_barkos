@@ -14,20 +14,20 @@ class ChatResource extends JsonResource
             'sender' => new UserResource($this->whenLoaded('sender')),
             'receiver' => new UserResource($this->whenLoaded('receiver')),
             'product' => new ProductResource($this->whenLoaded('product')),
-            'message' => $this->message,
+            'pesan' => $this->pesan,
             'reply_to' => $this->whenLoaded('replyTo', function () {
                 if (!$this->replyTo) {
                     return null;
                 }
                 return [
                     'id' => $this->replyTo->id,
-                    'message' => $this->replyTo->message,
+                    'pesan' => $this->replyTo->pesan,
                     'sender' => $this->replyTo->relationLoaded('sender') && $this->replyTo->sender
                         ? new UserResource($this->replyTo->sender)
                         : null,
                 ];
             }),
-            'is_read' => (bool) $this->is_read,
+            'sudah_dibaca' => (bool) $this->sudah_dibaca,
             'created_at' => $this->created_at,
         ];
     }

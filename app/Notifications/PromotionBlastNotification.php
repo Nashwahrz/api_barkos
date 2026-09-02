@@ -41,7 +41,7 @@ class PromotionBlastNotification extends Notification implements ShouldQueue
         return [
             'promotion_id' => $this->promotion->id,
             'product_id'   => $this->promotion->product_id,
-            'message'      => 'Promo Spesial: ' . ($this->promotion->ad_title ?? $this->promotion->product->nama_barang) . ' kini tersedia! Cek sekarang sebelum kehabisan.',
+            'message'      => 'Promo Spesial: ' . ($this->promotion->judul_iklan ?? $this->promotion->product->nama_barang) . ' kini tersedia! Cek sekarang sebelum kehabisan.',
             'type'         => 'promotion',
         ];
     }

@@ -8,16 +8,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class PromotionPackage extends Model
 {
     protected $fillable = [
-        'name',
-        'duration_days',
-        'random_recipient_count',
-        'price',
-        'is_active',
+        'nama',
+        'durasi_hari',
+        'jumlah_penerima_acak',
+        'harga',
+        'aktif',
     ];
 
     protected $casts = [
-        'price'     => 'decimal:2',
-        'is_active' => 'boolean',
+        'harga' => 'decimal:2',
+        'aktif' => 'boolean',
     ];
 
     /**

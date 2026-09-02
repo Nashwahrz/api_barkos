@@ -9,12 +9,12 @@ class ProductImage extends Model
 {
     protected $fillable = [
         'product_id',
-        'image_path',
-        'is_primary',
+        'jalur_gambar',
+        'utama',
     ];
 
     protected $casts = [
-        'is_primary' => 'boolean',
+        'utama' => 'boolean',
     ];
 
     /**

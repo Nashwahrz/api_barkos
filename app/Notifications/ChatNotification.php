@@ -38,9 +38,9 @@ class ChatNotification extends Notification implements ShouldQueue
      */
     public function toWebPush($notifiable, $notification)
     {
-        $senderName = $this->chat->sender->name ?? 'Seseorang';
+        $senderName = $this->chat->sender->nama ?? 'Seseorang';
         $productName = $this->chat->product->nama_barang ?? 'Produk';
-        $body = $senderName . ': "' . Str::limit($this->chat->message, 60) . '"';
+        $body = $senderName . ': "' . Str::limit($this->chat->pesan, 60) . '"';
         $url  = '/chat/' . $this->chat->product_id . '/' . $this->chat->sender_id;
 
         return (new \NotificationChannels\WebPush\WebPushMessage)
@@ -60,7 +60,7 @@ class ChatNotification extends Notification implements ShouldQueue
     {
         return [
             'product_id' => $this->chat->product_id,
-            'message'    => "Pesan baru dari {$this->chat->sender->name}: \"" . Str::limit($this->chat->message, 50) . "\"",
+            'message'    => "Pesan baru dari {$this->chat->sender->nama}: \"" . Str::limit($this->chat->pesan, 50) . "\"",
             'type'       => 'chat',
         ];
     }
@@ -74,9 +74,9 @@ class ChatNotification extends Notification implements ShouldQueue
         
         return (new MailMessage)
             ->subject('Pesan Baru - Lapak Kos: ' . $productName)
-            ->greeting('Halo ' . $notifiable->name . '!')
-            ->line('Anda menerima pesan baru dari ' . $this->chat->sender->name . ' terkait produk "' . $productName . '".')
-            ->line('Pesan: "' . Str::limit($this->chat->message, 100) . '"')
+            ->greeting('Halo ' . $notifiable->nama . '!')
+            ->line('Anda menerima pesan baru dari ' . $this->chat->sender->nama . ' terkait produk "' . $productName . '".')
+            ->line('Pesan: "' . Str::limit($this->chat->pesan, 100) . '"')
             ->action('Balas Pesan', config('services.frontend_url') . '/chat')
             ->line('Terima kasih telah menggunakan Lapak Kos!');
     }
