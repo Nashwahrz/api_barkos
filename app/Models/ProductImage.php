@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ProductImage extends Model
 {
+    protected $table = 'gambar_produk';
     protected $fillable = [
         'product_id',
         'jalur_gambar',

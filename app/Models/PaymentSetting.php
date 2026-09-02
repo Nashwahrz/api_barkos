@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class PaymentSetting extends Model
 {
+    protected $table = 'pengaturan_pembayaran';
     protected $fillable = [
         'midtrans_diaktifkan',
         'transfer_manual_diaktifkan',

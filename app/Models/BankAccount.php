@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class BankAccount extends Model
 {
+    protected $table = 'rekening_bank';
     protected $fillable = [
         'user_id',
         'nama_bank',

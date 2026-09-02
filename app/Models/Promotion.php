@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Promotion extends Model
 {
+    protected $table = 'promosi';
     protected $fillable = [
         'order_id',
         'snap_token',

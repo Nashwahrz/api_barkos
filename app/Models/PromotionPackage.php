@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PromotionPackage extends Model
 {
+    protected $table = 'paket_promosi';
     protected $fillable = [
         'nama',
         'durasi_hari',

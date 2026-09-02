@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Offer extends Model
 {
+    protected $table = 'tawaran';
     protected $fillable = [
         'product_id',
         'buyer_id',

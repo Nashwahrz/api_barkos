@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Chat extends Model
 {
+    protected $table = 'obrolan';
     protected $fillable = [
         'sender_id',
         'receiver_id',

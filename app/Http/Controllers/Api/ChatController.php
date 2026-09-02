@@ -169,7 +169,7 @@ class ChatController extends Controller
             $buyerId = $isOwner ? $receiverId : $senderId;
 
             // Check if chat is closed manually by the seller
-            $isClosed = DB::table('closed_chats')
+            $isClosed = DB::table('obrolan_selesai')
                 ->where('product_id', $productId)
                 ->where('buyer_id', $buyerId)
                 ->exists();
@@ -268,7 +268,7 @@ class ChatController extends Controller
         // If auth user is not the owner and not the other user (e.g. admin), they can just view it.
         $buyerId = $isOwner ? $user->id : $authId;
 
-        $isManuallyClosed = DB::table('closed_chats')
+        $isManuallyClosed = DB::table('obrolan_selesai')
             ->where('product_id', $productId)
             ->where('buyer_id', $buyerId)
             ->exists();
@@ -292,7 +292,7 @@ class ChatController extends Controller
             return response()->json(['message' => 'Tidak diizinkan menutup percakapan ini.'], 403);
         }
 
-        DB::table('closed_chats')->updateOrInsert(
+        DB::table('obrolan_selesai')->updateOrInsert(
             ['product_id' => $productId, 'buyer_id' => $user->id],
             ['created_at' => now(), 'updated_at' => now()]
         );

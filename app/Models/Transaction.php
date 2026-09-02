@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Transaction extends Model
 {
+    protected $table = 'transaksi';
     protected $fillable = [
         'product_id',
         'buyer_id',
