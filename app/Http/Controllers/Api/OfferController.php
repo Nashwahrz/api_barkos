@@ -26,7 +26,7 @@ class OfferController extends Controller
         $buyer = Auth::user();
 
         // Cannot offer on own product
-        if ($product->user_id === $buyer->id) {
+        if ($product->id_pengguna === $buyer->id) {
             return response()->json(['message' => 'Anda tidak dapat menawar produk milik sendiri.'], 422);
         }
 
@@ -48,8 +48,8 @@ class OfferController extends Controller
         }
 
         // Prevent duplicate pending offers
-        $existing = Offer::where('product_id', $product->id)
-            ->where('buyer_id', $buyer->id)
+        $existing = Offer::where('id_produk', $product->id_produk)
+            ->where('id_pembeli', $buyer->id)
             ->where('status', 'pending')
             ->exists();
 
@@ -58,14 +58,14 @@ class OfferController extends Controller
         }
 
         $offer = Offer::create([
-            'product_id'    => $product->id,
-            'buyer_id'      => $buyer->id,
-            'seller_id'     => $product->user_id,
+            'id_produk'     => $product->id_produk,
+            'id_pembeli'    => $buyer->id,
+            'id_penjual'    => $product->id_pengguna,
             'harga_tawaran' => $request->harga_tawaran,
             'status'        => 'pending',
         ]);
 
-        $seller = \App\Models\User::find($product->user_id);
+        $seller = \App\Models\User::find($product->id_pengguna);
         $seller->notify(new \App\Notifications\OfferNotification(
             $offer,
             "{$buyer->nama} menawar produk {$product->nama_barang} Anda seharga Rp " . number_format($request->harga_tawaran, 0, ',', '.'),
@@ -84,7 +84,7 @@ class OfferController extends Controller
     public function indexBuyer(Request $request): AnonymousResourceCollection
     {
         $offers = Offer::with(['product.images', 'seller'])
-            ->where('buyer_id', Auth::id())
+            ->where('id_pembeli', Auth::id())
             ->latest()
             ->get();
 
@@ -97,7 +97,7 @@ class OfferController extends Controller
     public function indexSeller(Request $request): AnonymousResourceCollection
     {
         $offers = Offer::with(['product.images', 'buyer'])
-            ->where('seller_id', Auth::id())
+            ->where('id_penjual', Auth::id())
             ->latest()
             ->get();
 
@@ -117,7 +117,7 @@ class OfferController extends Controller
 
         if ($request->action === 'cancel') {
             // Only buyer can cancel, and only if pending
-            if ($offer->buyer_id !== $user->id) {
+            if ($offer->id_pembeli !== $user->id) {
                 return response()->json(['message' => 'Unauthorized'], 403);
             }
             if ($offer->status !== 'pending') {
@@ -127,7 +127,7 @@ class OfferController extends Controller
             $message = 'Penawaran dibatalkan.';
         } else {
             // Only seller can accept/reject, and only if pending
-            if ($offer->seller_id !== $user->id) {
+            if ($offer->id_penjual !== $user->id) {
                 return response()->json(['message' => 'Unauthorized'], 403);
             }
             if ($offer->status !== 'pending') {
@@ -138,7 +138,7 @@ class OfferController extends Controller
                 $offer->update(['status' => 'accepted']);
                 $message = 'Penawaran diterima.';
 
-                $buyer = \App\Models\User::find($offer->buyer_id);
+                $buyer = \App\Models\User::find($offer->id_pembeli);
                 $buyer->notify(new \App\Notifications\OfferNotification(
                     $offer,
                     "Penawaran Anda untuk produk {$offer->product->nama_barang} seharga Rp " . number_format($offer->harga_tawaran, 0, ',', '.') . " telah DITERIMA.",
@@ -148,7 +148,7 @@ class OfferController extends Controller
                 $offer->update(['status' => 'rejected']);
                 $message = 'Penawaran ditolak.';
 
-                $buyer = \App\Models\User::find($offer->buyer_id);
+                $buyer = \App\Models\User::find($offer->id_pembeli);
                 $buyer->notify(new \App\Notifications\OfferNotification(
                     $offer,
                     "Penawaran Anda untuk produk {$offer->product->nama_barang} seharga Rp " . number_format($offer->harga_tawaran, 0, ',', '.') . " telah DITOLAK.",

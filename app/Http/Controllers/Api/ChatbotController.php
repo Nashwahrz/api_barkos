@@ -72,7 +72,7 @@ class ChatbotController extends Controller
                         $subQ->where('nama_barang', 'like', "%{$word}%")
                              ->orWhere('deskripsi',   'like', "%{$word}%")
                              ->orWhereHas('category', function ($cq) use ($word) {
-                                 $cq->where('name', 'like', "%{$word}%");
+                                 $cq->where('nama', 'like', "%{$word}%");
                              });
                     });
                 }
@@ -94,7 +94,7 @@ class ChatbotController extends Controller
             foreach ($products as $p) {
                 if ($p->latitude && $p->longitude) {
                     $coords        .= ";{$p->longitude},{$p->latitude}";
-                    $validProducts[] = $p->id;
+                    $validProducts[] = $p->id_produk;
                 }
             }
 
@@ -136,7 +136,7 @@ class ChatbotController extends Controller
                             $c = 2 * asin(sqrt($a));
                             $distanceKm = 6371 * $c;
                             
-                            $osrmDistances[$p->id] = round($distanceKm, 1);
+                            $osrmDistances[$p->id_produk] = round($distanceKm, 1);
                         }
                     }
                 }
@@ -152,10 +152,10 @@ class ChatbotController extends Controller
         } else {
             $productListString = "";
             foreach ($products as $p) {
-                $distance = $osrmDistances[$p->id] ?? null;
+                $distance = $osrmDistances[$p->id_produk] ?? null;
                 $jarakText = $distance !== null ? ", Jarak: {$distance} km" : "";
                 $price = number_format($p->harga, 0, ',', '.');
-                $url = "/products/{$p->id}";
+                $url = "/products/{$p->id_produk}";
                 
                 $namaBarang = mb_convert_encoding($p->nama_barang, 'UTF-8', 'UTF-8');
                 $kondisi = mb_convert_encoding($p->kondisi, 'UTF-8', 'UTF-8');
@@ -168,7 +168,7 @@ class ChatbotController extends Controller
                 $productListString .= "  Detail: {$desc}...\n";
                 
                 $productList[] = [
-                    'id'       => $p->id,
+                    'id'       => $p->id_produk,
                     'name'     => $namaBarang,
                     'price'    => (int) ($p->harga ?? 0),
                     'kondisi'  => $kondisi,
@@ -203,7 +203,7 @@ class ChatbotController extends Controller
                     $dLat = $lat2 - $lat1;
                     $dLon = $lon2 - $lon1;
                     $a = sin($dLat / 2) ** 2 + cos($lat1) * cos($lat2) * sin($dLon / 2) ** 2;
-                    $allDistances[$p->id] = round(6371 * 2 * asin(sqrt($a)), 1);
+                    $allDistances[$p->id_produk] = round(6371 * 2 * asin(sqrt($a)), 1);
                 }
             }
         }
@@ -211,13 +211,13 @@ class ChatbotController extends Controller
         $allProductListString = $allAvailableProducts->isEmpty()
             ? "Saat ini tidak ada barang yang tersedia di database Lapak Kos."
             : $allAvailableProducts->map(function ($p) use ($allDistances) {
-                $distance = $allDistances[$p->id] ?? null;
+                $distance = $allDistances[$p->id_produk] ?? null;
                 $jarakText = $distance !== null ? ", Jarak: {$distance} km" : "";
                 $price = number_format($p->harga, 0, ',', '.');
                 $namaBarang = mb_convert_encoding($p->nama_barang, 'UTF-8', 'UTF-8');
                 $kondisi = mb_convert_encoding($p->kondisi, 'UTF-8', 'UTF-8');
                 $desc = mb_convert_encoding(substr(trim(preg_replace('/\s+/', ' ', $p->deskripsi ?? '')), 0, 150), 'UTF-8', 'UTF-8');
-                return "- [{$namaBarang}](/products/{$p->id}) (Kondisi: {$kondisi}{$jarakText}) - Rp {$price}\n  Detail: {$desc}...\n";
+                return "- [{$namaBarang}](/products/{$p->id_produk}) (Kondisi: {$kondisi}{$jarakText}) - Rp {$price}\n  Detail: {$desc}...\n";
             })->implode('');
 
         $systemPrompt = "Kamu adalah Miu, asisten cerdas dari 'Lapak Kos' (marketplace barang bekas mahasiswa). Tugasmu: membantu membandingkan barang, memberi saran, dan MEREKOMENDASIKAN BARANG HANYA dari database Lapak Kos kepada pengguna, serta MENJAWAB PERTANYAAN seputar cara penggunaan website Lapak Kos.\n"
@@ -271,14 +271,14 @@ class ChatbotController extends Controller
 
                 $nearestProducts = $isMurah
                     ? $productsWithCoords->sortBy(fn($p) => (float) $p->harga)->take(5)
-                    : $productsWithCoords->sortBy(fn($p) => $allDistances[$p->id] ?? PHP_INT_MAX)->take(5);
+                    : $productsWithCoords->sortBy(fn($p) => $allDistances[$p->id_produk] ?? PHP_INT_MAX)->take(5);
 
                 $str = "";
                 foreach ($nearestProducts as $p) {
-                    $distance = $allDistances[$p->id] ?? null;
+                    $distance = $allDistances[$p->id_produk] ?? null;
                     $jarakText = $distance !== null ? ", Jarak: {$distance} km" : "";
                     $price = number_format($p->harga, 0, ',', '.');
-                    $url = "/products/{$p->id}";
+                    $url = "/products/{$p->id_produk}";
                     $namaBarang = mb_convert_encoding($p->nama_barang, 'UTF-8', 'UTF-8');
                     $kondisi = mb_convert_encoding($p->kondisi, 'UTF-8', 'UTF-8');
                     $str .= "- [{$namaBarang}]({$url}) (Kondisi: {$kondisi}{$jarakText}) - Rp {$price}\n";
@@ -297,10 +297,10 @@ class ChatbotController extends Controller
                 }
                 $str = "";
                 foreach ($cheapProducts as $p) {
-                    $distance = $allDistances[$p->id] ?? null;
+                    $distance = $allDistances[$p->id_produk] ?? null;
                     $jarakText = $distance !== null ? ", Jarak: {$distance} km" : "";
                     $price = number_format($p->harga, 0, ',', '.');
-                    $url = "/products/{$p->id}";
+                    $url = "/products/{$p->id_produk}";
                     $namaBarang = mb_convert_encoding($p->nama_barang, 'UTF-8', 'UTF-8');
                     $kondisi = mb_convert_encoding($p->kondisi, 'UTF-8', 'UTF-8');
                     $str .= "- [{$namaBarang}]({$url}) (Kondisi: {$kondisi}{$jarakText}) - Rp {$price}\n";
@@ -323,10 +323,10 @@ class ChatbotController extends Controller
 
                 $str = "";
                 foreach ($latestProducts as $p) {
-                    $distance = $allDistances[$p->id] ?? null;
+                    $distance = $allDistances[$p->id_produk] ?? null;
                     $jarakText = $distance !== null ? ", Jarak: {$distance} km" : "";
                     $price = number_format($p->harga, 0, ',', '.');
-                    $url = "/products/{$p->id}";
+                    $url = "/products/{$p->id_produk}";
                     $namaBarang = mb_convert_encoding($p->nama_barang, 'UTF-8', 'UTF-8');
                     $kondisi = mb_convert_encoding($p->kondisi, 'UTF-8', 'UTF-8');
                     $desc = substr(trim(preg_replace('/\s+/', ' ', $p->deskripsi ?? '')), 0, 150);
@@ -421,7 +421,7 @@ class ChatbotController extends Controller
                             $subQ->where('nama_barang', 'like', "%{$word}%")
                                  ->orWhere('deskripsi', 'like', "%{$word}%")
                                  ->orWhereHas('category', function ($cq) use ($word) {
-                                     $cq->where('name', 'like', "%{$word}%");
+                                     $cq->where('nama', 'like', "%{$word}%");
                                  });
                         });
                     }
@@ -437,7 +437,7 @@ class ChatbotController extends Controller
                 foreach ($found as $p) {
                     if ($p->latitude && $p->longitude) {
                         $coords .= ";{$p->longitude},{$p->latitude}";
-                        $validIds[] = $p->id;
+                        $validIds[] = $p->id_produk;
                     }
                 }
                 if (count($validIds) > 0) {
@@ -470,7 +470,7 @@ class ChatbotController extends Controller
                                 $dLat = $lat2 - $lat1;
                                 $dLon = $lon2 - $lon1;
                                 $a = sin($dLat / 2) ** 2 + cos($lat1) * cos($lat2) * sin($dLon / 2) ** 2;
-                                $distances[$p->id] = round(6371 * 2 * asin(sqrt($a)), 1);
+                                $distances[$p->id_produk] = round(6371 * 2 * asin(sqrt($a)), 1);
                             }
                         }
                     }
@@ -479,14 +479,14 @@ class ChatbotController extends Controller
 
             $items = $found->map(function ($p) use ($distances) {
                 return [
-                    'id'        => $p->id,
+                    'id'        => $p->id_produk,
                     'nama'      => mb_convert_encoding($p->nama_barang, 'UTF-8', 'UTF-8'),
                     'harga'     => (int) $p->harga,
                     'kondisi'   => mb_convert_encoding($p->kondisi, 'UTF-8', 'UTF-8'),
                     'kategori'  => mb_convert_encoding($p->category?->nama ?? '', 'UTF-8', 'UTF-8'),
                     'deskripsi' => substr(trim(preg_replace('/\s+/', ' ', $p->deskripsi ?? '')), 0, 150),
-                    'jarak_km'  => $distances[$p->id] ?? null,
-                    'url'       => "/products/{$p->id}",
+                    'jarak_km'  => $distances[$p->id_produk] ?? null,
+                    'url'       => "/products/{$p->id_produk}",
                 ];
             })->values()->all();
 

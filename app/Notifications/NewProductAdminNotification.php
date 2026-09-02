@@ -29,7 +29,7 @@ class NewProductAdminNotification extends Notification implements ShouldQueue
     public function toDatabase(object $notifiable): array
     {
         return [
-            'product_id' => $this->product->id,
+            'product_id' => $this->product->id_produk,
             'message'    => 'Penjual ' . ($this->product->user->nama ?? '-') . ' mengunggah produk baru: ' . $this->product->nama_barang,
             'type'       => 'admin_new_product',
         ];

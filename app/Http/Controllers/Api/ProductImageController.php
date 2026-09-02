@@ -18,7 +18,7 @@ class ProductImageController extends Controller
      */
     public function store(Request $request, Product $product): JsonResponse
     {
-        if ($product->user_id !== Auth::id()) {
+        if ($product->id_pengguna !== Auth::id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -31,12 +31,12 @@ class ProductImageController extends Controller
         foreach ($request->file('images') as $file) {
             $path  = $file->store('products', 'public');
             $image = ProductImage::create([
-                'product_id' => $product->id,
+                'id_produk' => $product->id_produk,
                 'jalur_gambar' => $path,
                 'utama' => false,
             ]);
             $uploaded[] = [
-                'id'           => $image->id,
+                'id_gambar_produk' => $image->id_gambar_produk,
                 'jalur_gambar' => '/api/storage/' . $path,
                 'utama'        => false,
             ];
@@ -54,11 +54,11 @@ class ProductImageController extends Controller
      */
     public function destroy(Product $product, ProductImage $image): JsonResponse
     {
-        if ($product->user_id !== Auth::id()) {
+        if ($product->id_pengguna !== Auth::id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        if ($image->product_id !== $product->id) {
+        if ($image->id_produk !== $product->id_produk) {
             return response()->json(['message' => 'Image does not belong to this product'], 422);
         }
 
@@ -74,12 +74,12 @@ class ProductImageController extends Controller
      */
     public function setPrimary(Product $product, ProductImage $image): JsonResponse
     {
-        if ($product->user_id !== Auth::id()) {
+        if ($product->id_pengguna !== Auth::id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         // Unset all primary flags for this product's images first
-        ProductImage::where('product_id', $product->id)->update(['utama' => false]);
+        ProductImage::where('id_produk', $product->id_produk)->update(['utama' => false]);
 
         $image->update(['utama' => true]);
 

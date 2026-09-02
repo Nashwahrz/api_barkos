@@ -14,9 +14,9 @@ class TransactionFactory extends Factory
     public function definition(): array
     {
         return [
-            'product_id' => Product::factory(),
-            'buyer_id' => User::factory(),
-            'seller_id' => User::factory(),
+            'id_produk' => Product::factory(),
+            'id_pembeli' => User::factory(),
+            'id_penjual' => User::factory(),
             'metode_pembayaran' => fake()->randomElement(['cod', 'bank_transfer']),
             'status' => fake()->randomElement(['pending', 'confirmed', 'completed', 'cancelled']),
             'jalur_bukti_pembayaran' => null,

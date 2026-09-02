@@ -54,11 +54,11 @@ class PromotionController extends Controller
                 }
 
                 return [
-                    'id'           => $promo->id,
+                    'id_promosi'   => $promo->id_promosi,
                     'jenis_iklan'      => $promo->jenis_iklan,
                     'url_media_iklan' => $mediaUrl,
                     'judul_iklan'     => $promo->judul_iklan,
-                    'product_id'   => $promo->product_id,
+                    'id_produk'    => $promo->id_produk,
                     'product_name' => $promo->product?->nama_barang,
                     'product_price'=> $promo->product?->harga,
                 ];
@@ -77,8 +77,8 @@ class PromotionController extends Controller
         }
 
         $request->validate([
-            'product_id'    => 'required|exists:products,id',
-            'package_id'    => 'required|exists:promotion_packages,id',
+            'product_id'    => 'required|exists:produk,id_produk',
+            'package_id'    => 'required|exists:paket_promosi,id_paket_promosi',
             'metode_pembayaran' => 'required|in:midtrans,manual_transfer',
             // Ad fields — optional
             'jenis_iklan'       => 'nullable|in:none,image,video',
@@ -90,7 +90,7 @@ class PromotionController extends Controller
         $product = Product::findOrFail($request->product_id);
 
         // Ensure the seller owns the product
-        if ($product->user_id !== $request->user()->id) {
+        if ($product->id_pengguna !== $request->user()->id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -117,9 +117,9 @@ class PromotionController extends Controller
                 'status_pembayaran' => 'pending',
                 'metode_pembayaran' => 'manual_transfer',
                 'status_peninjauan_manual' => 'pending',
-                'product_id'   => $product->id,
-                'seller_id'    => $request->user()->id,
-                'package_id'   => $package->id,
+                'id_produk'    => $product->id_produk,
+                'id_penjual'   => $request->user()->id,
+                'id_paket_promosi' => $package->id_paket_promosi,
                 'status'       => 'active',
                 'mulai_pada'     => Carbon::now(),
                 'berakhir_pada'       => Carbon::now(),
@@ -166,9 +166,9 @@ class PromotionController extends Controller
             'snap_token'   => $snapToken,
             'status_pembayaran' => 'pending',
             'metode_pembayaran' => 'midtrans',
-            'product_id'   => $product->id,
-            'seller_id'    => $request->user()->id,
-            'package_id'   => $package->id,
+            'id_produk'    => $product->id_produk,
+            'id_penjual'   => $request->user()->id,
+            'id_paket_promosi' => $package->id_paket_promosi,
             'status'       => 'active', // overall promotion status, but payment is pending
             'mulai_pada'     => Carbon::now(), // Will be properly adjusted on success webhook
             'berakhir_pada'       => Carbon::now(), // Will be properly adjusted on success webhook
@@ -189,7 +189,7 @@ class PromotionController extends Controller
      */
     public function uploadProof(Request $request, Promotion $promotion): JsonResponse
     {
-        if ($promotion->seller_id !== $request->user()->id) {
+        if ($promotion->id_penjual !== $request->user()->id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -267,7 +267,7 @@ class PromotionController extends Controller
      */
     public function recreateSnapToken(Request $request, Promotion $promotion): JsonResponse
     {
-        if ($promotion->seller_id !== $request->user()->id) {
+        if ($promotion->id_penjual !== $request->user()->id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -324,7 +324,7 @@ class PromotionController extends Controller
 
         $promotions = Promotion::with(['product', 'package'])
             ->whereHas('product', function ($query) use ($request) {
-                $query->where('user_id', $request->user()->id);
+                $query->where('id_pengguna', $request->user()->id);
             })
             ->latest()
             ->get()
@@ -426,7 +426,7 @@ class PromotionController extends Controller
         ]);
 
         $promotion = Promotion::where('order_id', $request->order_id)
-            ->where('seller_id', $request->user()->id)
+            ->where('id_penjual', $request->user()->id)
             ->firstOrFail();
 
         $this->promotionActivationService->activate($promotion);

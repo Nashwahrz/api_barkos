@@ -54,7 +54,7 @@ class PromotionActivationService
             return null;
         }
 
-        return User::where('id', '!=', $promotion->product->user_id)
+        return User::where('id', '!=', $promotion->product->id_pengguna)
             ->whereNotNull('email')
             ->inRandomOrder()
             ->limit($count)

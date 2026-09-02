@@ -11,10 +11,11 @@ class Transaction extends Model
     use HasFactory;
 
     protected $table = 'transaksi';
+    protected $primaryKey = 'id_transaksi';
     protected $fillable = [
-        'product_id',
-        'buyer_id',
-        'seller_id',
+        'id_produk',
+        'id_pembeli',
+        'id_penjual',
         'metode_pembayaran',
         'status',
         'jalur_bukti_pembayaran',
@@ -31,7 +32,7 @@ class Transaction extends Model
      */
     public function product(): BelongsTo
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(Product::class, 'id_produk', 'id_produk');
     }
 
     /**
@@ -39,7 +40,7 @@ class Transaction extends Model
      */
     public function buyer(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'buyer_id');
+        return $this->belongsTo(User::class, 'id_pembeli', 'id');
     }
 
     /**
@@ -47,6 +48,6 @@ class Transaction extends Model
      */
     public function seller(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'seller_id');
+        return $this->belongsTo(User::class, 'id_penjual', 'id');
     }
 }

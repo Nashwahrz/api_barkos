@@ -10,6 +10,7 @@ class PaymentBankAccount extends Model
     use HasFactory;
 
     protected $table = 'rekening_bank_pembayaran';
+    protected $primaryKey = 'id_rekening_bank_pembayaran';
     protected $fillable = [
         'nama_bank',
         'nomor_rekening',

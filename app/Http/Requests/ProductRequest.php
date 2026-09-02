@@ -15,7 +15,7 @@ class ProductRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'category_id' => ['required', 'exists:categories,id'],
+            'id_kategori' => ['required', 'exists:kategori,id_kategori'],
             'nama_barang' => ['required', 'string', 'max:255'],
             'deskripsi' => ['required', 'string'],
             'harga' => ['required', 'integer', 'min:0'],

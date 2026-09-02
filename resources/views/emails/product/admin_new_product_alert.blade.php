@@ -13,7 +13,7 @@ Penjual **{{ $product->user->nama ?? 'seorang penjual' }}** ({{ $product->user->
 **Deskripsi:** {{ Str::limit($product->deskripsi, 100) }}
 @endcomponent
 
-@component('mail::button', ['url' => config('services.frontend_url') . '/products/' . $product->id])
+@component('mail::button', ['url' => config('services.frontend_url') . '/products/' . $product->id_produk])
 Lihat Detail Produk
 @endcomponent
 

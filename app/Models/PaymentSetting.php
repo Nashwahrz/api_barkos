@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class PaymentSetting extends Model
 {
     protected $table = 'pengaturan_pembayaran';
+    protected $primaryKey = 'id_pengaturan_pembayaran';
     protected $fillable = [
         'midtrans_diaktifkan',
         'transfer_manual_diaktifkan',
@@ -23,7 +24,7 @@ class PaymentSetting extends Model
      */
     public static function current(): self
     {
-        return static::firstOrCreate(['id' => 1], [
+        return static::firstOrCreate(['id_pengaturan_pembayaran' => 1], [
             'midtrans_diaktifkan' => true,
             'transfer_manual_diaktifkan' => false,
         ]);

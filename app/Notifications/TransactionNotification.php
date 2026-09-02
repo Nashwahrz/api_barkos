@@ -40,9 +40,9 @@ class TransactionNotification extends Notification implements ShouldQueue
      */
     public function toWebPush($notifiable, $notification)
     {
-        $url = '/seller/orders/' . $this->transaction->id;
+        $url = '/seller/orders/' . $this->transaction->id_transaksi;
         if ($this->type === 'buyer') {
-            $url = '/orders/' . $this->transaction->id;
+            $url = '/orders/' . $this->transaction->id_transaksi;
         }
 
         return (new \NotificationChannels\WebPush\WebPushMessage)
@@ -61,8 +61,8 @@ class TransactionNotification extends Notification implements ShouldQueue
     public function toDatabase(object $notifiable): array
     {
         return [
-            'transaction_id' => $this->transaction->id,
-            'product_id'     => $this->transaction->product_id,
+            'transaction_id' => $this->transaction->id_transaksi,
+            'product_id'     => $this->transaction->id_produk,
             'message'        => $this->message,
             'type'           => $this->type,
         ];

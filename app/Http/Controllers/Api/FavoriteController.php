@@ -33,7 +33,7 @@ class FavoriteController extends Controller
     public function toggle(Request $request, Product $product)
     {
         $user = $request->user();
-        $favorite = $user->favorites()->where('product_id', $product->id)->first();
+        $favorite = $user->favorites()->where('id_produk', $product->id_produk)->first();
 
         if ($favorite) {
             $favorite->delete();
@@ -44,7 +44,7 @@ class FavoriteController extends Controller
             ]);
         } else {
             $user->favorites()->create([
-                'product_id' => $product->id
+                'id_produk' => $product->id_produk
             ]);
             return response()->json([
                 'status' => 'success',

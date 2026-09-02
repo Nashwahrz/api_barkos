@@ -37,7 +37,7 @@ class ProcessPromotionPaymentProofJob implements ShouldQueue
                 'catatan_ocr' => $prefix . str_replace("\n", ' ', $result['text']),
             ]);
         } catch (\Exception $e) {
-            Log::error('Promotion payment proof OCR check failed.', ['promotion_id' => $this->promotion->id, 'error' => $e->getMessage()]);
+            Log::error('Promotion payment proof OCR check failed.', ['promotion_id' => $this->promotion->id_promosi, 'error' => $e->getMessage()]);
             $this->promotion->update([
                 'status_peninjauan_manual' => 'ocr_checked',
                 'catatan_ocr' => '[GAGAL DICEK] ' . $e->getMessage(),

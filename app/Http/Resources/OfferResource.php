@@ -10,10 +10,10 @@ class OfferResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'            => $this->id,
-            'product_id'    => $this->product_id,
-            'buyer_id'      => $this->buyer_id,
-            'seller_id'     => $this->seller_id,
+            'id_tawaran'    => $this->id_tawaran,
+            'id_produk'     => $this->id_produk,
+            'id_pembeli'    => $this->id_pembeli,
+            'id_penjual'    => $this->id_penjual,
             'product'       => new ProductResource($this->whenLoaded('product')),
             'buyer'         => new UserResource($this->whenLoaded('buyer')),
             'seller'        => new UserResource($this->whenLoaded('seller')),

@@ -15,7 +15,7 @@ Ada penawaran dari **{{ $product->user->nama ?? 'Lapak Kos' }}** yang mungkin An
 
 **Harga:** Rp {{ number_format($product->harga, 0, ',', '.') }}
 
-<x-mail::button :url="config('app.frontend_url', env('FRONTEND_URL', 'http://localhost:3000')) . '/products/' . $product->id">
+<x-mail::button :url="config('app.frontend_url', env('FRONTEND_URL', 'http://localhost:3000')) . '/products/' . $product->id_produk">
 Lihat Produk
 </x-mail::button>
 

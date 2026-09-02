@@ -24,14 +24,14 @@ class OfferSeeder extends Seeder
         foreach ($products->random(min(8, $products->count())) as $product) {
             $buyer = $buyers->random();
 
-            if ($buyer->id === $product->user_id) {
+            if ($buyer->id === $product->id_pengguna) {
                 continue;
             }
 
             Offer::factory()->create([
-                'product_id' => $product->id,
-                'buyer_id' => $buyer->id,
-                'seller_id' => $product->user_id,
+                'id_produk' => $product->id_produk,
+                'id_pembeli' => $buyer->id,
+                'id_penjual' => $product->id_pengguna,
                 'harga_tawaran' => (int) round($product->harga * fake()->randomFloat(2, 0.6, 0.95)),
             ]);
         }

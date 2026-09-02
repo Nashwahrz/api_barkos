@@ -14,9 +14,9 @@ class ChatFactory extends Factory
     public function definition(): array
     {
         return [
-            'sender_id' => User::factory(),
-            'receiver_id' => User::factory(),
-            'product_id' => Product::factory(),
+            'id_pengirim' => User::factory(),
+            'id_penerima' => User::factory(),
+            'id_produk' => Product::factory(),
             'pesan' => fake()->sentence(),
             'sudah_dibaca' => fake()->boolean(70),
         ];

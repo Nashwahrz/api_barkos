@@ -29,7 +29,7 @@ class PromotionPaymentNotification extends Notification implements ShouldQueue
             && str_contains((string) $this->promotion->catatan_ocr, '[MATCH]');
 
         return [
-            'promotion_id' => $this->promotion->id,
+            'promotion_id' => $this->promotion->id_promosi,
             'message'       => 'Bukti transfer manual dari ' . ($this->promotion->seller->nama ?? '-')
                 . ' untuk produk ' . ($this->promotion->product->nama_barang ?? '-')
                 . ' perlu ditinjau.',

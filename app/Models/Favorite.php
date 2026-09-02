@@ -10,15 +10,16 @@ class Favorite extends Model
     use HasFactory;
 
     protected $table = 'favorit';
-    protected $fillable = ['user_id', 'product_id'];
+    protected $primaryKey = 'id_favorit';
+    protected $fillable = ['id_pengguna', 'id_produk'];
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'id_pengguna', 'id');
     }
 
     public function product()
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(Product::class, 'id_produk', 'id_produk');
     }
 }

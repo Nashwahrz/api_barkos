@@ -26,43 +26,43 @@ class ChatController extends Controller
 
         // Subquery: get the latest message ID per conversation (product + user pair)
         $subQuery = Chat::select(
-            DB::raw('MAX(id) as max_id'),
-            'product_id',
-            DB::raw('LEAST(sender_id, receiver_id) as user_a'),
-            DB::raw('GREATEST(sender_id, receiver_id) as user_b')
+            DB::raw('MAX(id_obrolan) as max_id'),
+            'id_produk',
+            DB::raw('LEAST(id_pengirim, id_penerima) as user_a'),
+            DB::raw('GREATEST(id_pengirim, id_penerima) as user_b')
         )
-        ->where('sender_id', $userId)
-        ->orWhere('receiver_id', $userId)
-        ->groupBy('product_id', 'user_a', 'user_b');
+        ->where('id_pengirim', $userId)
+        ->orWhere('id_penerima', $userId)
+        ->groupBy('id_produk', 'user_a', 'user_b');
 
         $latestMessageIds = DB::table($subQuery, 'sub')->pluck('max_id');
 
         $chats = Chat::with(['sender', 'receiver', 'product.user', 'product.category'])
-            ->whereIn('id', $latestMessageIds)
+            ->whereIn('id_obrolan', $latestMessageIds)
             ->latest()
             ->get();
 
-        // Fix N+1: fetch ALL unread counts in a single aggregated query, keyed by product_id + sender_id
+        // Fix N+1: fetch ALL unread counts in a single aggregated query, keyed by id_produk + id_pengirim
         $unreadCounts = Chat::select(
-                'product_id',
-                'sender_id',
+                'id_produk',
+                'id_pengirim',
                 DB::raw('COUNT(*) as unread_count')
             )
-            ->where('receiver_id', $userId)
+            ->where('id_penerima', $userId)
             ->where('sudah_dibaca', false)
-            ->groupBy('product_id', 'sender_id')
+            ->groupBy('id_produk', 'id_pengirim')
             ->get()
-            ->keyBy(fn($row) => $row->product_id . '_' . $row->sender_id);
+            ->keyBy(fn($row) => $row->id_produk . '_' . $row->id_pengirim);
 
         $result = $chats->map(function ($chat) use ($userId, $unreadCounts) {
-            $otherUserId = ($chat->sender_id === $userId) ? $chat->receiver_id : $chat->sender_id;
+            $otherUserId = ($chat->id_pengirim === $userId) ? $chat->id_penerima : $chat->id_pengirim;
 
-            $key = $chat->product_id . '_' . $otherUserId;
+            $key = $chat->id_produk . '_' . $otherUserId;
             $unreadCount = $unreadCounts->get($key)?->unread_count ?? 0;
 
             return [
                 'last_message' => new ChatResource($chat),
-                'other_user'   => new UserResource(($chat->sender_id === $userId) ? $chat->receiver : $chat->sender),
+                'other_user'   => new UserResource(($chat->id_pengirim === $userId) ? $chat->receiver : $chat->sender),
                 'unread_count' => (int) $unreadCount,
             ];
         });
@@ -82,15 +82,15 @@ class ChatController extends Controller
 
         $chats = Chat::with(['sender', 'receiver', 'product', 'replyTo.sender'])
             ->when($productId == 0 || $productId === '0', function ($q) {
-                $q->whereNull('product_id');
+                $q->whereNull('id_produk');
             }, function ($q) use ($productId) {
-                $q->where('product_id', $productId);
+                $q->where('id_produk', $productId);
             })
             ->where(function ($query) use ($authId, $otherId) {
                 $query->where(function ($q) use ($authId, $otherId) {
-                    $q->where('sender_id', $authId)->where('receiver_id', $otherId);
+                    $q->where('id_pengirim', $authId)->where('id_penerima', $otherId);
                 })->orWhere(function ($q) use ($authId, $otherId) {
-                    $q->where('sender_id', $otherId)->where('receiver_id', $authId);
+                    $q->where('id_pengirim', $otherId)->where('id_penerima', $authId);
                 });
             })
             ->oldest()
@@ -104,9 +104,9 @@ class ChatController extends Controller
      */
     public function markAsRead($productId, User $user): JsonResponse
     {
-        Chat::where('product_id', $productId)
-            ->where('sender_id', $user->id)
-            ->where('receiver_id', Auth::id())
+        Chat::where('id_produk', $productId)
+            ->where('id_pengirim', $user->id)
+            ->where('id_penerima', Auth::id())
             ->where('sudah_dibaca', false)
             ->update(['sudah_dibaca' => true]);
 
@@ -118,7 +118,7 @@ class ChatController extends Controller
      */
     public function unreadCount(): JsonResponse
     {
-        $count = Chat::where('receiver_id', Auth::id())
+        $count = Chat::where('id_penerima', Auth::id())
             ->where('sudah_dibaca', false)
             ->count();
 
@@ -134,7 +134,7 @@ class ChatController extends Controller
         $request->validate([
             'message'     => 'required|string|max:2000',
             'receiver_id' => 'required|exists:users,id',
-            'reply_to_id' => 'nullable|integer|exists:chats,id',
+            'reply_to_id' => 'nullable|integer|exists:obrolan,id_obrolan',
         ]);
 
         $senderId   = Auth::id();
@@ -156,8 +156,8 @@ class ChatController extends Controller
                 return response()->json(['message' => 'Produk ini sudah tidak tersedia.'], 404);
             }
 
-            $isOwner         = $product->user_id === $senderId;
-            $receiverIsOwner = $product->user_id === $receiverId;
+            $isOwner         = $product->id_pengguna === $senderId;
+            $receiverIsOwner = $product->id_pengguna === $receiverId;
 
             if (!$isOwner && !$receiverIsOwner) {
                 return response()->json([
@@ -170,8 +170,8 @@ class ChatController extends Controller
 
             // Check if chat is closed manually by the seller
             $isClosed = DB::table('obrolan_selesai')
-                ->where('product_id', $productId)
-                ->where('buyer_id', $buyerId)
+                ->where('id_produk', $productId)
+                ->where('id_pembeli', $buyerId)
                 ->exists();
 
             if ($isClosed) {
@@ -187,16 +187,16 @@ class ChatController extends Controller
         // Reply must belong to the same product conversation.
         $replyToId = $request->reply_to_id;
         if ($replyToId) {
-            $replyTarget = Chat::where('id', $replyToId)->where('product_id', $productId)->first();
+            $replyTarget = Chat::where('id_obrolan', $replyToId)->where('id_produk', $productId)->first();
             if (!$replyTarget) {
                 $replyToId = null;
             }
         }
 
         $chat = Chat::create([
-            'sender_id'   => $senderId,
-            'receiver_id' => $receiverId,
-            'product_id'  => $productId,
+            'id_pengirim' => $senderId,
+            'id_penerima' => $receiverId,
+            'id_produk'   => $productId,
             'pesan'       => $request->message,
             'id_balasan'  => $replyToId,
             'sudah_dibaca' => false,
@@ -221,7 +221,7 @@ class ChatController extends Controller
     {
         $authId = Auth::id();
 
-        if ($chat->sender_id !== $authId && $chat->receiver_id !== $authId) {
+        if ($chat->id_pengirim !== $authId && $chat->id_penerima !== $authId) {
             return response()->json(['message' => 'Tidak diizinkan menghapus pesan ini.'], 403);
         }
 
@@ -239,12 +239,12 @@ class ChatController extends Controller
         $authId  = Auth::id();
         $otherId = $user->id;
 
-        Chat::where('product_id', $productId)
+        Chat::where('id_produk', $productId)
             ->where(function ($query) use ($authId, $otherId) {
                 $query->where(function ($q) use ($authId, $otherId) {
-                    $q->where('sender_id', $authId)->where('receiver_id', $otherId);
+                    $q->where('id_pengirim', $authId)->where('id_penerima', $otherId);
                 })->orWhere(function ($q) use ($authId, $otherId) {
-                    $q->where('sender_id', $otherId)->where('receiver_id', $authId);
+                    $q->where('id_pengirim', $otherId)->where('id_penerima', $authId);
                 });
             })
             ->delete();
@@ -263,14 +263,14 @@ class ChatController extends Controller
         }
 
         $authId = Auth::id();
-        $isOwner = $product->user_id === $authId;
-        
+        $isOwner = $product->id_pengguna === $authId;
+
         // If auth user is not the owner and not the other user (e.g. admin), they can just view it.
         $buyerId = $isOwner ? $user->id : $authId;
 
         $isManuallyClosed = DB::table('obrolan_selesai')
-            ->where('product_id', $productId)
-            ->where('buyer_id', $buyerId)
+            ->where('id_produk', $productId)
+            ->where('id_pembeli', $buyerId)
             ->exists();
 
         $isAutoClosed = $product->status_terjual && $product->terjual_pada && \Carbon\Carbon::parse($product->terjual_pada)->addDays(3)->isPast();
@@ -288,12 +288,12 @@ class ChatController extends Controller
     public function closeChat($productId, User $user): JsonResponse
     {
         $product = Product::find($productId);
-        if (!$product || $product->user_id !== Auth::id()) {
+        if (!$product || $product->id_pengguna !== Auth::id()) {
             return response()->json(['message' => 'Tidak diizinkan menutup percakapan ini.'], 403);
         }
 
         DB::table('obrolan_selesai')->updateOrInsert(
-            ['product_id' => $productId, 'buyer_id' => $user->id],
+            ['id_produk' => $productId, 'id_pembeli' => $user->id],
             ['created_at' => now(), 'updated_at' => now()]
         );
 

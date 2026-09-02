@@ -41,7 +41,7 @@ class NotifyAdminsOfNewProductJob implements ShouldQueue
                     }
                 });
 
-            Log::info('New product admin alert sent successfully.', ['product_id' => $this->product->id]);
+            Log::info('New product admin alert sent successfully.', ['product_id' => $this->product->id_produk]);
         } catch (\Exception $e) {
             Log::error('New product admin alert job failed.', ['error' => $e->getMessage()]);
         }

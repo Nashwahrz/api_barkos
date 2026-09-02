@@ -11,7 +11,7 @@ class BankAccountController extends Controller
 {
     public function index()
     {
-        $accounts = BankAccount::where('user_id', Auth::id())->get();
+        $accounts = BankAccount::where('id_pengguna', Auth::id())->get();
         return response()->json(['data' => $accounts]);
     }
 
@@ -24,7 +24,7 @@ class BankAccountController extends Controller
         ]);
 
         $account = BankAccount::create([
-            'user_id' => Auth::id(),
+            'id_pengguna' => Auth::id(),
             'nama_bank' => $request->bank_name,
             'nomor_rekening' => $request->account_number,
             'nama_pemilik_rekening' => $request->account_name,
@@ -35,7 +35,7 @@ class BankAccountController extends Controller
 
     public function update(Request $request, BankAccount $bankAccount)
     {
-        if ($bankAccount->user_id !== Auth::id()) {
+        if ($bankAccount->id_pengguna !== Auth::id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -56,7 +56,7 @@ class BankAccountController extends Controller
 
     public function destroy(BankAccount $bankAccount)
     {
-        if ($bankAccount->user_id !== Auth::id()) {
+        if ($bankAccount->id_pengguna !== Auth::id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 

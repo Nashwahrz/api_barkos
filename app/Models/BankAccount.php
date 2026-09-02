@@ -11,8 +11,9 @@ class BankAccount extends Model
     use HasFactory;
 
     protected $table = 'rekening_bank';
+    protected $primaryKey = 'id_rekening_bank';
     protected $fillable = [
-        'user_id',
+        'id_pengguna',
         'nama_bank',
         'nomor_rekening',
         'nama_pemilik_rekening',
@@ -20,6 +21,6 @@ class BankAccount extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'id_pengguna', 'id');
     }
 }

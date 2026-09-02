@@ -41,7 +41,7 @@ class ChatNotification extends Notification implements ShouldQueue
         $senderName = $this->chat->sender->nama ?? 'Seseorang';
         $productName = $this->chat->product->nama_barang ?? 'Produk';
         $body = $senderName . ': "' . Str::limit($this->chat->pesan, 60) . '"';
-        $url  = '/chat/' . $this->chat->product_id . '/' . $this->chat->sender_id;
+        $url  = '/chat/' . $this->chat->id_produk . '/' . $this->chat->id_pengirim;
 
         return (new \NotificationChannels\WebPush\WebPushMessage)
             ->title('💬 Pesan Baru - ' . $productName)
@@ -59,7 +59,7 @@ class ChatNotification extends Notification implements ShouldQueue
     public function toDatabase(object $notifiable): array
     {
         return [
-            'product_id' => $this->chat->product_id,
+            'product_id' => $this->chat->id_produk,
             'message'    => "Pesan baru dari {$this->chat->sender->nama}: \"" . Str::limit($this->chat->pesan, 50) . "\"",
             'type'       => 'chat',
         ];

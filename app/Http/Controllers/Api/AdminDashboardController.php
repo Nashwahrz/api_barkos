@@ -116,7 +116,7 @@ class AdminDashboardController extends Controller
         $query = Product::with(['user', 'category']);
 
         if ($request->filled('user_id')) {
-            $query->where('user_id', $request->query('user_id'));
+            $query->where('id_pengguna', $request->query('user_id'));
         }
 
         $products = $query->latest()->get();

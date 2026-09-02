@@ -14,7 +14,7 @@ class BankAccountSeeder extends Seeder
     public function run(): void
     {
         User::where('role', 'penjual')->get()->each(function (User $seller) {
-            BankAccount::factory()->create(['user_id' => $seller->id]);
+            BankAccount::factory()->create(['id_pengguna' => $seller->id]);
         });
     }
 }

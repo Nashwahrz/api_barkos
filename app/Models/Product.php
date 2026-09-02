@@ -11,9 +11,10 @@ class Product extends Model
 {
     use HasFactory;
     protected $table = 'produk';
+    protected $primaryKey = 'id_produk';
     protected $fillable = [
-        'user_id',
-        'category_id',
+        'id_pengguna',
+        'id_kategori',
         'nama_barang',
         'deskripsi',
         'harga',
@@ -49,7 +50,7 @@ class Product extends Model
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'id_pengguna', 'id');
     }
 
     /**
@@ -57,7 +58,7 @@ class Product extends Model
      */
     public function category(): BelongsTo
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(Category::class, 'id_kategori', 'id_kategori');
     }
 
     /**
@@ -65,7 +66,7 @@ class Product extends Model
      */
     public function chats(): HasMany
     {
-        return $this->hasMany(Chat::class);
+        return $this->hasMany(Chat::class, 'id_produk', 'id_produk');
     }
 
     /**
@@ -73,7 +74,7 @@ class Product extends Model
      */
     public function images(): HasMany
     {
-        return $this->hasMany(ProductImage::class);
+        return $this->hasMany(ProductImage::class, 'id_produk', 'id_produk');
     }
 
     /**
@@ -81,7 +82,7 @@ class Product extends Model
      */
     public function transactions(): HasMany
     {
-        return $this->hasMany(Transaction::class);
+        return $this->hasMany(Transaction::class, 'id_produk', 'id_produk');
     }
 
     /**
@@ -89,7 +90,7 @@ class Product extends Model
      */
     public function promotions(): HasMany
     {
-        return $this->hasMany(Promotion::class);
+        return $this->hasMany(Promotion::class, 'id_produk', 'id_produk');
     }
 
     /**
@@ -137,7 +138,7 @@ class Product extends Model
      */
     public function favorites(): HasMany
     {
-        return $this->hasMany(Favorite::class);
+        return $this->hasMany(Favorite::class, 'id_produk', 'id_produk');
     }
 
     /**
@@ -151,9 +152,9 @@ class Product extends Model
 
         // We check if the relation is loaded to avoid N+1 queries if we eager loaded it.
         if ($this->relationLoaded('favorites')) {
-            return $this->favorites->contains('user_id', auth('sanctum')->id());
+            return $this->favorites->contains('id_pengguna', auth('sanctum')->id());
         }
 
-        return $this->favorites()->where('user_id', auth('sanctum')->id())->exists();
+        return $this->favorites()->where('id_pengguna', auth('sanctum')->id())->exists();
     }
 }

@@ -10,6 +10,7 @@ class Category extends Model
 {
     use HasFactory;
     protected $table = 'kategori';
+    protected $primaryKey = 'id_kategori';
     protected $fillable = ['nama'];
 
     /**
@@ -17,6 +18,6 @@ class Category extends Model
      */
     public function products(): HasMany
     {
-        return $this->hasMany(Product::class);
+        return $this->hasMany(Product::class, 'id_kategori', 'id_kategori');
     }
 }

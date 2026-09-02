@@ -24,13 +24,13 @@ class ReportSeeder extends Seeder
         foreach ($products->random(min(3, $products->count())) as $product) {
             $reporter = $reporters->random();
 
-            if ($reporter->id === $product->user_id) {
+            if ($reporter->id === $product->id_pengguna) {
                 continue;
             }
 
             Report::factory()->create([
-                'reporter_id' => $reporter->id,
-                'product_id' => $product->id,
+                'id_pelapor' => $reporter->id,
+                'id_produk' => $product->id_produk,
             ]);
         }
     }

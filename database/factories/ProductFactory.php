@@ -19,8 +19,8 @@ class ProductFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => User::factory(),
-            'category_id' => Category::factory(),
+            'id_pengguna' => User::factory(),
+            'id_kategori' => Category::factory(),
             'nama_barang' => fake()->words(3, true),
             'deskripsi' => fake()->paragraph(),
             'harga' => fake()->numberBetween(10000, 10000000),

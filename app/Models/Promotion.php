@@ -8,13 +8,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Promotion extends Model
 {
     protected $table = 'promosi';
+    protected $primaryKey = 'id_promosi';
     protected $fillable = [
         'order_id',
         'snap_token',
         'status_pembayaran',
-        'product_id',
-        'seller_id',
-        'package_id',
+        'id_produk',
+        'id_penjual',
+        'id_paket_promosi',
         'mulai_pada',
         'berakhir_pada',
         'jumlah_dibayar',
@@ -41,7 +42,7 @@ class Promotion extends Model
      */
     public function product(): BelongsTo
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(Product::class, 'id_produk', 'id_produk');
     }
 
     /**
@@ -49,7 +50,7 @@ class Promotion extends Model
      */
     public function seller(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'seller_id');
+        return $this->belongsTo(User::class, 'id_penjual', 'id');
     }
 
     /**
@@ -57,7 +58,7 @@ class Promotion extends Model
      */
     public function package(): BelongsTo
     {
-        return $this->belongsTo(PromotionPackage::class, 'package_id');
+        return $this->belongsTo(PromotionPackage::class, 'id_paket_promosi', 'id_paket_promosi');
     }
 
     /**

@@ -11,8 +11,9 @@ class ProductImage extends Model
     use HasFactory;
 
     protected $table = 'gambar_produk';
+    protected $primaryKey = 'id_gambar_produk';
     protected $fillable = [
-        'product_id',
+        'id_produk',
         'jalur_gambar',
         'utama',
     ];
@@ -26,6 +27,6 @@ class ProductImage extends Model
      */
     public function product(): BelongsTo
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(Product::class, 'id_produk', 'id_produk');
     }
 }

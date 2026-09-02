@@ -14,8 +14,8 @@ class ReportFactory extends Factory
     public function definition(): array
     {
         return [
-            'reporter_id' => User::factory(),
-            'product_id' => Product::factory(),
+            'id_pelapor' => User::factory(),
+            'id_produk' => Product::factory(),
             'alasan' => fake()->randomElement([
                 'Barang tidak sesuai deskripsi',
                 'Penjual tidak responsif',

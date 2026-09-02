@@ -15,7 +15,7 @@ class TransactionResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'                   => $this->id,
+            'id_transaksi'         => $this->id_transaksi,
             'metode_pembayaran'    => $this->metode_pembayaran,
             'status'               => $this->status,
             'harga_disepakati'     => $this->harga_disepakati,
@@ -25,7 +25,7 @@ class TransactionResource extends JsonResource
                                         : null,
             'punya_bukti_pembayaran' => !is_null($this->jalur_bukti_pembayaran),
             'product'              => $this->whenLoaded('product', fn() => [
-                'id'          => $this->product->id,
+                'id_produk'   => $this->product->id_produk,
                 'nama_barang' => $this->product->nama_barang,
                 'harga'       => $this->product->harga,
                 'foto'        => $this->product->foto

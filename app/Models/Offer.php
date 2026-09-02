@@ -10,26 +10,27 @@ class Offer extends Model
     use HasFactory;
 
     protected $table = 'tawaran';
+    protected $primaryKey = 'id_tawaran';
     protected $fillable = [
-        'product_id',
-        'buyer_id',
-        'seller_id',
+        'id_produk',
+        'id_pembeli',
+        'id_penjual',
         'harga_tawaran',
         'status',
     ];
 
     public function product()
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(Product::class, 'id_produk', 'id_produk');
     }
 
     public function buyer()
     {
-        return $this->belongsTo(User::class, 'buyer_id');
+        return $this->belongsTo(User::class, 'id_pembeli', 'id');
     }
 
     public function seller()
     {
-        return $this->belongsTo(User::class, 'seller_id');
+        return $this->belongsTo(User::class, 'id_penjual', 'id');
     }
 }

@@ -14,9 +14,9 @@ class OfferFactory extends Factory
     public function definition(): array
     {
         return [
-            'product_id' => Product::factory(),
-            'buyer_id' => User::factory(),
-            'seller_id' => User::factory(),
+            'id_produk' => Product::factory(),
+            'id_pembeli' => User::factory(),
+            'id_penjual' => User::factory(),
             'harga_tawaran' => fake()->numberBetween(5000, 8000000),
             'status' => fake()->randomElement(['pending', 'accepted', 'rejected', 'cancelled']),
         ];

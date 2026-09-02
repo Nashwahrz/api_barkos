@@ -14,7 +14,7 @@ class ProductImageFactory extends Factory
     public function definition(): array
     {
         return [
-            'product_id' => Product::factory(),
+            'id_produk' => Product::factory(),
             'jalur_gambar' => 'products/' . Str::uuid() . '.jpg',
             'utama' => false,
         ];

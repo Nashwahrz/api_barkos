@@ -13,7 +13,7 @@ class BankAccountFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => User::factory(),
+            'id_pengguna' => User::factory(),
             'nama_bank' => fake()->randomElement(['BCA', 'BNI', 'BRI', 'Mandiri', 'BSI', 'CIMB Niaga']),
             'nomor_rekening' => fake()->numerify('##########'),
             'nama_pemilik_rekening' => fake()->name(),

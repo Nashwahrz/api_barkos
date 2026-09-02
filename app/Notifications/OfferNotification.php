@@ -61,8 +61,8 @@ class OfferNotification extends Notification implements ShouldQueue
     public function toDatabase(object $notifiable): array
     {
         return [
-            'offer_id'   => $this->offer->id,
-            'product_id' => $this->offer->product_id,
+            'offer_id'   => $this->offer->id_tawaran,
+            'product_id' => $this->offer->id_produk,
             'message'    => $this->message,
             'type'       => $this->type,
         ];

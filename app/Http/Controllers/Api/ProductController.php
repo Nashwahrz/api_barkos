@@ -56,7 +56,7 @@ class ProductController extends Controller
 
         // ── Category filter ───────────────────────────────────────────────
         if ($catId) {
-            $query->where('category_id', $catId);
+            $query->where('id_kategori', $catId);
         }
 
         // ── Price range filter ────────────────────────────────────────────
@@ -117,12 +117,12 @@ class ProductController extends Controller
         $products = $query
             ->orderByRaw(
                 "CASE WHEN dipromosikan = 1 AND (dipromosikan_hingga IS NULL OR dipromosikan_hingga > NOW()) AND EXISTS (
-                    SELECT 1 FROM promotions
-                    WHERE promotions.product_id = products.id
-                      AND promotions.status = 'active'
-                      AND promotions.status_pembayaran = 'paid'
-                      AND promotions.berakhir_pada > NOW()
-                      AND (promotions.id_pengguna_target IS NULL OR JSON_CONTAINS(promotions.id_pengguna_target, ?))
+                    SELECT 1 FROM promosi
+                    WHERE promosi.id_produk = produk.id_produk
+                      AND promosi.status = 'active'
+                      AND promosi.status_pembayaran = 'paid'
+                      AND promosi.berakhir_pada > NOW()
+                      AND (promosi.id_pengguna_target IS NULL OR JSON_CONTAINS(promosi.id_pengguna_target, ?))
                 ) THEN 1 ELSE 0 END DESC",
                 [json_encode($viewerId)]
             )
@@ -163,7 +163,7 @@ class ProductController extends Controller
             $accountNumber = $request->input('account_number');
             if ($bankName && $accountNumber) {
                 \App\Models\BankAccount::updateOrCreate(
-                    ['user_id' => Auth::id()],
+                    ['id_pengguna' => Auth::id()],
                     [
                         'nama_bank' => $bankName,
                         'nomor_rekening' => $accountNumber,
@@ -199,7 +199,7 @@ class ProductController extends Controller
      */
     public function update(ProductRequest $request, Product $product): JsonResponse
     {
-        if ($product->user_id !== Auth::id()) {
+        if ($product->id_pengguna !== Auth::id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -223,7 +223,7 @@ class ProductController extends Controller
             $accountNumber = $request->input('account_number');
             if ($bankName && $accountNumber) {
                 \App\Models\BankAccount::updateOrCreate(
-                    ['user_id' => Auth::id()],
+                    ['id_pengguna' => Auth::id()],
                     [
                         'nama_bank' => $bankName,
                         'nomor_rekening' => $accountNumber,
@@ -244,7 +244,7 @@ class ProductController extends Controller
      */
     public function toggleStatus(Request $request, Product $product): JsonResponse
     {
-        if ($product->user_id !== Auth::id()) {
+        if ($product->id_pengguna !== Auth::id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
         $isSold = !$product->status_terjual;
@@ -263,7 +263,7 @@ class ProductController extends Controller
      */
     public function destroy(Product $product): JsonResponse
     {
-        if ($product->user_id !== Auth::id()) {
+        if ($product->id_pengguna !== Auth::id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 

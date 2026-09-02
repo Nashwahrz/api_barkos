@@ -27,14 +27,14 @@ class ProductSeeder extends Seeder
                 ->count(fake()->numberBetween(2, 5))
                 ->for($seller)
                 ->create([
-                    'category_id' => fn () => $categories->random()->id,
+                    'id_kategori' => fn () => $categories->random()->id_kategori,
                 ])
                 ->each(function (Product $product) {
                     $imageCount = fake()->numberBetween(1, 4);
 
                     for ($i = 0; $i < $imageCount; $i++) {
                         ProductImage::factory()->create([
-                            'product_id' => $product->id,
+                            'id_produk' => $product->id_produk,
                             'utama' => $i === 0,
                         ]);
                     }

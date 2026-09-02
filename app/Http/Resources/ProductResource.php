@@ -11,10 +11,10 @@ class ProductResource extends JsonResource
     public function toArray(Request $request): array
     {
         $viewer = auth('sanctum')->user();
-        $bypassTargeting = $viewer && ($viewer->id === $this->user_id || $viewer->role === 'super_admin');
+        $bypassTargeting = $viewer && ($viewer->id === $this->id_pengguna || $viewer->role === 'super_admin');
 
         return [
-            'id'             => $this->id,
+            'id_produk'      => $this->id_produk,
             'nama_barang'    => $this->nama_barang,
             'deskripsi'      => $this->deskripsi,
             'harga'          => $this->harga,
@@ -36,7 +36,7 @@ class ProductResource extends JsonResource
             'category'       => new CategoryResource($this->whenLoaded('category')),
             'images'         => $this->whenLoaded('images', fn() =>
                 $this->images->map(fn($img) => [
-                    'id'           => $img->id,
+                    'id_gambar_produk' => $img->id_gambar_produk,
                     'jalur_gambar' => '/api/storage/' . $img->jalur_gambar,
                     'utama'        => (bool) $img->utama,
                 ])

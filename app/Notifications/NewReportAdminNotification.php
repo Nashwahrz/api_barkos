@@ -29,7 +29,7 @@ class NewReportAdminNotification extends Notification implements ShouldQueue
     public function toDatabase(object $notifiable): array
     {
         return [
-            'report_id' => $this->report->id,
+            'report_id' => $this->report->id_laporan,
             'message'   => ($this->report->reporter->nama ?? 'Seorang pengguna') . ' membuat laporan: ' . $this->report->alasan,
             'type'      => 'admin_new_report',
         ];

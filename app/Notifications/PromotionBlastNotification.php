@@ -39,8 +39,8 @@ class PromotionBlastNotification extends Notification implements ShouldQueue
     public function toDatabase(object $notifiable): array
     {
         return [
-            'promotion_id' => $this->promotion->id,
-            'product_id'   => $this->promotion->product_id,
+            'promotion_id' => $this->promotion->id_promosi,
+            'product_id'   => $this->promotion->id_produk,
             'message'      => 'Promo Spesial: ' . ($this->promotion->judul_iklan ?? $this->promotion->product->nama_barang) . ' kini tersedia! Cek sekarang sebelum kehabisan.',
             'type'         => 'promotion',
         ];

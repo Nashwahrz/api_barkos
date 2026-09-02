@@ -25,7 +25,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function products(): HasMany
     {
-        return $this->hasMany(Product::class, 'user_id');
+        return $this->hasMany(Product::class, 'id_pengguna', 'id');
     }
 
     /**
@@ -33,7 +33,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function receivedReports(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
     {
-        return $this->hasManyThrough(Report::class, Product::class, 'user_id', 'product_id', 'id', 'id');
+        return $this->hasManyThrough(Report::class, Product::class, 'id_pengguna', 'id_produk', 'id', 'id_produk');
     }
 
     /**
@@ -41,7 +41,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function sentChats(): HasMany
     {
-        return $this->hasMany(Chat::class, 'sender_id');
+        return $this->hasMany(Chat::class, 'id_pengirim', 'id');
     }
 
     /**
@@ -49,7 +49,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function receivedChats(): HasMany
     {
-        return $this->hasMany(Chat::class, 'receiver_id');
+        return $this->hasMany(Chat::class, 'id_penerima', 'id');
     }
 
     /**
@@ -57,7 +57,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function buyerTransactions(): HasMany
     {
-        return $this->hasMany(Transaction::class, 'buyer_id');
+        return $this->hasMany(Transaction::class, 'id_pembeli', 'id');
     }
 
     /**
@@ -65,7 +65,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function sellerTransactions(): HasMany
     {
-        return $this->hasMany(Transaction::class, 'seller_id');
+        return $this->hasMany(Transaction::class, 'id_penjual', 'id');
     }
 
     /**
@@ -73,7 +73,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function promotions(): HasMany
     {
-        return $this->hasMany(Promotion::class, 'seller_id');
+        return $this->hasMany(Promotion::class, 'id_penjual', 'id');
     }
 
     /**
@@ -81,7 +81,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function bankAccounts(): HasMany
     {
-        return $this->hasMany(BankAccount::class);
+        return $this->hasMany(BankAccount::class, 'id_pengguna', 'id');
     }
 
     /**
@@ -89,7 +89,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function favorites(): HasMany
     {
-        return $this->hasMany(Favorite::class);
+        return $this->hasMany(Favorite::class, 'id_pengguna', 'id');
     }
 
     /**

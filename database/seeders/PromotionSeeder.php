@@ -46,8 +46,8 @@ class PromotionSeeder extends Seeder
         $product = Product::firstOrCreate(
             ['nama_barang' => 'Laptop Bekas Promosi'],
             [
-                'user_id' => $seller->id,
-                'category_id' => $category->id,
+                'id_pengguna' => $seller->id,
+                'id_kategori' => $category->id_kategori,
                 'deskripsi' => 'Laptop bekas masih bagus',
                 'harga' => 2500000,
                 'kondisi' => 'sangat baik',
@@ -60,9 +60,9 @@ class PromotionSeeder extends Seeder
         // Create the promotion
         Promotion::firstOrCreate(
             [
-                'product_id' => $product->id,
-                'seller_id' => $seller->id,
-                'package_id' => $package->id,
+                'id_produk' => $product->id_produk,
+                'id_penjual' => $seller->id,
+                'id_paket_promosi' => $package->id_paket_promosi,
             ],
             [
                 'mulai_pada' => Carbon::now(),

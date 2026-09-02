@@ -35,7 +35,7 @@ class SendPromotionBlastJob implements ShouldQueue
     {
         try {
             // Get the seller ID to exclude them from the blast
-            $sellerId = $this->promotion->product->user_id;
+            $sellerId = $this->promotion->product->id_pengguna;
 
             $query = User::where('id', '!=', $sellerId)->whereNotNull('email');
 
@@ -57,7 +57,7 @@ class SendPromotionBlastJob implements ShouldQueue
                     }
                 });
 
-            Log::info('Promotion blast sent successfully.', ['promotion_id' => $this->promotion->id]);
+            Log::info('Promotion blast sent successfully.', ['promotion_id' => $this->promotion->id_promosi]);
         } catch (\Exception $e) {
             Log::error('Promotion blast job failed.', ['error' => $e->getMessage()]);
         }

@@ -30,7 +30,7 @@ class CategoryController extends Controller
         }
 
         $request->validate([
-            'nama' => 'required|string|max:255|unique:categories,nama',
+            'nama' => 'required|string|max:255|unique:kategori,nama',
             'description' => 'nullable|string',
         ]);
 
@@ -52,7 +52,7 @@ class CategoryController extends Controller
         }
 
         $request->validate([
-            'nama' => 'required|string|max:255|unique:categories,nama,' . $category->id,
+            'nama' => 'required|string|max:255|unique:kategori,nama,' . $category->id_kategori . ',id_kategori',
             'description' => 'nullable|string',
         ]);
 

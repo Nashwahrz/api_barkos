@@ -24,14 +24,14 @@ class TransactionSeeder extends Seeder
         foreach ($products->random(min(5, $products->count())) as $product) {
             $buyer = $buyers->random();
 
-            if ($buyer->id === $product->user_id) {
+            if ($buyer->id === $product->id_pengguna) {
                 continue;
             }
 
             Transaction::factory()->create([
-                'product_id' => $product->id,
-                'buyer_id' => $buyer->id,
-                'seller_id' => $product->user_id,
+                'id_produk' => $product->id_produk,
+                'id_pembeli' => $buyer->id,
+                'id_penjual' => $product->id_pengguna,
                 'harga_disepakati' => $product->harga,
             ]);
         }

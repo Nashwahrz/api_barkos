@@ -22,7 +22,7 @@ class FavoriteSeeder extends Seeder
         }
 
         foreach ($buyers as $buyer) {
-            $available = $products->reject(fn (Product $p) => $p->user_id === $buyer->id);
+            $available = $products->reject(fn (Product $p) => $p->id_pengguna === $buyer->id);
 
             if ($available->isEmpty()) {
                 continue;
@@ -32,8 +32,8 @@ class FavoriteSeeder extends Seeder
 
             foreach ($picks as $product) {
                 Favorite::firstOrCreate([
-                    'user_id' => $buyer->id,
-                    'product_id' => $product->id,
+                    'id_pengguna' => $buyer->id,
+                    'id_produk' => $product->id_produk,
                 ]);
             }
         }

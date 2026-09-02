@@ -10,7 +10,7 @@ class ChatResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
+            'id_obrolan' => $this->id_obrolan,
             'sender' => new UserResource($this->whenLoaded('sender')),
             'receiver' => new UserResource($this->whenLoaded('receiver')),
             'product' => new ProductResource($this->whenLoaded('product')),
@@ -20,7 +20,7 @@ class ChatResource extends JsonResource
                     return null;
                 }
                 return [
-                    'id' => $this->replyTo->id,
+                    'id_obrolan' => $this->replyTo->id_obrolan,
                     'pesan' => $this->replyTo->pesan,
                     'sender' => $this->replyTo->relationLoaded('sender') && $this->replyTo->sender
                         ? new UserResource($this->replyTo->sender)

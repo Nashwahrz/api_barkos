@@ -38,13 +38,13 @@ class TransactionController extends Controller
 
         if ($as === 'buyer') {
             $transactions = Transaction::with(['product', 'seller'])
-                ->where('buyer_id', $user->id)
+                ->where('id_pembeli', $user->id)
                 ->latest()
                 ->get();
         } elseif ($as === 'seller' || $user->role === 'penjual') {
             // Seller: see all transactions on their products
             $transactions = Transaction::with(['product', 'buyer'])
-                ->where('seller_id', $user->id)
+                ->where('id_penjual', $user->id)
                 ->latest()
                 ->get();
         } elseif ($user->role === 'super_admin') {
@@ -55,7 +55,7 @@ class TransactionController extends Controller
         } else {
             // Buyer: see own purchase history
             $transactions = Transaction::with(['product', 'seller'])
-                ->where('buyer_id', $user->id)
+                ->where('id_pembeli', $user->id)
                 ->latest()
                 ->get();
         }
@@ -71,8 +71,8 @@ class TransactionController extends Controller
         $user = Auth::user();
 
         // Only parties involved or admin may view
-        if ($transaction->buyer_id !== $user->id
-            && $transaction->seller_id !== $user->id
+        if ($transaction->id_pembeli !== $user->id
+            && $transaction->id_penjual !== $user->id
             && $user->role !== 'super_admin') {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
@@ -87,10 +87,10 @@ class TransactionController extends Controller
     public function store(TransactionRequest $request): JsonResponse
     {
         $buyer   = $request->user();
-        $product = Product::findOrFail($request->product_id);
+        $product = Product::findOrFail($request->id_produk);
 
         // Cannot buy own product
-        if ($product->user_id === $buyer->id) {
+        if ($product->id_pengguna === $buyer->id) {
             return response()->json(['message' => 'Anda tidak dapat membeli produk milik sendiri.'], 422);
         }
 
@@ -100,8 +100,8 @@ class TransactionController extends Controller
         }
 
         // Prevent duplicate pending order on same product by same buyer
-        $existing = Transaction::where('product_id', $product->id)
-            ->where('buyer_id', $buyer->id)
+        $existing = Transaction::where('id_produk', $product->id_produk)
+            ->where('id_pembeli', $buyer->id)
             ->whereIn('status', ['pending', 'confirmed'])
             ->exists();
 
@@ -115,8 +115,8 @@ class TransactionController extends Controller
             $isValidPrice = true;
         } else {
             // Check if there is an accepted offer with this price
-            $acceptedOffer = \App\Models\Offer::where('product_id', $product->id)
-                ->where('buyer_id', $buyer->id)
+            $acceptedOffer = \App\Models\Offer::where('id_produk', $product->id_produk)
+                ->where('id_pembeli', $buyer->id)
                 ->where('status', 'accepted')
                 ->where('harga_tawaran', $request->harga_disepakati)
                 ->exists();
@@ -130,16 +130,16 @@ class TransactionController extends Controller
         }
 
         $transaction = Transaction::create([
-            'product_id'     => $product->id,
-            'buyer_id'       => $buyer->id,
-            'seller_id'      => $product->user_id,
+            'id_produk'      => $product->id_produk,
+            'id_pembeli'     => $buyer->id,
+            'id_penjual'     => $product->id_pengguna,
             'metode_pembayaran' => $request->metode_pembayaran,
             'status'         => 'pending',
             'harga_disepakati'   => $request->harga_disepakati,
             'catatan'          => $request->catatan,
         ]);
 
-        $seller = \App\Models\User::find($product->user_id);
+        $seller = \App\Models\User::find($product->id_pengguna);
         $seller->notify(new \App\Notifications\TransactionNotification(
             $transaction,
             "Pesanan baru masuk dari {$buyer->nama} untuk produk {$product->nama_barang} seharga Rp " . number_format($request->harga_disepakati, 0, ',', '.'),
@@ -165,7 +165,7 @@ class TransactionController extends Controller
             'metode_pembayaran.in'       => 'Metode pembayaran harus COD atau transfer bank.',
         ]);
 
-        if ($transaction->buyer_id !== Auth::id()) {
+        if ($transaction->id_pembeli !== Auth::id()) {
             return response()->json(['message' => 'Hanya pembeli yang bisa mengubah metode pembayaran.'], 403);
         }
 
@@ -197,7 +197,7 @@ class TransactionController extends Controller
             'action' => 'required|in:confirm,reject',
         ]);
 
-        if ($transaction->seller_id !== Auth::id()) {
+        if ($transaction->id_penjual !== Auth::id()) {
             return response()->json(['message' => 'Hanya penjual yang bisa mengkonfirmasi order.'], 403);
         }
 
@@ -215,7 +215,7 @@ class TransactionController extends Controller
 
             $message = 'Order dikonfirmasi. Produk otomatis ditandai terjual. Hubungi pembeli untuk proses selanjutnya.';
 
-            $buyer = \App\Models\User::find($transaction->buyer_id);
+            $buyer = \App\Models\User::find($transaction->id_pembeli);
             $buyer->notify(new \App\Notifications\TransactionNotification(
                 $transaction,
                 "Pesanan Anda untuk produk {$transaction->product->nama_barang} telah dikonfirmasi penjual.",
@@ -225,7 +225,7 @@ class TransactionController extends Controller
             $transaction->update(['status' => 'cancelled']);
             $message = 'Order ditolak.';
 
-            $buyer = \App\Models\User::find($transaction->buyer_id);
+            $buyer = \App\Models\User::find($transaction->id_pembeli);
             $buyer->notify(new \App\Notifications\TransactionNotification(
                 $transaction,
                 "Maaf, pesanan Anda untuk produk {$transaction->product->nama_barang} telah ditolak oleh penjual.",
@@ -251,7 +251,7 @@ class TransactionController extends Controller
             'payment_proof' => 'required|image|max:10240', // max 10 MB
         ]);
 
-        if ($transaction->buyer_id !== Auth::id()) {
+        if ($transaction->id_pembeli !== Auth::id()) {
             return response()->json(['message' => 'Hanya pembeli yang bisa upload bukti bayar.'], 403);
         }
 
@@ -272,7 +272,7 @@ class TransactionController extends Controller
 
         $transaction->update(['jalur_bukti_pembayaran' => $path]);
 
-        $seller = \App\Models\User::find($transaction->seller_id);
+        $seller = \App\Models\User::find($transaction->id_penjual);
         $seller->notify(new \App\Notifications\TransactionNotification(
             $transaction,
             "Pembeli telah mengunggah bukti pembayaran untuk pesanan {$transaction->product->nama_barang}.",
@@ -291,7 +291,7 @@ class TransactionController extends Controller
     // ─────────────────────────────────────────────────────────────────────
     public function complete(Transaction $transaction): JsonResponse
     {
-        if ($transaction->seller_id !== Auth::id()) {
+        if ($transaction->id_penjual !== Auth::id()) {
             return response()->json(['message' => 'Hanya penjual yang bisa menandai transaksi selesai.'], 403);
         }
 
@@ -310,7 +310,7 @@ class TransactionController extends Controller
         // Pastikan tetap true (idempotent) kalau ada edge-case.
         $transaction->product->update(['status_terjual' => true, 'terjual_pada' => now()]);
 
-        $buyer = \App\Models\User::find($transaction->buyer_id);
+        $buyer = \App\Models\User::find($transaction->id_pembeli);
         $buyer->notify(new \App\Notifications\TransactionNotification(
             $transaction,
             "Pesanan Anda untuk produk {$transaction->product->nama_barang} telah diselesaikan oleh penjual. Terima kasih!",
@@ -330,7 +330,7 @@ class TransactionController extends Controller
     // ─────────────────────────────────────────────────────────────────────
     public function cancel(Transaction $transaction): JsonResponse
     {
-        if ($transaction->buyer_id !== Auth::id()) {
+        if ($transaction->id_pembeli !== Auth::id()) {
             return response()->json(['message' => 'Hanya pembeli yang bisa membatalkan order.'], 403);
         }
 
@@ -340,7 +340,7 @@ class TransactionController extends Controller
 
         $transaction->update(['status' => 'cancelled']);
 
-        $seller = \App\Models\User::find($transaction->seller_id);
+        $seller = \App\Models\User::find($transaction->id_penjual);
         $seller->notify(new \App\Notifications\TransactionNotification(
             $transaction,
             "Pembeli membatalkan pesanan untuk produk {$transaction->product->nama_barang}.",

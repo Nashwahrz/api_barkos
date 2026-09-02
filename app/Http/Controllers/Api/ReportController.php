@@ -25,9 +25,9 @@ class ReportController extends Controller
         }
 
         $chat = Chat::create([
-            'sender_id'   => $sender->id,
-            'receiver_id' => $seller->id,
-            'product_id'  => $report->product->id,
+            'id_pengirim' => $sender->id,
+            'id_penerima' => $seller->id,
+            'id_produk'   => $report->product->id_produk,
             'pesan'       => $message,
             'sudah_dibaca' => false,
         ]);
@@ -69,14 +69,14 @@ class ReportController extends Controller
     public function store(Request $request): JsonResponse
     {
         $request->validate([
-            'product_id' => 'required|exists:products,id',
+            'product_id' => 'required|exists:produk,id_produk',
             'reason' => 'required|string|max:255',
             'description' => 'nullable|string',
         ]);
 
         $report = Report::create([
-            'reporter_id' => Auth::id(),
-            'product_id' => $request->product_id,
+            'id_pelapor' => Auth::id(),
+            'id_produk' => $request->product_id,
             'alasan' => $request->reason,
             'deskripsi' => $request->description,
             'status' => 'pending',
