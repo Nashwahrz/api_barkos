@@ -24,11 +24,16 @@ class ProductFactory extends Factory
             'nama_barang' => fake()->words(3, true),
             'deskripsi' => fake()->paragraph(),
             'harga' => fake()->numberBetween(10000, 10000000),
-            'foto' => 'https://via.placeholder.com/640x480.png',
+            'foto' => null,
             'kondisi' => fake()->randomElement(['baru', 'sangat baik', 'layak pakai']),
+            'durasi_pemakaian' => fake()->optional()->randomElement(['< 6 bulan', '6-12 bulan', '1-2 tahun', '> 2 tahun']),
             'status_terjual' => false,
-            'latitude' => fake()->latitude(),
-            'longitude' => fake()->longitude(),
+            'latitude' => fake()->latitude(-0.95, -0.85),
+            'longitude' => fake()->longitude(100.30, 100.45),
+            'harga_minimum_tawaran' => null,
+            'tawaran_diaktifkan' => false,
+            'dipromosikan' => false,
+            'metode_pembayaran' => fake()->randomElement(['cod', 'bank_transfer', 'both']),
         ];
     }
 }

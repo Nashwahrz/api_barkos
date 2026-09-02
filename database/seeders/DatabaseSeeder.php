@@ -18,17 +18,31 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CategorySeeder::class,
             PromotionPackageSeeder::class,
+            PaymentBankAccountSeeder::class,
+            PaymentSettingSeeder::class,
+            TestimoniSeeder::class,
+            UserSeeder::class,
+            ProductSeeder::class,
+            BankAccountSeeder::class,
+            OfferSeeder::class,
+            ChatSeeder::class,
+            TransactionSeeder::class,
+            ReportSeeder::class,
+            FavoriteSeeder::class,
+            ClosedChatSeeder::class,
             PromotionSeeder::class,
         ]);
 
-        User::factory()->create([
-            'nama' => 'Super Admin',
-            'email' => 'kostmartpadang@gmail.com',
-            'asal_kampus' => 'PNP',
-            'role' => 'super_admin',
-            'email_verified_at' => now(),
-            'password' => 'YakinBisa123!',
-        ]);
+        User::firstOrCreate(
+            ['email' => 'kostmartpadang@gmail.com'],
+            [
+                'nama' => 'Super Admin',
+                'asal_kampus' => 'PNP',
+                'role' => 'super_admin',
+                'email_verified_at' => now(),
+                'password' => 'YakinBisa123!',
+            ]
+        );
 
         // User::factory()->create([
         //     'name' => 'Test User',
